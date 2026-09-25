@@ -1,0 +1,56 @@
+{
+  "Header": {
+    "title": "用 AI 為每一張賀卡注入魔力",
+    "subtitle": "透過 AI 驅動的個性化賀卡，將簡單的時刻轉化為難忘的回憶。",
+    "credits": "免費試用剩餘次數"
+  },
+  "About": {
+    "title": "🚀 關於 GreetingAI Studio (PWA 漸進式網頁應用)",
+    "description": "GreetingAI Studio 是一款 PWA 漸進式網頁應用程式，讓使用者能透過 AI 生成高度客製化的個性化賀卡（包含精美圖片與短影片）。您可以自由選擇慶祝主題、套用獨特視覺藝術風格，並搭配自訂文字與語音訊息。本平台採用 Freemium 模式，提供 5 次免費創作額度，試用上限後可透過 Stripe 安全加值獲取專屬安全金鑰解鎖更多額度。",
+    "canvas_title": "📺 主展示畫布："
+  },
+  "Form": {
+    "step1": "1. 選擇賀卡主題 (Event Selection)",
+    "step1_desc": "💡 操作說明：點擊選擇慶祝主題（如生日快樂、母親節、父親節、新年、情人節或聖誕節），將自動載入該主題專屬範本。",
+    "step2": "2. 選擇視覺風格 (Style Selection)",
+    "step2_desc": "💡 操作說明：點擊選擇視覺藝術風格方塊（寫實相片、數位繪畫、畢加索抽象風格或動態影片），以控制 AI 的生成渲染視覺質感。",
+    "step3": "3. 個性化祝福語與語音上傳 (Personalize Greeting & Voice)",
+    "step3_desc": "💡 操作說明：輸入您的自訂祝福文字、點擊快捷靈感帶入範本，或上傳專屬 MP3/WAV 語音對白檔。",
+    "placeholder_message": "在此輸入您的自訂祝福語，或點擊上方快捷範本...",
+    "presets_label": "💡 快捷靈感範本 (點擊帶入)",
+    "upload_voice": "上傳語音訊息 (MP3/WAV)",
+    "generate_btn": "生成個性化賀卡",
+    "generating": "正在生成賀卡..."
+  },
+  "Categories": {
+    "birthday": "生日快樂",
+    "mothers_day": "母親節快樂",
+    "fathers_day": "父親節快樂",
+    "new_year": "新年快樂",
+    "valentine": "情人節快樂",
+    "christmas": "聖誕快樂"
+  },
+  "Styles": {
+    "photo": "寫實相片",
+    "paint": "數位繪畫",
+    "picasso": "畢加索風格",
+    "video": "動態影片"
+  },
+  "Preview": {
+    "screen_heading": "4. 主電視展示螢幕 (Main Canvas TV Screen Display)",
+    "screen_desc": "💡 操作說明：您的 AI 賀卡生成後將即時在此螢幕上播放與展示，可直接下載或複製連結分享。",
+    "screen_text": "您製作的 AI 賀卡將在此螢幕上播放",
+    "tray_heading": "5. 暫存迷你電視螢幕 (5 Mini-TV Trays)",
+    "tray_desc": "💡 操作說明：下方圖庫自動為您保存最近生成的 5 張賀卡紀錄，同時作為您的 5 次免費試用額度視覺追蹤器。",
+    "download_btn": "📥 下載賀卡",
+    "share_btn": "🔗 分享賀卡"
+  },
+  "Guardrail": {
+    "title": "🔑 Freemium 5次試用上限 Guardrail",
+    "desc": "請輸入 Email 並透過 Stripe 完成加值，系統將自動寄送 Security Key（安全金鑰）至您的信箱以解鎖額外 5 次生成權限。",
+    "email_label": "1. 註冊 Email 信箱：",
+    "pay_btn": "🔒 透過 Stripe 支付 $4.99 並發送安全金鑰",
+    "key_label": "2. 輸入信箱收到的 Security Key 安全金鑰：",
+    "verify_btn": "✅ 驗證安全金鑰並解鎖額度 (+5 次)"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "Header": {
+    "title": "Craft AI Magic in Every Card",
+    "subtitle": "Transform simple moments into unforgettable memories with AI-powered personalized greeting cards.",
+    "credits": "Free Trial Credits"
+  },
+  "About": {
+    "title": "🚀 About GreetingAI Studio (PWA)",
+    "description": "GreetingAI Studio is a Progressive Web Application (PWA) that allows users to generate highly personalized AI greeting cards (images and short videos). Select from tailored celebration themes, apply unique artistic visual styles, and personalize your message with custom text or uploaded audio voiceovers. The platform operates on a freemium monetization model, providing 5 free creation credits before requiring a secure Stripe top-up to receive a security key for additional generations.",
+    "canvas_title": "📺 Main Showcase Canvas:"
+  },
+  "Form": {
+    "step1": "1. Event Selection",
+    "step1_desc": "💡 Instruction: Click a celebration theme tile (Birthday, Mother's Day, Father's Day, New Year, Valentine's, or Christmas) to load theme samples.",
+    "step2": "2. Style Selection",
+    "step2_desc": "💡 Instruction: Choose an artistic style tile (Photo, Paint, Picasso, or Video) to set the visual rendering target for the AI engine.",
+    "step3": "3. Personalization Input",
+    "step3_desc": "💡 Instruction: Type your custom message, click quick inspiration templates to auto-fill, or attach an audio voice message.",
+    "placeholder_message": "Type your custom message or click a quick template above...",
+    "presets_label": "💡 Quick Inspiration Ideas (Click to insert)",
+    "upload_voice": "Upload Voice Message (MP3/WAV)",
+    "generate_btn": "Generate Greeting Card",
+    "generating": "Generating Card..."
+  },
+  "Categories": {
+    "birthday": "Happy Birthday",
+    "mothers_day": "Happy Mother's Day",
+    "fathers_day": "Happy Father's Day",
+    "new_year": "Happy New Year",
+    "valentine": "Happy Valentine's Day",
+    "christmas": "Merry Christmas"
+  },
+  "Styles": {
+    "photo": "Photo",
+    "paint": "Paint",
+    "picasso": "Picasso",
+    "video": "Video"
+  },
+  "Preview": {
+    "screen_heading": "4. Main Canvas TV Screen Display",
+    "screen_desc": "💡 Instruction: Your synthesized card renders live on this screen. Download the asset directly or share the link with friends.",
+    "screen_text": "Your composed AI card will render on this screen",
+    "tray_heading": "5. Temporary Storage (5 Mini-TV Trays)",
+    "tray_desc": "💡 Instruction: This gallery holds your 5 most recent card creations, acting as a visual tracker for your 5 free trial credits.",
+    "download_btn": "📥 Download Card",
+    "share_btn": "🔗 Share Card"
+  },
+  "Guardrail": {
+    "title": "🔑 Freemium 5-Trial Limit Reached",
+    "desc": "Please register your email and complete top-up via Stripe to receive a unique security key emailed to you for unlocking 5 additional generations.",
+    "email_label": "1. Register Email Address:",
+    "pay_btn": "🔒 Pay $4.99 via Stripe & Email Security Key",
+    "key_label": "2. Enter Emailed Security Key:",
+    "verify_btn": "✅ Verify Security Key & Reactivate (+5 Credits)"
+  }
+}
