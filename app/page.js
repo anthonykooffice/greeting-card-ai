@@ -649,7 +649,6 @@ export default function Home() {
                     <video 
                       src={preset.url} 
                       autoPlay 
-                      loop 
                       muted 
                       playsInline 
                       crossOrigin="anonymous" 
@@ -817,7 +816,6 @@ export default function Home() {
                           ref={videoRef}
                           src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
-                          loop 
                           playsInline 
                           crossOrigin="anonymous" 
                           onLoadedData={(e) => e.currentTarget.play()} 
@@ -904,7 +902,6 @@ export default function Home() {
                             <video 
                               src={card.media ? card.media.url : card.url} 
                               autoPlay 
-                              loop 
                               muted 
                               playsInline 
                               crossOrigin="anonymous" 
