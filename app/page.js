@@ -442,25 +442,35 @@ export default function Home() {
     if (isVideo && videoRef.current) {
       const videoEl = videoRef.current;
       videoEl.currentTime = 0;
+      videoEl.muted = false;
       videoEl.play();
 
       // Capture visual stream from Canvas
       const canvasStream = canvas.captureStream(30);
 
-      // Capture audio stream from Video element via Web Audio API
+      // Capture audio directly from video media stream / Web Audio API
       let combinedStream = canvasStream;
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(videoEl);
-        const destination = audioCtx.createMediaStreamDestination();
-        source.connect(destination);
-        source.connect(audioCtx.destination);
+        let videoAudioTrack = null;
+        if (videoEl.captureStream) {
+          videoAudioTrack = videoEl.captureStream().getAudioTracks()[0];
+        } else if (videoEl.mozCaptureStream) {
+          videoAudioTrack = videoEl.mozCaptureStream().getAudioTracks()[0];
+        }
 
-        const audioTrack = destination.stream.getAudioTracks()[0];
-        if (audioTrack) {
+        if (!videoAudioTrack) {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioCtx.createMediaElementSource(videoEl);
+          const destination = audioCtx.createMediaStreamDestination();
+          source.connect(destination);
+          source.connect(audioCtx.destination);
+          videoAudioTrack = destination.stream.getAudioTracks()[0];
+        }
+
+        if (videoAudioTrack) {
           combinedStream = new MediaStream([
             ...canvasStream.getVideoTracks(),
-            audioTrack
+            videoAudioTrack
           ]);
         }
       } catch (err) {
@@ -502,10 +512,17 @@ export default function Home() {
 
       renderFrame();
 
-      setTimeout(() => {
+      // Dynamic recording duration matching actual video length (e.g. 15s)
+      const durationMs = videoEl.duration && !isNaN(videoEl.duration) ? videoEl.duration * 1000 : 15000;
+
+      const stopRecording = () => {
         cancelAnimationFrame(animId);
         if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
-      }, 5000);
+        videoEl.removeEventListener("ended", stopRecording);
+      };
+
+      videoEl.addEventListener("ended", stopRecording);
+      setTimeout(stopRecording, durationMs + 200);
 
       return;
     }
