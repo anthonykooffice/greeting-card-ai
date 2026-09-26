@@ -25,15 +25,15 @@ const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a"
 const FESTIVE_DATA = {
   "Happy Birthday": {
     zhTitle: "祝生日快樂",
-    heroImage: "/assets/Happy-Birthday/Happy-Birthday-1.jpg",
+    heroImage: "/assets/Happy-Birthday/Happy-Birthday-1.mp4",
     heroFallback: createPlaceholder("Happy Birthday Celebration", "%233b82f6"),
     themeColor: "from-amber-500/40 via-purple-600/30 to-pink-500/40",
     presets: [
-      { id: "b1", title: "Golden Birthday Cake & Sparklers", zhTitle: "金色生日蛋糕與煙花", url: "/assets/Happy-Birthday/Happy-Birthday-1.jpg", fallback: createPlaceholder("Birthday Cake & Sparklers", "%23d97706") },
-      { id: "b2", title: "Vibrant Celebration Balloons", zhTitle: "繽紛慶典氣球", url: "/assets/Happy-Birthday/Happy-Birthday-2.jpg", fallback: createPlaceholder("Celebration Balloons", "%232563eb") },
-      { id: "b3", title: "Confetti Burst Party", zhTitle: "彩帶派對狂歡", url: "/assets/Happy-Birthday/Happy-Birthday-3.jpg", fallback: createPlaceholder("Confetti Party", "%237c3aed") },
-      { id: "b4", title: "Glittering Birthday Gift Boxes", zhTitle: "璀璨生日禮盒", url: "/assets/Happy-Birthday/Happy-Birthday-4.jpg", fallback: createPlaceholder("Gift Boxes", "%23db2777") },
-      { id: "b5", title: "Festive Candlelight Wishes", zhTitle: "溫馨燭光許願", url: "/assets/Happy-Birthday/Happy-Birthday-5.jpg", fallback: createPlaceholder("Candlelight Wishes", "%23ca8a04") }
+      { id: "b1", title: "Golden Birthday Cake & Sparklers", zhTitle: "金色生日蛋糕與煙花", url: "/assets/Happy-Birthday/Happy-Birthday-1.mp4", fallback: createPlaceholder("Birthday Cake & Sparklers", "%23d97706") },
+      { id: "b2", title: "Vibrant Celebration Balloons", zhTitle: "繽紛慶典氣球", url: "/assets/Happy-Birthday/Happy-Birthday-2.mp4", fallback: createPlaceholder("Celebration Balloons", "%232563eb") },
+      { id: "b3", title: "Confetti Burst Party", zhTitle: "彩帶派對狂歡", url: "/assets/Happy-Birthday/Happy-Birthday-3.mp4", fallback: createPlaceholder("Confetti Party", "%237c3aed") },
+      { id: "b4", title: "Glittering Birthday Gift Boxes", zhTitle: "璀璨生日禮盒", url: "/assets/Happy-Birthday/Happy-Birthday-4.mp4", fallback: createPlaceholder("Gift Boxes", "%23db2777") },
+      { id: "b5", title: "Festive Candlelight Wishes", zhTitle: "溫馨燭光許願", url: "/assets/Happy-Birthday/Happy-Birthday-5.mp4", fallback: createPlaceholder("Candlelight Wishes", "%23ca8a04") }
     ],
     ideas: [
       { en: "Wishing you a year filled with joy, laughter, and endless success!", zh: "願新的一年充滿歡樂、笑聲與無限成功！" },
@@ -45,15 +45,15 @@ const FESTIVE_DATA = {
   },
   "Happy Mother's Day": {
     zhTitle: "母親節快樂",
-    heroImage: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.jpg",
+    heroImage: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4",
     heroFallback: createPlaceholder("Happy Mother's Day", "%23ec4899"),
     themeColor: "from-rose-500/40 via-pink-600/30 to-red-400/40",
     presets: [
-      { id: "m1", title: "Fresh Peony & Rose Bouquet", zhTitle: "新鮮牡丹玫瑰花束", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.jpg", fallback: createPlaceholder("Peony Bouquet", "%23e11d48") },
-      { id: "m2", title: "Spring Tulip Bloom", zhTitle: "春日鬱金香花海", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-2.jpg", fallback: createPlaceholder("Spring Tulips", "%23be123c") },
-      { id: "m3", title: "Warm Morning Floral Tea", zhTitle: "溫馨早晨花茶", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-3.jpg", fallback: createPlaceholder("Morning Floral Tea", "%239f1239") },
-      { id: "m4", title: "Golden Hour Garden Blossoms", zhTitle: "金輝花園盛開", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-4.jpg", fallback: createPlaceholder("Garden Blossoms", "%23881337") },
-      { id: "m5", title: "Soft Pink Carnation Arrangement", zhTitle: "粉嫩康乃馨花藝", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-5.jpg", fallback: createPlaceholder("Pink Carnations", "%23f43f5e") }
+      { id: "m1", title: "Fresh Peony & Rose Bouquet", zhTitle: "新鮮牡丹玫瑰花束", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4", fallback: createPlaceholder("Peony Bouquet", "%23e11d48") },
+      { id: "m2", title: "Spring Tulip Bloom", zhTitle: "春日鬱金香花海", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-2.mp4", fallback: createPlaceholder("Spring Tulips", "%23be123c") },
+      { id: "m3", title: "Warm Morning Floral Tea", zhTitle: "溫馨早晨花茶", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-3.mp4", fallback: createPlaceholder("Morning Floral Tea", "%239f1239") },
+      { id: "m4", title: "Golden Hour Garden Blossoms", zhTitle: "金輝花園盛開", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-4.mp4", fallback: createPlaceholder("Garden Blossoms", "%23881337") },
+      { id: "m5", title: "Soft Pink Carnation Arrangement", zhTitle: "粉嫩康乃馨花藝", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-5.mp4", fallback: createPlaceholder("Pink Carnations", "%23f43f5e") }
     ],
     ideas: [
       { en: "Thank you for your unconditional love and infinite patience. Happy Mother's Day!", zh: "感謝您無私的愛與無窮的耐心，母親節快樂！" },
@@ -65,15 +65,15 @@ const FESTIVE_DATA = {
   },
   "Happy Father's Day": {
     zhTitle: "父親節快樂",
-    heroImage: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.jpg",
+    heroImage: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4",
     heroFallback: createPlaceholder("Happy Father's Day", "%231d4ed8"),
     themeColor: "from-blue-600/40 via-slate-700/30 to-indigo-500/40",
     presets: [
-      { id: "f1", title: "Serene Dock & Ocean Sunset", zhTitle: "寧靜港灣夕陽", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.jpg", fallback: createPlaceholder("Ocean Sunset", "%231e40af") },
-      { id: "f2", title: "Majestic Wilderness Mountain", zhTitle: "壯麗山川風光", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-2.jpg", fallback: createPlaceholder("Wilderness Mountain", "%231d4ed8") },
-      { id: "f3", title: "Classic Vintage Timepiece", zhTitle: "經典復古腕錶", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-3.jpg", fallback: createPlaceholder("Vintage Timepiece", "%232563eb") },
-      { id: "f4", title: "Peaceful Forest Dusk Path", zhTitle: "靜謐森林步道", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-4.jpg", fallback: createPlaceholder("Forest Dusk Path", "%233b82f6") },
-      { id: "f5", title: "Modern Deep Blue Geometry", zhTitle: "深藍幾何美學", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-5.jpg", fallback: createPlaceholder("Deep Blue Geometry", "%231e3a8a") }
+      { id: "f1", title: "Serene Dock & Ocean Sunset", zhTitle: "寧靜港灣夕陽", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4", fallback: createPlaceholder("Ocean Sunset", "%231e40af") },
+      { id: "f2", title: "Majestic Wilderness Mountain", zhTitle: "壯麗山川風光", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-2.mp4", fallback: createPlaceholder("Wilderness Mountain", "%231d4ed8") },
+      { id: "f3", title: "Classic Vintage Timepiece", zhTitle: "經典復古腕錶", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-3.mp4", fallback: createPlaceholder("Vintage Timepiece", "%232563eb") },
+      { id: "f4", title: "Peaceful Forest Dusk Path", zhTitle: "靜謐森林步道", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-4.mp4", fallback: createPlaceholder("Forest Dusk Path", "%233b82f6") },
+      { id: "f5", title: "Modern Deep Blue Geometry", zhTitle: "深藍幾何美學", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-5.mp4", fallback: createPlaceholder("Deep Blue Geometry", "%231e3a8a") }
     ],
     ideas: [
       { en: "Thank you for being my anchor, my mentor, and my hero. Happy Father's Day!", zh: "感謝您成為我的靠山、導師與英雄，父親節快樂！" },
@@ -85,15 +85,15 @@ const FESTIVE_DATA = {
   },
   "Happy New Year": {
     zhTitle: "跨年元旦快樂",
-    heroImage: "/assets/Happy-New-Year/Happy-New-Year-1.jpg",
+    heroImage: "/assets/Happy-New-Year/Happy-New-Year-1.mp4",
     heroFallback: createPlaceholder("Happy New Year 2027", "%23d97706"),
     themeColor: "from-amber-400/40 via-yellow-600/30 to-orange-500/40",
     presets: [
-      { id: "n1", title: "Midnight Fireworks Sky", zhTitle: "璀璨夜空煙花", url: "/assets/Happy-New-Year/Happy-New-Year-1.jpg", fallback: createPlaceholder("Fireworks Sky", "%23b45309") },
-      { id: "n2", title: "Golden Champagne Celebration", zhTitle: "金色香檳慶典", url: "/assets/Happy-New-Year/Happy-New-Year-2.jpg", fallback: createPlaceholder("Champagne Celebration", "%23d97706") },
-      { id: "n3", title: "City Skyline Sparkler Glow", zhTitle: "都市天際仙女棒", url: "/assets/Happy-New-Year/Happy-New-Year-3.jpg", fallback: createPlaceholder("City Sparkler Glow", "%23f59e0b") },
-      { id: "n4", title: "Warm Festive Lantern Festival", zhTitle: "暖心節慶天燈", url: "/assets/Happy-New-Year/Happy-New-Year-4.jpg", fallback: createPlaceholder("Lantern Festival", "%23ea580c") },
-      { id: "n5", title: "Glittering Countdown Lights", zhTitle: "倒數歡慶燈光", url: "/assets/Happy-New-Year/Happy-New-Year-5.jpg", fallback: createPlaceholder("Countdown Lights", "%23c2410c") }
+      { id: "n1", title: "Midnight Fireworks Sky", zhTitle: "璀璨夜空煙花", url: "/assets/Happy-New-Year/Happy-New-Year-1.mp4", fallback: createPlaceholder("Fireworks Sky", "%23b45309") },
+      { id: "n2", title: "Golden Champagne Celebration", zhTitle: "金色香檳慶典", url: "/assets/Happy-New-Year/Happy-New-Year-2.mp4", fallback: createPlaceholder("Champagne Celebration", "%23d97706") },
+      { id: "n3", title: "City Skyline Sparkler Glow", zhTitle: "都市天際仙女棒", url: "/assets/Happy-New-Year/Happy-New-Year-3.mp4", fallback: createPlaceholder("City Sparkler Glow", "%23f59e0b") },
+      { id: "n4", title: "Warm Festive Lantern Festival", zhTitle: "暖心節慶天燈", url: "/assets/Happy-New-Year/Happy-New-Year-4.mp4", fallback: createPlaceholder("Lantern Festival", "%23ea580c") },
+      { id: "n5", title: "Glittering Countdown Lights", zhTitle: "倒數歡慶燈光", url: "/assets/Happy-New-Year/Happy-New-Year-5.mp4", fallback: createPlaceholder("Countdown Lights", "%23c2410c") }
     ],
     ideas: [
       { en: "May 2027 bring you health, wealth, prosperity, and endless joy!", zh: "願新的一年帶給你健康、財富與無限喜悅！" },
@@ -105,15 +105,15 @@ const FESTIVE_DATA = {
   },
   "Happy Valentine's Day": {
     zhTitle: "情人節快樂",
-    heroImage: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.jpg",
+    heroImage: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4",
     heroFallback: createPlaceholder("Happy Valentine's Day", "%23be123c"),
     themeColor: "from-pink-600/40 via-rose-700/30 to-red-500/40",
     presets: [
-      { id: "v1", title: "Crimson Red Velvet Hearts", zhTitle: "深紅絲絨愛心", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.jpg", fallback: createPlaceholder("Red Velvet Hearts", "%23be123c") },
-      { id: "v2", title: "Red Rose Petal Shower", zhTitle: "浪漫玫瑰花瓣", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-2.jpg", fallback: createPlaceholder("Rose Petal Shower", "%239f1239") },
-      { id: "v3", title: "Romantic Candlelight Ambiance", zhTitle: "浪漫燭光晚宴", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-3.jpg", fallback: createPlaceholder("Candlelight Ambiance", "%23881337") },
-      { id: "v4", title: "Glowing Neon Heart Art", zhTitle: "霓虹愛心燈飾", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-4.jpg", fallback: createPlaceholder("Neon Heart Art", "%23e11d48") },
-      { id: "v5", title: "Golden Love Infinity Symbol", zhTitle: "金色永恆摯愛", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-5.jpg", fallback: createPlaceholder("Golden Love Infinity", "%23f43f5e") }
+      { id: "v1", title: "Crimson Red Velvet Hearts", zhTitle: "深紅絲絨愛心", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4", fallback: createPlaceholder("Red Velvet Hearts", "%23be123c") },
+      { id: "v2", title: "Red Rose Petal Shower", zhTitle: "浪漫玫瑰花瓣", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-2.mp4", fallback: createPlaceholder("Rose Petal Shower", "%239f1239") },
+      { id: "v3", title: "Romantic Candlelight Ambiance", zhTitle: "浪漫燭光晚宴", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-3.mp4", fallback: createPlaceholder("Candlelight Ambiance", "%23881337") },
+      { id: "v4", title: "Glowing Neon Heart Art", zhTitle: "霓虹愛心燈飾", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-4.mp4", fallback: createPlaceholder("Neon Heart Art", "%23e11d48") },
+      { id: "v5", title: "Golden Love Infinity Symbol", zhTitle: "金色永恆摯愛", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-5.mp4", fallback: createPlaceholder("Golden Love Infinity", "%23f43f5e") }
     ],
     ideas: [
       { en: "You hold the key to my heart today, tomorrow, and forever. Happy Valentine's Day!", zh: "你掌握著我心門的鑰匙，直到永遠。情人節快樂！" },
@@ -125,15 +125,15 @@ const FESTIVE_DATA = {
   },
   "Merry Christmas": {
     zhTitle: "聖誕節快樂",
-    heroImage: "/assets/Merry-Christmas/Merry-Christmas-1.jpg",
+    heroImage: "/assets/Merry-Christmas/Merry-Christmas-1.mp4",
     heroFallback: createPlaceholder("Merry Christmas", "%2315803d"),
     themeColor: "from-emerald-600/40 via-red-700/30 to-green-500/40",
     presets: [
-      { id: "c1", title: "Glowing Christmas Tree Lights", zhTitle: "璀璨聖誕樹彩燈", url: "/assets/Merry-Christmas/Merry-Christmas-1.jpg", fallback: createPlaceholder("Christmas Tree Lights", "%2315803d") },
-      { id: "c2", title: "Cozy Fireplace & Holiday Stockings", zhTitle: "壁爐與節慶聖誕襪", url: "/assets/Merry-Christmas/Merry-Christmas-2.jpg", fallback: createPlaceholder("Cozy Fireplace", "%23b91c1c") },
-      { id: "c3", title: "Snowy Winter Pine Cones", zhTitle: "雪景松果美景", url: "/assets/Merry-Christmas/Merry-Christmas-3.jpg", fallback: createPlaceholder("Snowy Pine Cones", "%23047857") },
-      { id: "c4", title: "Golden Christmas Tree Baubles", zhTitle: "金色聖誕裝飾球", url: "/assets/Merry-Christmas/Merry-Christmas-4.jpg", fallback: createPlaceholder("Golden Christmas Baubles", "%23b45309") },
-      { id: "c5", title: "Nordic Winter Snowflake Branch", zhTitle: "北歐雪花冬日松枝", url: "/assets/Merry-Christmas/Merry-Christmas-5.jpg", fallback: createPlaceholder("Snowflake Branch", "%230f766e") }
+      { id: "c1", title: "Glowing Christmas Tree Lights", zhTitle: "璀璨聖誕樹彩燈", url: "/assets/Merry-Christmas/Merry-Christmas-1.mp4", fallback: createPlaceholder("Christmas Tree Lights", "%2315803d") },
+      { id: "c2", title: "Cozy Fireplace & Holiday Stockings", zhTitle: "壁爐與節慶聖誕襪", url: "/assets/Merry-Christmas/Merry-Christmas-2.mp4", fallback: createPlaceholder("Cozy Fireplace", "%23b91c1c") },
+      { id: "c3", title: "Snowy Winter Pine Cones", zhTitle: "雪景松果美景", url: "/assets/Merry-Christmas/Merry-Christmas-3.mp4", fallback: createPlaceholder("Snowy Pine Cones", "%23047857") },
+      { id: "c4", title: "Golden Christmas Tree Baubles", zhTitle: "金色聖誕裝飾球", url: "/assets/Merry-Christmas/Merry-Christmas-4.mp4", fallback: createPlaceholder("Golden Christmas Baubles", "%23b45309") },
+      { id: "c5", title: "Nordic Winter Snowflake Branch", zhTitle: "北歐雪花冬日松枝", url: "/assets/Merry-Christmas/Merry-Christmas-5.mp4", fallback: createPlaceholder("Snowflake Branch", "%230f766e") }
     ],
     ideas: [
       { en: "May your holidays be wrapped in warmth, filled with love, and bright with joy!", zh: "願你的佳節充滿溫暖、愛與無盡喜悅！" },
@@ -145,15 +145,15 @@ const FESTIVE_DATA = {
   },
   "Happy Easter": {
     zhTitle: "復活節快樂",
-    heroImage: "/assets/Happy-Easter/Happy-Easter-1.jpg",
+    heroImage: "/assets/Happy-Easter/Happy-Easter-1.mp4",
     heroFallback: createPlaceholder("Happy Easter", "%2310b981"),
     themeColor: "from-emerald-400/40 via-teal-500/30 to-yellow-400/40",
     presets: [
-      { id: "e1", title: "Colorful Pastel Easter Eggs", zhTitle: "彩繪復活節彩蛋", url: "/assets/Happy-Easter/Happy-Easter-1.jpg", fallback: createPlaceholder("Pastel Easter Eggs", "%23059669") },
-      { id: "e2", title: "Spring Blossom Bunny Garden", zhTitle: "春日花園可愛兔子", url: "/assets/Happy-Easter/Happy-Easter-2.jpg", fallback: createPlaceholder("Bunny Garden", "%2310b981") },
-      { id: "e3", title: "Easter Egg Nest in Meadow", zhTitle: "草地彩蛋溫馨鳥巢", url: "/assets/Happy-Easter/Happy-Easter-3.jpg", fallback: createPlaceholder("Easter Egg Nest", "%2334d399") },
-      { id: "e4", title: "Golden Morning Spring Tulips", zhTitle: "晨曦金色鬱金香", url: "/assets/Happy-Easter/Happy-Easter-4.jpg", fallback: createPlaceholder("Spring Tulips", "%23f59e0b") },
-      { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.jpg", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
+      { id: "e1", title: "Colorful Pastel Easter Eggs", zhTitle: "彩繪復活節彩蛋", url: "/assets/Happy-Easter/Happy-Easter-1.mp4", fallback: createPlaceholder("Pastel Easter Eggs", "%23059669") },
+      { id: "e2", title: "Spring Blossom Bunny Garden", zhTitle: "春日花園可愛兔子", url: "/assets/Happy-Easter/Happy-Easter-2.mp4", fallback: createPlaceholder("Bunny Garden", "%2310b981") },
+      { id: "e3", title: "Easter Egg Nest in Meadow", zhTitle: "草地彩蛋溫馨鳥巢", url: "/assets/Happy-Easter/Happy-Easter-3.mp4", fallback: createPlaceholder("Easter Egg Nest", "%2334d399") },
+      { id: "e4", title: "Golden Morning Spring Tulips", zhTitle: "晨曦金色鬱金香", url: "/assets/Happy-Easter/Happy-Easter-4.mp4", fallback: createPlaceholder("Spring Tulips", "%23f59e0b") },
+      { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
       { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
@@ -165,15 +165,15 @@ const FESTIVE_DATA = {
   },
   "Happy Mid-Autumn Festival": {
     zhTitle: "中秋節快樂",
-    heroImage: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.jpg",
+    heroImage: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4",
     heroFallback: createPlaceholder("Happy Mid-Autumn Festival", "%23d97706"),
     themeColor: "from-amber-600/40 via-yellow-700/30 to-orange-500/40",
     presets: [
-      { id: "ma1", title: "Full Golden Moon & Lanterns", zhTitle: "金黃明月與節慶燈籠", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.jpg", fallback: createPlaceholder("Golden Moon & Lanterns", "%23d97706") },
-      { id: "ma2", title: "Traditional Gourmet Mooncakes", zhTitle: "傳統精緻月餅美食", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-2.jpg", fallback: createPlaceholder("Gourmet Mooncakes", "%23b45309") },
-      { id: "ma3", title: "Glowing Night Sky Lanterns", zhTitle: "夜空璀璨放飛天燈", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-3.jpg", fallback: createPlaceholder("Night Sky Lanterns", "%23ea580c") },
-      { id: "ma4", title: "Serene Moonlight Lake Reflection", zhTitle: "靜謐湖畔月影搖曳", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-4.jpg", fallback: createPlaceholder("Moonlight Lake", "%231e3a8a") },
-      { id: "ma5", title: "Warm Tea & Reunion Celebration", zhTitle: "中秋品茗歡聚一堂", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-5.jpg", fallback: createPlaceholder("Tea & Reunion", "%2378350f") }
+      { id: "ma1", title: "Full Golden Moon & Lanterns", zhTitle: "金黃明月與節慶燈籠", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4", fallback: createPlaceholder("Golden Moon & Lanterns", "%23d97706") },
+      { id: "ma2", title: "Traditional Gourmet Mooncakes", zhTitle: "傳統精緻月餅美食", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-2.mp4", fallback: createPlaceholder("Gourmet Mooncakes", "%23b45309") },
+      { id: "ma3", title: "Glowing Night Sky Lanterns", zhTitle: "夜空璀璨放飛天燈", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-3.mp4", fallback: createPlaceholder("Night Sky Lanterns", "%23ea580c") },
+      { id: "ma4", title: "Serene Moonlight Lake Reflection", zhTitle: "靜謐湖畔月影搖曳", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-4.mp4", fallback: createPlaceholder("Moonlight Lake", "%231e3a8a") },
+      { id: "ma5", title: "Warm Tea & Reunion Celebration", zhTitle: "中秋品茗歡聚一堂", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-5.mp4", fallback: createPlaceholder("Tea & Reunion", "%2378350f") }
     ],
     ideas: [
       { en: "Wishing you and your family a blessed Mid-Autumn Festival of harmony and reunion!", zh: "祝您與家人中秋團圓，花好月圓，合家幸福！" },
@@ -185,15 +185,15 @@ const FESTIVE_DATA = {
   },
   "Happy Chinese New Year": {
     zhTitle: "農曆新年快樂",
-    heroImage: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.jpg",
+    heroImage: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4",
     heroFallback: createPlaceholder("Happy Chinese New Year", "%23dc2626"),
     themeColor: "from-red-600/40 via-amber-600/30 to-red-500/40",
     presets: [
-      { id: "cny1", title: "Red Lanterns & Spring Couplets", zhTitle: "喜慶紅燈籠與春聯", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.jpg", fallback: createPlaceholder("Red Lanterns & Couplets", "%23dc2626") },
-      { id: "cny2", title: "Golden Fortune Coins & Red Packets", zhTitle: "金玉滿堂開運紅包", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-2.jpg", fallback: createPlaceholder("Fortune Coins & Red Packets", "%23b91c1c") },
-      { id: "cny3", title: "Vibrant Lion Dance Celebration", zhTitle: "熱鬧非凡醒獅賀歲", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-3.jpg", fallback: createPlaceholder("Lion Dance Celebration", "%23991b1b") },
-      { id: "cny4", title: "Blossoming Cherry Spring Flowers", zhTitle: "新春桃花報喜盛開", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-4.jpg", fallback: createPlaceholder("Blossoming Spring Flowers", "%23e11d48") },
-      { id: "cny5", title: "Festive Fireworks & Temple Lights", zhTitle: "新春火樹銀花不夜天", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-5.jpg", fallback: createPlaceholder("Fireworks & Temple Lights", "%23d97706") }
+      { id: "cny1", title: "Red Lanterns & Spring Couplets", zhTitle: "喜慶紅燈籠與春聯", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4", fallback: createPlaceholder("Red Lanterns & Couplets", "%23dc2626") },
+      { id: "cny2", title: "Golden Fortune Coins & Red Packets", zhTitle: "金玉滿堂開運紅包", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-2.mp4", fallback: createPlaceholder("Fortune Coins & Red Packets", "%23b91c1c") },
+      { id: "cny3", title: "Vibrant Lion Dance Celebration", zhTitle: "熱鬧非凡醒獅賀歲", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-3.mp4", fallback: createPlaceholder("Lion Dance Celebration", "%23991b1b") },
+      { id: "cny4", title: "Blossoming Cherry Spring Flowers", zhTitle: "新春桃花報喜盛開", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-4.mp4", fallback: createPlaceholder("Blossoming Spring Flowers", "%23e11d48") },
+      { id: "cny5", title: "Festive Fireworks & Temple Lights", zhTitle: "新春火樹銀花不夜天", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-5.mp4", fallback: createPlaceholder("Fireworks & Temple Lights", "%23d97706") }
     ],
     ideas: [
       { en: "Wishing you immense prosperity, good health, and wealth in the New Year!", zh: "祝您新春吉星高照，大吉大利，歲歲平安！" },
@@ -437,7 +437,9 @@ export default function Home() {
       }
     };
 
-    if (activeCard.media && activeCard.media.type === "video" && videoRef.current) {
+    const isVideo = activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video");
+
+    if (isVideo && videoRef.current) {
       const videoEl = videoRef.current;
       videoEl.play();
 
@@ -587,7 +589,7 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 md:pt-8 space-y-8 md:space-y-10">
-        {/* HERO SHOWCASE REEL WITH UNCLIPPED FULL-FRAME TOP TITLE VISIBILITY */}
+        {/* HERO SHOWCASE REEL */}
         <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 grid lg:grid-cols-12 gap-8 items-center shadow-2xl">
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center space-x-2">
@@ -601,7 +603,6 @@ export default function Home() {
           </div>
 
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
-            {/* Direct clean video element prevents YouTube profile badge popups while keeping 100% full-frame top title text visible */}
             <iframe 
               src="https://www.youtube.com/embed/O0HdWMBXVVI?controls=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3" 
               title="GreetingAI Studio Official Introductory Video"
@@ -645,10 +646,14 @@ export default function Home() {
                       selectedPreset.id === preset.id && !attachedMedia ? "border-amber-400 ring-4 ring-amber-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
                     }`}
                   >
-                    <img 
+                    <video 
                       src={preset.url} 
-                      onError={(e) => { e.target.src = preset.fallback; }}
-                      alt={preset.title} 
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline 
+                      crossOrigin="anonymous" 
+                      onLoadedData={(e) => e.currentTarget.play()} 
                       className="w-full h-full object-cover" 
                     />
                   </button>
@@ -755,7 +760,7 @@ export default function Home() {
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
               />
 
-              {/* MEDIA UPLOAD WITH REMOVE SWITCH */}
+              {/* MEDIA UPLOAD */}
               <div className="bg-slate-950 border border-slate-700 hover:border-slate-600 p-3.5 rounded-xl text-sm font-semibold text-slate-300 flex items-center justify-between">
                 <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
                   <Upload className="h-5 w-5 text-indigo-400 shrink-0" />
@@ -806,17 +811,19 @@ export default function Home() {
                 ) : activeCard ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
                     
-                    {activeCard.media && activeCard.media.type === "video" ? (
+                    {activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video") ? (
                       <div className="relative w-full h-full flex items-center justify-center">
                         <video 
                           ref={videoRef}
-                          src={activeCard.media.url} 
+                          src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
                           loop 
                           muted 
                           playsInline 
+                          crossOrigin="anonymous" 
+                          onLoadedData={(e) => e.currentTarget.play()} 
                           style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
-                          className={`max-w-full max-h-full object-contain transition-all duration-500 ${
+                          className={`w-full h-full object-cover transition-all duration-500 ${
                             activeCard.style === "Motion5s" ? "ai-motion-video" : ""
                           }`} 
                         />
@@ -877,12 +884,13 @@ export default function Home() {
               </button>
             )}
 
-            {/* MINI TV TRAYS (CLEAN HOLDINGS WITHOUT EXTRA REMARKS) */}
+            {/* MINI TV TRAYS */}
             <div className="space-y-3 pt-2">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">{t.recentTitle}</h3>
               <div className="grid grid-cols-5 gap-3">
                 {[...Array(5)].map((_, index) => {
                   const card = history[index];
+                  const isCardVideo = card?.url?.endsWith(".mp4") || (card?.media && card.media.type === "video");
                   return (
                     <div
                       key={index}
@@ -893,8 +901,17 @@ export default function Home() {
                     >
                       {card ? (
                         <div className="relative w-full h-full">
-                          {card.media && card.media.type === "video" ? (
-                            <video src={card.media.url} className="w-full h-full object-cover" />
+                          {isCardVideo ? (
+                            <video 
+                              src={card.media ? card.media.url : card.url} 
+                              autoPlay 
+                              loop 
+                              muted 
+                              playsInline 
+                              crossOrigin="anonymous" 
+                              onLoadedData={(e) => e.currentTarget.play()} 
+                              className="w-full h-full object-cover" 
+                            />
                           ) : (
                             <img 
                               src={card.media ? card.media.url : card.url} 
