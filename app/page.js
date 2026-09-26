@@ -818,7 +818,6 @@ export default function Home() {
                           src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
                           loop 
-                          muted 
                           playsInline 
                           crossOrigin="anonymous" 
                           onLoadedData={(e) => e.currentTarget.play()} 
