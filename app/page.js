@@ -441,10 +441,37 @@ export default function Home() {
 
     if (isVideo && videoRef.current) {
       const videoEl = videoRef.current;
+      videoEl.currentTime = 0;
       videoEl.play();
 
-      const stream = canvas.captureStream(30);
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+      // Capture visual stream from Canvas
+      const canvasStream = canvas.captureStream(30);
+
+      // Capture audio stream from Video element via Web Audio API
+      let combinedStream = canvasStream;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(videoEl);
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(destination);
+        source.connect(audioCtx.destination);
+
+        const audioTrack = destination.stream.getAudioTracks()[0];
+        if (audioTrack) {
+          combinedStream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            audioTrack
+          ]);
+        }
+      } catch (err) {
+        console.warn("Audio capture fallback triggered:", err);
+      }
+
+      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") 
+        ? "video/webm;codecs=vp9,opus" 
+        : "video/webm";
+
+      const mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
       const chunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
