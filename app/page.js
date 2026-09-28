@@ -317,7 +317,7 @@ export default function Home() {
       to: toName,
       from: fromName,
       text: customText,
-      url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+      url: selectedPreset.url,
       fallback: selectedPreset.fallback,
       media: attachedMedia,
       faceSwapActive: enableFaceSwap
@@ -399,7 +399,7 @@ export default function Home() {
       to: toName,
       from: fromName,
       text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
-      url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+      url: selectedPreset.url,
       fallback: selectedPreset.fallback,
       media: attachedMedia,
       faceSwapActive: enableFaceSwap
@@ -446,7 +446,7 @@ export default function Home() {
       }
     };
 
-    const isVideo = activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video");
+    const isVideo = activeCard.url?.endsWith(".mp4");
 
     if (isVideo && videoRef.current) {
       const videoEl = videoRef.current;
@@ -563,7 +563,26 @@ export default function Home() {
 
     setIsGenerating(true);
 
-    setTimeout(() => {
+    try {
+      let finalVideoUrl = selectedPreset.url;
+
+      // Execute AI Face Swap API call if enabled and photo is attached
+      if (enableFaceSwap && attachedMedia) {
+        const response = await fetch("/api/face-swap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceImage: attachedMedia.url,
+            targetVideoUrl: selectedPreset.url,
+          }),
+        });
+
+        const resData = await response.json();
+        if (resData.swappedVideoUrl) {
+          finalVideoUrl = resData.swappedVideoUrl;
+        }
+      }
+
       const generatedCard = {
         id: Date.now(),
         category: selectedCategory,
@@ -571,7 +590,7 @@ export default function Home() {
         to: toName,
         from: fromName,
         text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
-        url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+        url: finalVideoUrl,
         fallback: selectedPreset.fallback,
         media: attachedMedia,
         faceSwapActive: enableFaceSwap
@@ -583,7 +602,10 @@ export default function Home() {
       setIsGenerating(false);
 
       setTimeout(() => downloadImprintedCard(), 400);
-    }, 1800);
+    } catch (err) {
+      console.error("Card generation error:", err);
+      setIsGenerating(false);
+    }
   };
 
   const activeStyleObj = t.styles.find((s) => s.key === selectedStyle);
@@ -694,7 +716,7 @@ export default function Home() {
                     key={preset.id}
                     onClick={() => handlePresetSelect(preset)}
                     className={`aspect-square rounded-xl overflow-hidden border-2 transition relative ${
-                      selectedPreset.id === preset.id && !attachedMedia ? "border-amber-400 ring-4 ring-amber-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                      selectedPreset.id === preset.id ? "border-amber-400 ring-4 ring-amber-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
                     }`}
                   >
                     <video 
@@ -829,7 +851,7 @@ export default function Home() {
                   <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
                     <Upload className="h-5 w-5 text-indigo-400 shrink-0" />
                     <span className="truncate">{attachedMedia ? `Attached: ${attachedMedia.name}` : t.faceSwapUploadLabel}</span>
-                    <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
+                    <input type="file" accept="image/*" onChange={handleMediaUpload} className="hidden" />
                   </label>
                   {attachedMedia && (
                     <button
@@ -880,11 +902,11 @@ export default function Home() {
                 ) : activeCard ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
                     
-                    {activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video") ? (
+                    {activeCard.url?.endsWith(".mp4") ? (
                       <div className="relative w-full h-full flex items-center justify-center">
                         <video 
                           ref={videoRef}
-                          src={activeCard.media ? activeCard.media.url : activeCard.url} 
+                          src={activeCard.url} 
                           autoPlay 
                           playsInline 
                           crossOrigin="anonymous" 
@@ -903,7 +925,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <img 
-                        src={activeCard.media ? activeCard.media.url : activeCard.url} 
+                        src={activeCard.url} 
                         onError={(e) => { e.target.src = activeCard.fallback || createPlaceholder(activeCard.category); }}
                         alt="Composed Greeting Card" 
                         style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
@@ -957,7 +979,7 @@ export default function Home() {
               <div className="grid grid-cols-5 gap-3">
                 {[...Array(5)].map((_, index) => {
                   const card = history[index];
-                  const isCardVideo = card?.url?.endsWith(".mp4") || (card?.media && card.media.type === "video");
+                  const isCardVideo = card?.url?.endsWith(".mp4");
                   return (
                     <div
                       key={index}
@@ -970,7 +992,7 @@ export default function Home() {
                         <div className="relative w-full h-full">
                           {isCardVideo ? (
                             <video 
-                              src={card.media ? card.media.url : card.url} 
+                              src={card.url} 
                               autoPlay 
                               muted 
                               playsInline 
@@ -980,7 +1002,7 @@ export default function Home() {
                             />
                           ) : (
                             <img 
-                              src={card.media ? card.media.url : card.url} 
+                              src={card.url} 
                               onError={(e) => { e.target.src = card.fallback || createPlaceholder(card.category); }}
                               alt="Mini TV preview" 
                               className="w-full h-full object-cover" 
