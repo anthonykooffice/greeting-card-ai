@@ -15,7 +15,8 @@ import {
   Wand2,
   Check,
   Film,
-  X
+  X,
+  UserCheck
 } from "lucide-react";
 
 // Reliable SVG Fallback Data Generator for safety
@@ -209,7 +210,7 @@ const TRANSLATIONS = {
   en: {
     title: "GreetingAI Studio",
     heroTitle: "Craft AI Magic in Every Card",
-    heroDesc: "Transform festive moments into personalized cards & video greetings. Tap an event, pick a style, enter custom names and greetings, and stage your card onto the Canvas.",
+    heroDesc: "Follow the steps (1) Tap an event, (2) Pick a style, (3) Enter \"Recipient Name\" & \"Sender Name\", (4) Tap Greeting Message, (5) Tap photo input (Facial-Swap), (6) Tap \"Generate AI Synchronized Card\", (7) Tap \"Download Button\".",
     categoryTitle: "1. EVENT SELECTION (5 Presets per Category)",
     styleTitle: "2. VISUAL STYLE SELECTION & AI ENHANCEMENTS",
     msgTitle: "3. PERSONALIZATION & GUARDED INPUTS",
@@ -226,19 +227,21 @@ const TRANSLATIONS = {
     creditsLeft: "Free Trial Credits",
     sessionExpired: "0/5 Free Trial Credits Expired",
     recentTitle: "TEMPORARY CANVAS MINI TV TRAYS (Imprinted Holdings)",
+    faceSwapToggleLabel: "Enable AI Character Facial-Swap (Auto-Detect Faces in Photo)",
+    faceSwapUploadLabel: "Upload Photo of Person / Couple / Family (Max 15MB)",
     disclaimer: "Legal Guardrail: Uploaded reference media are processed in browser memory and temporary runtime only. No local device folders are accessed.",
     categories: Object.keys(FESTIVE_DATA),
     styles: [
       { key: "Photo", label: "4K Photorealistic", badge: "📷 4K Photo Style Active", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "Hand-Painted Oil Art", badge: "🎨 Hand-Painted Oil Style Active", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
-      { key: "Picasso", label: "Picasso Pop-Art", badge: "🖼️ Picasso Pop-Art Active", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
+      { key: "Portrait", label: "Portrait Drawing Style", badge: "✏️ Portrait Drawing Style Active", cssFilter: "grayscale(30%) contrast(125%) brightness(105%) sepia(15%)" },
       { key: "Motion5s", label: "5-Sec AI Motion Video", badge: "🎬 5-Sec AI Motion Loop Active", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
   },
   zh: {
     title: "GreetingAI 賀卡工作室",
     heroTitle: "用 AI 為每一張賀卡注入魔力",
-    heroDesc: "將節日時刻轉化為個性化賀卡與動態影片。點擊主題、選擇視覺風格、填入收件人與自訂祝福語，並即時將印製賀卡暫存至畫布。",
+    heroDesc: "請按照以下步驟操作：(1) 點擊主題，(2) 選擇視覺風格，(3) 填入「收件人」與「寄件人」，(4) 點擊祝福語點子，(5) 點擊上傳相片 (人臉替換)，(6) 點擊「生成 AI 同步個性化賀卡」，(7) 點擊「下載按鈕」。",
     categoryTitle: "1. 選擇賀卡主題 (每類含 5 個設計預設)",
     styleTitle: "2. 視覺風格選擇與 AI 動態增強",
     msgTitle: "3. 個性化內容與安全保護輸入",
@@ -255,12 +258,14 @@ const TRANSLATIONS = {
     creditsLeft: "免費試用額度",
     sessionExpired: "5次免費試用額度已用完",
     recentTitle: "暫存迷你電視畫布 (已印製文字紀錄區)",
+    faceSwapToggleLabel: "啟用 AI 角色人臉替換 (自動偵測相片中多個人臉)",
+    faceSwapUploadLabel: "上傳個人 / 情侶 / 家庭合照 (最大 15MB)",
     disclaimer: "安全與法律聲明：您選擇上傳的參考媒體僅在瀏覽器內存與臨時 AI 雲端傳輸處理，本系統絕不會存取或洩漏您個人裝置中的檔案。",
     categories: Object.keys(FESTIVE_DATA),
     styles: [
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "油畫手繪 (Hand-Paint)", badge: "🎨 復古油畫風格已套用", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
-      { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
+      { key: "Portrait", label: "人像素描繪畫 (Portrait Drawing)", badge: "✏️ 人像素描繪畫風格已套用", cssFilter: "grayscale(30%) contrast(125%) brightness(105%) sepia(15%)" },
       { key: "Motion5s", label: "5秒 AI 動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
   }
@@ -283,6 +288,7 @@ export default function Home() {
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [attachedMedia, setAttachedMedia] = useState(null);
+  const [enableFaceSwap, setEnableFaceSwap] = useState(true);
 
   const initialStaged = {
     id: 1,
@@ -293,7 +299,8 @@ export default function Home() {
     text: customText,
     url: FESTIVE_DATA["Happy Birthday"].presets[0].url,
     fallback: FESTIVE_DATA["Happy Birthday"].presets[0].fallback,
-    media: null
+    media: null,
+    faceSwapActive: enableFaceSwap
   };
 
   const [activeCard, setActiveCard] = useState(initialStaged);
@@ -312,9 +319,10 @@ export default function Home() {
       text: customText,
       url: attachedMedia ? attachedMedia.url : selectedPreset.url,
       fallback: selectedPreset.fallback,
-      media: attachedMedia
+      media: attachedMedia,
+      faceSwapActive: enableFaceSwap
     }));
-  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, attachedMedia]);
+  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, attachedMedia, enableFaceSwap]);
 
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
@@ -393,7 +401,8 @@ export default function Home() {
       text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
       url: attachedMedia ? attachedMedia.url : selectedPreset.url,
       fallback: selectedPreset.fallback,
-      media: attachedMedia
+      media: attachedMedia,
+      faceSwapActive: enableFaceSwap
     };
     setActiveCard(stagedCard);
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
@@ -445,10 +454,8 @@ export default function Home() {
       videoEl.muted = false;
       videoEl.play();
 
-      // Capture visual stream from Canvas
       const canvasStream = canvas.captureStream(30);
 
-      // Capture audio directly from video media stream / Web Audio API
       let combinedStream = canvasStream;
       try {
         let videoAudioTrack = null;
@@ -512,7 +519,6 @@ export default function Home() {
 
       renderFrame();
 
-      // Dynamic recording duration matching actual video length (e.g. 15s)
       const durationMs = videoEl.duration && !isNaN(videoEl.duration) ? videoEl.duration * 1000 : 15000;
 
       const stopRecording = () => {
@@ -567,7 +573,8 @@ export default function Home() {
         text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
         url: attachedMedia ? attachedMedia.url : selectedPreset.url,
         fallback: selectedPreset.fallback,
-        media: attachedMedia
+        media: attachedMedia,
+        faceSwapActive: enableFaceSwap
       };
 
       setActiveCard(generatedCard);
@@ -803,22 +810,37 @@ export default function Home() {
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
               />
 
-              {/* MEDIA UPLOAD */}
-              <div className="bg-slate-950 border border-slate-700 hover:border-slate-600 p-3.5 rounded-xl text-sm font-semibold text-slate-300 flex items-center justify-between">
-                <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
-                  <Upload className="h-5 w-5 text-indigo-400 shrink-0" />
-                  <span className="truncate">{attachedMedia ? `Attached: ${attachedMedia.name}` : "Upload Optional Reference Image / MP4 (Max 15MB)"}</span>
-                  <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
-                </label>
-                {attachedMedia && (
-                  <button
-                    onClick={handleRemoveMedia}
-                    title="Remove custom media"
-                    className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              {/* FACE-SWAP TOGGLE & PHOTO UPLOAD */}
+              <div className="space-y-3 bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-300 flex items-center space-x-1.5">
+                    <UserCheck className="h-4 w-4 text-amber-400 shrink-0" />
+                    <span>{t.faceSwapToggleLabel}</span>
+                  </span>
+                  <input 
+                    type="checkbox"
+                    checked={enableFaceSwap}
+                    onChange={(e) => setEnableFaceSwap(e.target.checked)}
+                    className="h-5 w-5 rounded border-slate-700 text-amber-500 focus:ring-amber-400 cursor-pointer"
+                  />
+                </div>
+
+                <div className="bg-slate-900 border border-slate-700 hover:border-slate-600 p-3.5 rounded-xl text-sm font-semibold text-slate-300 flex items-center justify-between">
+                  <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
+                    <Upload className="h-5 w-5 text-indigo-400 shrink-0" />
+                    <span className="truncate">{attachedMedia ? `Attached: ${attachedMedia.name}` : t.faceSwapUploadLabel}</span>
+                    <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
+                  </label>
+                  {attachedMedia && (
+                    <button
+                      onClick={handleRemoveMedia}
+                      title="Remove custom media"
+                      className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-400 flex items-start space-x-2.5">
@@ -849,7 +871,11 @@ export default function Home() {
                 {isGenerating ? (
                   <div className="flex flex-col items-center justify-center space-y-4 text-amber-300">
                     <RefreshCw className="h-12 w-12 animate-spin text-indigo-400" />
-                    <p className="text-base font-bold tracking-widest uppercase">Synthesizing AI Card & Imprinting Text...</p>
+                    <p className="text-base font-bold tracking-widest uppercase text-center px-4">
+                      {enableFaceSwap && attachedMedia 
+                        ? "AI Detecting Faces & Synthesizing Facial-Swap Video..." 
+                        : "Synthesizing AI Card & Imprinting Text..."}
+                    </p>
                   </div>
                 ) : activeCard ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
