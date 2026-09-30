@@ -16,7 +16,8 @@ import {
   Check,
   Film,
   X,
-  UserCheck
+  UserCheck,
+  Users
 } from "lucide-react";
 
 // Reliable SVG Fallback Data Generator for safety
@@ -26,23 +27,87 @@ const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a"
 const FESTIVE_DATA = {
   "Happy Birthday": {
     zhTitle: "祝生日快樂",
-    heroImage: "/assets/Happy-Birthday/Happy-Birthday-1.mp4",
+    heroImage: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4",
     heroFallback: createPlaceholder("Happy Birthday Celebration", "%233b82f6"),
     themeColor: "from-amber-500/40 via-purple-600/30 to-pink-500/40",
-    presets: [
-      { id: "b1", title: "Golden Birthday Cake & Sparklers", zhTitle: "金色生日蛋糕與煙花", url: "/assets/Happy-Birthday/Happy-Birthday-1.mp4", fallback: createPlaceholder("Birthday Cake & Sparklers", "%23d97706") },
-      { id: "b2", title: "Vibrant Celebration Balloons", zhTitle: "繽紛慶典氣球", url: "/assets/Happy-Birthday/Happy-Birthday-2.mp4", fallback: createPlaceholder("Celebration Balloons", "%232563eb") },
-      { id: "b3", title: "Confetti Burst Party", zhTitle: "彩帶派對狂歡", url: "/assets/Happy-Birthday/Happy-Birthday-3.mp4", fallback: createPlaceholder("Confetti Party", "%237c3aed") },
-      { id: "b4", title: "Glittering Birthday Gift Boxes", zhTitle: "璀璨生日禮盒", url: "/assets/Happy-Birthday/Happy-Birthday-4.mp4", fallback: createPlaceholder("Gift Boxes", "%23db2777") },
-      { id: "b5", title: "Festive Candlelight Wishes", zhTitle: "溫馨燭光許願", url: "/assets/Happy-Birthday/Happy-Birthday-5.mp4", fallback: createPlaceholder("Candlelight Wishes", "%23ca8a04") }
-    ],
-    ideas: [
-      { en: "Wishing you a year filled with joy, laughter, and endless success!", zh: "願新的一年充滿歡樂、笑聲與無限成功！" },
-      { en: "May all your dreams come true on this special day. Happy Birthday!", zh: "願你在這特別的日子裡美夢成真，生日快樂！" },
-      { en: "Cheers to another year of amazing memories and fantastic adventures!", zh: "為又一年的精彩回憶與美好冒險乾杯！" },
-      { en: "Sending you oceans of love and happiness on your birthday!", zh: "送上無盡的愛與幸福，祝你生日快樂！" },
-      { en: "May your day be as bright and wonderful as your beautiful smile!", zh: "願你的心情如你燦爛的笑容般明亮美好！" }
-    ]
+    
+    // 25 Video Database divided into 5 Relationship Sectors (5 videos each)
+    relationshipPresets: {
+      couples: [
+        { id: "b1_1", title: "Romantic Candlelight & Champagne", zhTitle: "浪漫燭光與香檳 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4", fallback: createPlaceholder("Candlelight Champagne", "%23d97706") },
+        { id: "b1_2", title: "Sunset Beach Toast", zhTitle: "日落海灘乾杯 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-2.mp4", fallback: createPlaceholder("Sunset Beach Toast", "%232563eb") },
+        { id: "b1_3", title: "Starlight Rose Dinner", zhTitle: "星空玫瑰晚宴 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-3.mp4", fallback: createPlaceholder("Rose Dinner", "%237c3aed") },
+        { id: "b1_4", title: "Sweet Couples Cake Kiss", zhTitle: "甜蜜切蛋糕時光 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-4.mp4", fallback: createPlaceholder("Couples Cake", "%23db2777") },
+        { id: "b1_5", title: "Golden Heart Sparklers", zhTitle: "金光愛心仙女棒 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-5.mp4", fallback: createPlaceholder("Heart Sparklers", "%23ca8a04") }
+      ],
+      friends: [
+        { id: "b2_1", title: "Fun Confetti & Neon Party", zhTitle: "彩帶狂歡派對 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-1.mp4", fallback: createPlaceholder("Confetti Party", "%23d97706") },
+        { id: "b2_2", title: "Vibrant Outdoor BBQ Cheer", zhTitle: "熱鬧戶外聚會 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-2.mp4", fallback: createPlaceholder("Outdoor Cheer", "%232563eb") },
+        { id: "b2_3", title: "Balloons Burst Celebration", zhTitle: "繽紛氣球派對 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-3.mp4", fallback: createPlaceholder("Balloons Burst", "%237c3aed") },
+        { id: "b2_4", title: "Funny Dessert High Five", zhTitle: "歡樂甜品擊掌 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-4.mp4", fallback: createPlaceholder("Dessert High Five", "%23db2777") },
+        { id: "b2_5", title: "Karaoke Spotlight Cheers", zhTitle: "K歌燈光聚會 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-5.mp4", fallback: createPlaceholder("Karaoke Cheers", "%23ca8a04") }
+      ],
+      family: [
+        { id: "b3_1", title: "Warm Cozy Home Cake", zhTitle: "溫馨家庭燭光蛋糕 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-1.mp4", fallback: createPlaceholder("Home Cake", "%23d97706") },
+        { id: "b3_2", title: "Family Living Room Celebration", zhTitle: "客廳閤家歡聚 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-2.mp4", fallback: createPlaceholder("Living Room Party", "%232563eb") },
+        { id: "b3_3", title: "Generations Reunion Feast", zhTitle: "三代同堂賀壽宴 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-3.mp4", fallback: createPlaceholder("Reunion Feast", "%237c3aed") },
+        { id: "b3_4", title: "Fairy Light Warm Gifts", zhTitle: "暖光溫馨生日禮物 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-4.mp4", fallback: createPlaceholder("Warm Gifts", "%23db2777") },
+        { id: "b3_5", title: "Peaceful Garden Family Tea", zhTitle: "花園溫馨茶會 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-5.mp4", fallback: createPlaceholder("Garden Tea", "%23ca8a04") }
+      ],
+      colleagues: [
+        { id: "b4_1", title: "Corporate Elegance & Champagne", zhTitle: "高雅商務尊尚慶典 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-1.mp4", fallback: createPlaceholder("Corporate Elegance", "%23d97706") },
+        { id: "b4_2", title: "Executive Lounge Gift Box", zhTitle: "行政套房精緻禮盒 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-2.mp4", fallback: createPlaceholder("Executive Lounge", "%232563eb") },
+        { id: "b4_3", title: "Office Team Surprise Cake", zhTitle: "辦公室團隊驚喜蛋糕 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-3.mp4", fallback: createPlaceholder("Office Surprise", "%237c3aed") },
+        { id: "b4_4", title: "Sleek Marble Toast", zhTitle: "大理石尊爵乾杯 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-4.mp4", fallback: createPlaceholder("Marble Toast", "%23db2777") },
+        { id: "b4_5", title: "Modern Skyline Celebration", zhTitle: "現代都市天際賀壽 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-5.mp4", fallback: createPlaceholder("Skyline Celebration", "%23ca8a04") }
+      ],
+      schoolmates: [
+        { id: "b5_1", title: "Youthful Campus Memories", zhTitle: "青春校園草地回憶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-1.mp4", fallback: createPlaceholder("Campus Memories", "%23d97706") },
+        { id: "b5_2", title: "Classroom Blackboard Party", zhTitle: "教室黑板派對 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-2.mp4", fallback: createPlaceholder("Classroom Party", "%232563eb") },
+        { id: "b5_3", title: "Cafe Study Group Cake", zhTitle: "咖啡館同窗切蛋糕 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-3.mp4", fallback: createPlaceholder("Cafe Cake", "%237c3aed") },
+        { id: "b5_4", title: "Graduation Memory Polaroids", zhTitle: "拍立得相片青春回憶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-4.mp4", fallback: createPlaceholder("Memory Polaroids", "%23db2777") },
+        { id: "b5_5", title: "Sports Field Sunset Toast", zhTitle: "操場夕陽歡慶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-5.mp4", fallback: createPlaceholder("Sports Field Sunset", "%23ca8a04") }
+      ]
+    },
+
+    // AI Prompt Ideas mapped per relationship
+    ideas: {
+      couples: [
+        { en: "To my soulmate: Wishing you a birthday filled with oceans of love, romance, and joy!", zh: "致我的靈魂伴侶：願你的生日充滿無盡的愛、浪漫與歡喜！" },
+        { en: "You hold the key to my heart today, tomorrow, and forever. Happy Birthday my love!", zh: "你掌握著我心門的鑰匙，祝我最親愛的你生日快樂！" },
+        { en: "Cheers to another year of creating beautiful memories together. I love you!", zh: "為我們又一年共同創造的美好回憶乾杯，我愛你！" },
+        { en: "May your birthday be as sweet and magical as the happiness you bring into my life!", zh: "願你的生日如你帶給我生活的幸福般甜美神奇！" },
+        { en: "Sending you tight hugs and sweet kisses on your special day. Happy Birthday!", zh: "在這特別的日子送上最深情的擁抱與甜蜜祝福，生日快樂！" }
+      ],
+      friends: [
+        { en: "Happy Birthday! Cheers to another year of crazy adventures and endless laughter!", zh: "生日快樂！為我們又一年的精彩冒險與歡笑乾杯！" },
+        { en: "May your day be filled with good vibes, fantastic food, and memorable moments!", zh: "願你今天充滿好心情、美食與超棒的回憶！" },
+        { en: "To my best friend: Thanks for being awesome. Have a truly epic birthday!", zh: "致我最棒的朋友：感謝你一路相伴，祝你度過超棒的生日！" },
+        { en: "Wishing you 365 days of good luck, success, and pure happiness. Happy Birthday!", zh: "祝你未來 365 天好運連連、大獲成功、幸福滿滿！生日快樂！" },
+        { en: "Age is just a number, but our friendship is timeless. Happy Birthday buddy!", zh: "年齡只是數字，我們的友誼歷久彌新。生日快樂好朋友！" }
+      ],
+      family: [
+        { en: "Wishing you good health, warmth, and abundant joy always. Happy Birthday!", zh: "祝您身體健康、溫馨常伴、福氣滿門！生日快樂！" },
+        { en: "Thank you for always being our family's pillar of strength, care, and cheer.", zh: "感謝您總是成為我們家庭最堅實的後盾與歡樂源泉。" },
+        { en: "May your heart be filled with peace, warmth, and the sweet love of family!", zh: "願您的內心充滿平靜、溫暖與家庭的甜美關愛！" },
+        { en: "Sending warmest birthday wishes from all of us! May all your wishes come true.", zh: "獻上我們全家最溫暖的生日祝福！願您心想事成。" },
+        { en: "To our beloved family member: May your year ahead be blessed with health and success!", zh: "致我們最親愛的家人：願您新的一年平安健康、萬事勝意！" }
+      ],
+      colleagues: [
+        { en: "Wishing you a very Happy Birthday! May the year ahead bring continued success.", zh: "祝您生日快樂！願新的一年事業順遂、宏圖大展。" },
+        { en: "Happy Birthday! Wishing you a fantastic year ahead filled with great achievements.", zh: "生日快樂！願您新的一年成就非凡、平安喜樂。" },
+        { en: "Thank you for being such an inspirational colleague and leader. Happy Birthday!", zh: "感謝您在工作中的卓越指導與支持，祝您生日快樂！" },
+        { en: "May your special day bring you a well-deserved break and joyous moments!", zh: "願您在這特別的日子裡享有難得的輕鬆與愉悅時光！" },
+        { en: "Wishing you good health, great fortune, and seamless progress in all endeavors!", zh: "祝您工作順利、身體健康、諸事亨通、生日快樂！" }
+      ],
+      schoolmates: [
+        { en: "Happy Birthday! Here's to our golden campus memories and lifelong friendship!", zh: "生日快樂！致我們燦爛的校園回憶與永恆的同窗情誼！" },
+        { en: "May your birthday bring back sweet school memories and point to a brilliant future!", zh: "願生日為你重現甜蜜校園記憶，並指引明亮輝煌的前程！" },
+        { en: "To my dear schoolmate: Wishing you non-stop joy, high energy, and big achievements!", zh: "致我親愛的同學：祝你歡笑不斷、活力充沛、前程似錦！" },
+        { en: "Cheers to the good old school days and the exciting journey ahead. Happy Birthday!", zh: "為那些美好的同窗歲月與未來興奮的旅程乾杯，生日快樂！" },
+        { en: "Wishing my favorite classmate the happiest birthday ever! Keep shining bright!", zh: "祝我最棒的同學生日無比快樂！願你繼續熠熠生輝！" }
+      ]
+    }
   },
   "Happy Mother's Day": {
     zhTitle: "母親節快樂",
@@ -210,8 +275,17 @@ const TRANSLATIONS = {
   en: {
     title: "GreetingAI Studio",
     heroTitle: "Craft AI Magic in Every Card",
-    heroDesc: "Follow the steps (1) Tap an event, (2) Pick a style, (3) Enter \"Recipient Name\" & \"Sender Name\", (4) Tap Greeting Message, (5) Tap photo input (Facial-Swap), (6) Tap \"Generate AI Synchronized Card\", (7) Tap \"Download Button\".",
+    heroDesc: "Follow the steps: (1) Tap an event, (2) Choose Recipient Relationship to filter presets, (3) Pick a visual style, (4) Enter names & apply prompts, (5) Tap photo input (Facial-Swap), (6) Tap \"Generate AI Synchronized Card\", (7) Tap \"Download Button\".",
     categoryTitle: "1. EVENT SELECTION (5 Presets per Category)",
+    relationshipSelectorTitle: "Relationship Selector (Filtered Video Database):",
+    relationships: {
+      couples: "Couples / Spouse (情侶/伴侶)",
+      friends: "Friends (朋友)",
+      family: "Family (家人)",
+      colleagues: "Colleagues / Boss (同事/老闆)",
+      schoolmates: "Schoolmates (同學/校友)"
+    },
+    presetHeaderLabel: "Select 1 of 5 Relevant Event Presets:",
     styleTitle: "2. VISUAL STYLE SELECTION & AI ENHANCEMENTS",
     msgTitle: "3. PERSONALIZATION & GUARDED INPUTS",
     toLabel: "To (Recipient Name):",
@@ -241,8 +315,17 @@ const TRANSLATIONS = {
   zh: {
     title: "GreetingAI 賀卡工作室",
     heroTitle: "用 AI 為每一張賀卡注入魔力",
-    heroDesc: "請按照以下步驟操作：(1) 點擊主題，(2) 選擇視覺風格，(3) 填入「收件人」與「寄件人」，(4) 點擊祝福語點子，(5) 點擊上傳相片 (人臉替換)，(6) 點擊「生成 AI 同步個性化賀卡」，(7) 點擊「下載按鈕」。",
-    categoryTitle: "1. 選擇賀卡主題 (每類含 5 個設計預設)",
+    heroDesc: "請按照以下步驟操作：(1) 點擊主題，(2) 點選「收卡人關係」過濾專屬短片，(3) 選擇風格，(4) 填入姓名與套用祝福語，(5) 上傳相片 (人臉替換)，(6) 點擊「生成 AI 同步賀卡」，(7) 點擊「下載按鈕」。",
+    categoryTitle: "1. 選擇賀卡主題 (含專屬影片庫)",
+    relationshipSelectorTitle: "收卡人關係選擇 (過濾過 5 個主題短片)：",
+    relationships: {
+      couples: "情侶 / 伴侶 (Couples)",
+      friends: "朋友 (Friends)",
+      family: "家人 (Family)",
+      colleagues: "同事 / 老闆 (Colleagues & Boss)",
+      schoolmates: "同學 / 校友 (Schoolmates)"
+    },
+    presetHeaderLabel: "選擇 5 個動態短片預設之一：",
     styleTitle: "2. 視覺風格選擇與 AI 動態增強",
     msgTitle: "3. 個性化內容與安全保護輸入",
     toLabel: "致 (收件人姓名)：",
@@ -276,12 +359,37 @@ export default function Home() {
   const t = TRANSLATIONS[lang];
 
   const [selectedCategory, setSelectedCategory] = useState("Happy Birthday");
-  const [selectedPreset, setSelectedPreset] = useState(FESTIVE_DATA["Happy Birthday"].presets[0]);
+  const [selectedRelationship, setSelectedRelationship] = useState("couples");
+
+  // Helper to extract active 5 presets dynamically based on Category & Relationship Selection
+  const getActivePresetsForCategoryAndRelationship = (cat, relationship) => {
+    const categoryData = FESTIVE_DATA[cat];
+    if (!categoryData) return [];
+    if (categoryData.relationshipPresets && categoryData.relationshipPresets[relationship]) {
+      return categoryData.relationshipPresets[relationship];
+    }
+    return categoryData.presets || [];
+  };
+
+  // Helper to extract active ideas dynamically based on Category & Relationship Selection
+  const getIdeasForCategoryAndRelationship = (cat, relationship) => {
+    const categoryObj = FESTIVE_DATA[cat];
+    if (!categoryObj) return [];
+    if (categoryObj.ideas && typeof categoryObj.ideas === "object" && !Array.isArray(categoryObj.ideas)) {
+      return categoryObj.ideas[relationship] || categoryObj.ideas["couples"] || [];
+    }
+    return categoryObj.ideas || [];
+  };
+
+  const initialPresets = getActivePresetsForCategoryAndRelationship("Happy Birthday", "couples");
+  const [selectedPreset, setSelectedPreset] = useState(initialPresets[0]);
   const [selectedStyle, setSelectedStyle] = useState("Photo");
   
   const [toName, setToName] = useState("Dearest [Recipient Name]");
   const [fromName, setFromName] = useState("With Love [Sender Name]");
-  const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
+
+  const initialIdeas = getIdeasForCategoryAndRelationship("Happy Birthday", "couples");
+  const [customText, setCustomText] = useState(initialIdeas.length > 0 ? initialIdeas[0][lang] : "");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -293,12 +401,13 @@ export default function Home() {
   const initialStaged = {
     id: 1,
     category: "Happy Birthday",
+    relationship: selectedRelationship,
     style: "Photo",
     to: toName,
     from: fromName,
     text: customText,
-    url: FESTIVE_DATA["Happy Birthday"].presets[0].url,
-    fallback: FESTIVE_DATA["Happy Birthday"].presets[0].fallback,
+    url: initialPresets[0].url,
+    fallback: initialPresets[0].fallback,
     media: null,
     faceSwapActive: enableFaceSwap
   };
@@ -313,6 +422,7 @@ export default function Home() {
     setActiveCard((prev) => ({
       ...prev,
       category: selectedCategory,
+      relationship: selectedRelationship,
       style: selectedStyle,
       to: toName,
       from: fromName,
@@ -322,7 +432,7 @@ export default function Home() {
       media: attachedMedia,
       faceSwapActive: enableFaceSwap
     }));
-  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, attachedMedia, enableFaceSwap]);
+  }, [selectedCategory, selectedRelationship, selectedPreset, selectedStyle, toName, fromName, customText, attachedMedia, enableFaceSwap]);
 
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
@@ -338,11 +448,31 @@ export default function Home() {
 
   const handleCategoryChange = (cat) => {
     setSelectedCategory(cat);
-    const firstPreset = FESTIVE_DATA[cat].presets[0];
-    setSelectedPreset(firstPreset);
+    const activePresets = getActivePresetsForCategoryAndRelationship(cat, selectedRelationship);
+    if (activePresets.length > 0) {
+      setSelectedPreset(activePresets[0]);
+    }
     setAttachedMedia(null);
-    if (FESTIVE_DATA[cat].ideas.length > 0) {
-      setCustomText(FESTIVE_DATA[cat].ideas[0][lang]);
+
+    const currentIdeas = getIdeasForCategoryAndRelationship(cat, selectedRelationship);
+    if (currentIdeas.length > 0) {
+      setCustomText(currentIdeas[0][lang]);
+    }
+  };
+
+  const handleRelationshipChange = (relKey) => {
+    setSelectedRelationship(relKey);
+    
+    // Dynamically pop-up the 5 presets corresponding to the selected relationship
+    const newPresets = getActivePresetsForCategoryAndRelationship(selectedCategory, relKey);
+    if (newPresets.length > 0) {
+      setSelectedPreset(newPresets[0]);
+    }
+    setAttachedMedia(null);
+
+    const currentIdeas = getIdeasForCategoryAndRelationship(selectedCategory, relKey);
+    if (currentIdeas.length > 0) {
+      setCustomText(currentIdeas[0][lang]);
     }
   };
 
@@ -361,9 +491,11 @@ export default function Home() {
   };
 
   const handleSurprisePrompt = () => {
-    const currentIdeas = FESTIVE_DATA[selectedCategory].ideas;
-    const randomIndex = Math.floor(Math.random() * currentIdeas.length);
-    setCustomText(currentIdeas[randomIndex][lang]);
+    const currentIdeas = getIdeasForCategoryAndRelationship(selectedCategory, selectedRelationship);
+    if (currentIdeas.length > 0) {
+      const randomIndex = Math.floor(Math.random() * currentIdeas.length);
+      setCustomText(currentIdeas[randomIndex][lang]);
+    }
   };
 
   const handleMediaUpload = (e) => {
@@ -395,6 +527,7 @@ export default function Home() {
     const stagedCard = {
       id: Date.now(),
       category: selectedCategory,
+      relationship: selectedRelationship,
       style: selectedStyle,
       to: toName,
       from: fromName,
@@ -586,6 +719,7 @@ export default function Home() {
       const generatedCard = {
         id: Date.now(),
         category: selectedCategory,
+        relationship: selectedRelationship,
         style: selectedStyle,
         to: toName,
         from: fromName,
@@ -613,6 +747,12 @@ export default function Home() {
   const getDisplayCatName = (catKey) => {
     return lang === "zh" ? FESTIVE_DATA[catKey]?.zhTitle || catKey : catKey;
   };
+
+  // Get current active 5 preset videos corresponding to selected category & relationship
+  const activePresets = getActivePresetsForCategoryAndRelationship(selectedCategory, selectedRelationship);
+
+  // Get current active prompt suggestions corresponding to selected category & relationship
+  const activeIdeas = getIdeasForCategoryAndRelationship(selectedCategory, selectedRelationship);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-16 text-lg">
@@ -650,7 +790,10 @@ export default function Home() {
               onClick={() => {
                 const newLang = lang === "en" ? "zh" : "en";
                 setLang(newLang);
-                setCustomText(FESTIVE_DATA[selectedCategory].ideas[0][newLang]);
+                const currentIdeas = getIdeasForCategoryAndRelationship(selectedCategory, selectedRelationship);
+                if (currentIdeas.length > 0) {
+                  setCustomText(currentIdeas[0][newLang]);
+                }
               }}
               className="flex items-center space-x-2 bg-indigo-900/50 border border-indigo-700/60 hover:bg-indigo-800/80 px-4 py-2 rounded-xl text-base font-bold text-indigo-200 transition"
             >
@@ -693,6 +836,8 @@ export default function Home() {
             {/* 1. EVENT SELECTION */}
             <div>
               <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200 mb-4">{t.categoryTitle}</label>
+              
+              {/* Event Category Swift Buttons */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
                 {t.categories.map((cat) => (
                   <button
@@ -707,11 +852,35 @@ export default function Home() {
                 ))}
               </div>
 
+              {/* STEP 1 ADD-ON: RELATIONSHIP SELECTOR SWIFT BAR */}
+              <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2.5 mb-5">
+                <label className="block text-xs font-bold text-amber-300 flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-amber-400 shrink-0" />
+                  <span>{t.relationshipSelectorTitle}</span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {Object.keys(t.relationships).map((relKey) => (
+                    <button
+                      key={relKey}
+                      onClick={() => handleRelationshipChange(relKey)}
+                      className={`p-2.5 text-xs font-bold rounded-lg border text-center transition ${
+                        selectedRelationship === relKey
+                          ? "border-amber-400 bg-amber-500/20 text-amber-200 shadow ring-1 ring-amber-400/40"
+                          : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
+                      }`}
+                    >
+                      {t.relationships[relKey]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* STEP 2: DYNAMIC 5-PRESET SLOT POP-UP WINDOWS */}
               <label className="block text-sm font-bold text-slate-300 mb-3">
-                {lang === "zh" ? "選擇 5 個主題預設設計之一：" : "Select 1 of 5 Relevant Event Presets:"}
+                {t.presetHeaderLabel}
               </label>
               <div className="grid grid-cols-5 gap-3">
-                {FESTIVE_DATA[selectedCategory].presets.map((preset) => (
+                {activePresets.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => handlePresetSelect(preset)}
@@ -810,7 +979,7 @@ export default function Home() {
               <div>
                 <span className="block text-sm font-bold text-indigo-300 mb-2">{t.ideasTitle}</span>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
-                  {FESTIVE_DATA[selectedCategory].ideas.map((ideaObj, idx) => (
+                  {activeIdeas.map((ideaObj, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCustomText(ideaObj[lang])}
