@@ -595,15 +595,15 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack Engine
+  // Canvas Video & Full Soundtrack Recording Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    // Reset video playback to second 0 to record the FULL duration from start
+    // Reset video playback to second 0 to record full 10-15s duration
     video.currentTime = 0;
     const previousMuteState = video.muted;
-    video.muted = false; // Ensure unmuted for audio track capture
+    video.muted = false;
 
     if (video.paused) {
       await video.play().catch(() => {});
@@ -614,10 +614,8 @@ export default function Home() {
     canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
-    // Capture visual canvas stream at 30 fps
     const canvasStream = canvas.captureStream(30);
 
-    // Capture audio soundtrack from video element
     try {
       let videoAudioStream = null;
       if (typeof video.captureStream === "function") {
@@ -656,7 +654,7 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState; // Restore user Mute setting
+        video.muted = previousMuteState;
         const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         const blob = new Blob(chunks, { type: mimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
@@ -666,10 +664,10 @@ export default function Home() {
 
       recorder.start();
 
-      // Dynamic calculation: Record full length of video (e.g. 10-15s)
+      // Record full video duration (default 15 seconds)
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
-        : 12000;
+        : 15000;
 
       const startTime = Date.now();
 
@@ -722,9 +720,10 @@ export default function Home() {
     setIsSharing(true);
 
     try {
-      const { file } = await generateImprintedFile();
+      const { file, blob } = await generateImprintedFile();
       const shareCaption = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}`;
 
+      // Check if browser native share sheet supports direct file attachment (Mobile Browsers)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: `GreetingAI Studio - ${activeCard.category}`,
@@ -732,14 +731,24 @@ export default function Home() {
           files: [file]
         });
       } else {
-        const blobUrl = URL.createObjectURL(file);
+        // Desktop / Non-WebShare Fallback:
+        // 1. Download imprinted video file
+        const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = file.name;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
 
+        // 2. Copy caption to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareCaption);
+        }
+
+        // 3. Prompt user & open WhatsApp
+        alert("Video e-card downloaded to your device & caption copied to clipboard!\n\nOpening WhatsApp... Simply attach the downloaded video and paste your message into the chat.");
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
         window.open(whatsappUrl, "_blank");
       }
@@ -1146,10 +1155,10 @@ export default function Home() {
                           ref={videoRef}
                           src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
-                          loop
                           muted={isMuted}
                           playsInline 
                           crossOrigin="anonymous" 
+                          onEnded={() => setIsVideoPlaying(false)}
                           onLoadedData={(e) => e.currentTarget.play()} 
                           style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
                           className={`w-full h-full object-cover transition-all duration-500 ${
