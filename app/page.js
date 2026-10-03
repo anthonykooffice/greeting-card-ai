@@ -36,11 +36,11 @@ const ORDERED_CATEGORIES = [
 ];
 
 const FONT_OPTIONS = [
-  { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive" },
-  { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif" },
-  { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive" },
-  { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif" },
-  { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif" }
+  { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive", family: "'Great Vibes', cursive" },
+  { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif", family: "'Playfair Display', serif" },
+  { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive", family: "'Dancing Script', cursive" },
+  { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
+  { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif", family: "'Montserrat', sans-serif" }
 ];
 
 const FESTIVE_DATA = {
@@ -273,7 +273,7 @@ const TRANSLATIONS = {
     surpriseBtn: "Random Prompt Generator",
     generateBtn: "Generate AI Synchronized Card",
     stageBtn: "Stage Draft to Canvas",
-    downloadBtn: "Download to Phone / Computer Device",
+    downloadBtn: "Download Imprinted Video Card",
     shareBtn: "Direct Share via WhatsApp / WeChat",
     creditsLeft: "Free Trial Credits",
     sessionExpired: "0/5 Free Trial Credits Expired",
@@ -303,7 +303,7 @@ const TRANSLATIONS = {
     surpriseBtn: "隨機靈感點子",
     generateBtn: "生成 AI 同步個性化賀卡",
     stageBtn: "暫存預覽至畫布",
-    downloadBtn: "下載影片至本機裝置 (極速 < 2秒)",
+    downloadBtn: "下載已印製文字之影片至本機",
     shareBtn: "一鍵分享至 WhatsApp / 微信",
     creditsLeft: "免費試用額度",
     sessionExpired: "5次免費試用額度已用完",
@@ -314,8 +314,105 @@ const TRANSLATIONS = {
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "油畫手繪 (Hand-Paint)", badge: "🎨 復古油畫風格已套用", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
       { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
-      { key: "Motion5s", label: "5秒 AI 動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
+      { key: "Motion5s", label: "5秒 AI動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
+  }
+};
+
+// Canvas Text Overlay Imprinter Engine (Uniform Font Sizing)
+const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // 1. Draw video/image frame with active style filter
+  ctx.save();
+  if (activeStyleObj && activeStyleObj.cssFilter) {
+    ctx.filter = activeStyleObj.cssFilter;
+  }
+  ctx.drawImage(video, 0, 0, w, h);
+  ctx.restore();
+
+  // 2. Draw Bottom 28% Dark Gradient Overlay Box
+  const overlayH = h * 0.28;
+  const overlayY = h - overlayH;
+  const grad = ctx.createLinearGradient(0, overlayY, 0, h);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(0.3, "rgba(0,0,0,0.75)");
+  grad.addColorStop(1, "rgba(0,0,0,0.95)");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, overlayY, w, overlayH);
+
+  // 3. Setup Canvas Text Styles (Equalized Sizing for All Fields)
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  let fontFamily = "serif";
+  if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+  else if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+
+  const maxTextWidth = w * 0.88;
+  const centerX = w / 2;
+  const contentCenterY = overlayY + overlayH * 0.52;
+
+  // Unified base font size across all three fields
+  const baseFontSize = Math.round(w * 0.038);
+  const toFontSize = baseFontSize;
+  const msgFontSize = baseFontSize;
+  const fromFontSize = baseFontSize;
+
+  // A. Draw "To: [Recipient Name]"
+  if (card.to) {
+    ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
+    ctx.fillStyle = textColor || "#fde68a";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.4, maxTextWidth);
+  }
+
+  // B. Draw Greeting Message (Multi-line Word Wrap)
+  ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
+  ctx.fillStyle = textColor || "#fde68a";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+
+  const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
+  let lines = [];
+  let currentLine = "";
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxTextWidth && i > 0) {
+      lines.push(currentLine);
+      currentLine = words[i];
+    } else {
+      currentLine = testLine;
+    }
+  }
+  lines.push(currentLine);
+  if (lines.length > 2) lines = lines.slice(0, 2);
+
+  const lineHeight = msgFontSize * 1.2;
+  const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
+
+  lines.forEach((line, idx) => {
+    ctx.strokeText(`"${line}"`, centerX, startY + idx * lineHeight);
+    ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
+  });
+
+  // C. Draw "— [Sender Name]"
+  if (card.from) {
+    ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
+    ctx.fillStyle = textColor || "#fde68a";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+    ctx.shadowBlur = 6;
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.4, maxTextWidth);
   }
 };
 
@@ -332,14 +429,15 @@ export default function Home() {
   const [fromName, setFromName] = useState("With Love [Sender Name]");
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
-  // Typography Studio State (Google Fonts & Auto-Scaled Sizes)
-  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]); // Default: Great Vibes Script
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
   const [fontSize, setFontSize] = useState("text-lg sm:text-xl");
   const [textColor, setTextColor] = useState("#fde68a");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [attachedMedia, setAttachedMedia] = useState(null);
@@ -493,16 +591,74 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
+  const generateImprintedFile = async () => {
+    const video = videoRef.current;
+    if (!video) throw new Error("Video stream reference not ready.");
+
+    if (video.paused) {
+      await video.play().catch(() => {});
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 800;
+    canvas.height = video.videoHeight || 600;
+    const ctx = canvas.getContext("2d");
+
+    const getMimeType = () => {
+      if (typeof window !== "undefined" && window.MediaRecorder) {
+        const types = ["video/mp4;codecs=h264", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+        for (const type of types) {
+          if (MediaRecorder.isTypeSupported(type)) return type;
+        }
+      }
+      return "video/webm";
+    };
+
+    const mimeType = getMimeType();
+    const stream = canvas.captureStream(30);
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
+    const chunks = [];
+
+    return new Promise((resolve, reject) => {
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        const blob = new Blob(chunks, { type: mimeType });
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+        const file = new File([blob], fileName, { type: mimeType });
+        resolve({ blob, file, fileName });
+      };
+
+      recorder.start();
+      const duration = 3200;
+      const startTime = Date.now();
+
+      const loop = () => {
+        const elapsed = Date.now() - startTime;
+        setDownloadProgress(Math.min(99, Math.round((elapsed / duration) * 100)));
+
+        if (elapsed >= duration) {
+          recorder.stop();
+        } else {
+          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
+          requestAnimationFrame(loop);
+        }
+      };
+
+      requestAnimationFrame(loop);
+    });
+  };
+
   const handleDirectDownload = async () => {
     if (!activeCard) return;
     setIsDownloading(true);
+    setDownloadProgress(0);
 
     try {
-      const mediaUrl = activeCard.media ? activeCard.media.url : activeCard.url;
-      const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.mp4`;
-
-      const response = await fetch(mediaUrl);
-      const blob = await response.blob();
+      const { blob, fileName } = await generateImprintedFile();
       const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
@@ -513,36 +669,47 @@ export default function Home() {
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
+      console.log("Canvas fallback trigger:", err);
       const link = document.createElement("a");
       link.href = activeCard.url;
-      link.target = "_blank";
       link.download = `GreetingAI_Card.mp4`;
       link.click();
     } finally {
       setIsDownloading(false);
+      setDownloadProgress(0);
     }
   };
 
   const handleShare = async () => {
     if (!activeCard) return;
+    setIsSharing(true);
 
-    const shareTitle = `GreetingAI Studio - ${activeCard.category}`;
-    const shareText = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}\nCreated with GreetingAI Studio:`;
-    const shareUrl = window.location.href;
+    try {
+      const { file } = await generateImprintedFile();
+      const shareCaption = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}`;
 
-    if (navigator.share) {
-      try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl
+          title: `GreetingAI Studio - ${activeCard.category}`,
+          text: shareCaption,
+          files: [file]
         });
-      } catch (err) {
-        console.log("Share sheet closed or unhandled:", err);
+      } else {
+        const blobUrl = URL.createObjectURL(file);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+        window.open(whatsappUrl, "_blank");
       }
-    } else {
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
-      window.open(whatsappUrl, "_blank");
+    } catch (err) {
+      console.log("Share sheet unhandled:", err);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -835,7 +1002,7 @@ export default function Home() {
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
               />
 
-              {/* TYPOGRAPHY STUDIO WITH GOOGLE FONTS */}
+              {/* TYPOGRAPHY STUDIO */}
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
                 <span className="block text-xs font-bold text-amber-300 flex items-center space-x-1.5">
                   <Type className="h-4 w-4" />
@@ -942,6 +1109,8 @@ export default function Home() {
                           ref={videoRef}
                           src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
+                          loop
+                          muted
                           playsInline 
                           crossOrigin="anonymous" 
                           onLoadedData={(e) => e.currentTarget.play()} 
@@ -969,13 +1138,16 @@ export default function Home() {
                       />
                     )}
 
-                    {/* Strictly Constrained Bottom 28% Text Zone with Dynamic Google Font */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                    {/* Strictly Constrained Bottom 28% Overlay Screen View (Uniform Sizing for To / Msg / From) */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
                       <div className="text-center space-y-0.5 max-w-[92%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                           <p 
-                            style={{ fontFamily: activeCard.fontCss || selectedFont.cssVar }}
-                            className="text-xs sm:text-sm font-bold text-slate-200 italic truncate"
+                            style={{ 
+                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                              color: textColor
+                            }}
+                            className={`${fontSize} font-bold italic truncate`}
                           >
                             To: {activeCard.to}
                           </p>
@@ -991,8 +1163,11 @@ export default function Home() {
                         </p>
                         {activeCard.from && (
                           <p 
-                            style={{ fontFamily: activeCard.fontCss || selectedFont.cssVar }}
-                            className="text-xs sm:text-sm font-bold text-slate-300 truncate"
+                            style={{ 
+                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                              color: textColor
+                            }}
+                            className={`${fontSize} font-bold truncate`}
                           >
                             — {activeCard.from}
                           </p>
@@ -1009,28 +1184,43 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS */}
+            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
                   onClick={handleDirectDownload}
-                  disabled={isDownloading}
+                  disabled={isDownloading || isSharing}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
                 >
                   {isDownloading ? (
-                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      <span>Imprinting Text ({downloadProgress}%)</span>
+                    </div>
                   ) : (
-                    <Download className="h-5 w-5 shrink-0" />
+                    <>
+                      <Download className="h-5 w-5 shrink-0" />
+                      <span>{t.downloadBtn}</span>
+                    </>
                   )}
-                  <span>{t.downloadBtn}</span>
                 </button>
 
                 <button
                   onClick={handleShare}
+                  disabled={isDownloading || isSharing}
                   className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
                 >
-                  <Share2 className="h-5 w-5 shrink-0" />
-                  <span>{t.shareBtn}</span>
+                  {isSharing ? (
+                    <div className="flex items-center space-x-2">
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      <span>Preparing E-Card...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Share2 className="h-5 w-5 shrink-0" />
+                      <span>{t.shareBtn}</span>
+                    </>
+                  )}
                 </button>
               </div>
             )}
