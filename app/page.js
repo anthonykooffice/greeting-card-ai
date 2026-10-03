@@ -315,7 +315,7 @@ const TRANSLATIONS = {
     styles: [
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "油畫手繪 (Hand-Paint)", badge: "🎨 復古油畫風格已套用", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
-      { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
+      { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
       { key: "Motion5s", label: "5秒 AI 動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
   }
@@ -350,8 +350,8 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.textBaseline = "middle";
 
   let fontFamily = "serif";
-  if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-  else if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
   else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
   else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
   else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
@@ -360,7 +360,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const centerX = w / 2;
   const contentCenterY = overlayY + overlayH * 0.52;
 
-  // Unified base font size
+  // Equalized base font size across To, Message, and From
   const baseFontSize = Math.round(w * 0.038);
   const toFontSize = baseFontSize;
   const msgFontSize = baseFontSize;
@@ -431,7 +431,7 @@ export default function Home() {
   const [fromName, setFromName] = useState("With Love [Sender Name]");
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
-  // Defaults updated: Classic Serif font style and Medium font size
+  // Default font style: Classic Serif; Default size: Medium
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]); // Classic Serif
   const [fontSize, setFontSize] = useState("text-base sm:text-lg"); // Medium
   const [textColor, setTextColor] = useState("#fde68a");
@@ -443,7 +443,7 @@ export default function Home() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false); // Enable sound audio playback
+  const [isMuted, setIsMuted] = useState(false); // Play audio soundtrack by default
   const [attachedMedia, setAttachedMedia] = useState(null);
 
   const initialStaged = {
@@ -453,7 +453,7 @@ export default function Home() {
     to: toName,
     from: fromName,
     text: customText,
-    fontCss: selectedFont.cssVar,
+    fontCss: FONT_OPTIONS[0].cssVar,
     url: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].url,
     fallback: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].fallback,
     media: null
@@ -595,7 +595,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Soundtrack Engine
+  // Canvas Video & Soundtrack Synthesis Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
@@ -609,10 +609,10 @@ export default function Home() {
     canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
-    // Capture visual canvas stream
+    // Capture canvas video stream
     const canvasStream = canvas.captureStream(30);
 
-    // Capture and attach video soundtrack audio stream
+    // Merge audio soundtrack from video element
     try {
       let videoAudioStream = null;
       if (typeof video.captureStream === "function") {
@@ -628,7 +628,7 @@ export default function Home() {
         }
       }
     } catch (audioErr) {
-      console.log("Audio track capture fallback note:", audioErr);
+      console.log("Audio capture fallback:", audioErr);
     }
 
     const getMimeType = () => {
