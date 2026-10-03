@@ -19,7 +19,9 @@ import {
   Type,
   Share2,
   Volume2,
-  VolumeX
+  VolumeX,
+  MessageCircle,
+  CheckCircle2
 } from "lucide-react";
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
@@ -446,6 +448,10 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false); // Enable audio soundtrack by default
   const [attachedMedia, setAttachedMedia] = useState(null);
 
+  // Share Modal State for bypass of browser user activation expiry
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [preparedShareData, setPreparedShareData] = useState(null);
+
   const initialStaged = {
     id: 1,
     category: "Happy Birthday",
@@ -664,7 +670,6 @@ export default function Home() {
 
       recorder.start();
 
-      // Record full video duration (default 15 seconds)
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
         : 15000;
@@ -718,44 +723,42 @@ export default function Home() {
   const handleShare = async () => {
     if (!activeCard) return;
     setIsSharing(true);
+    setDownloadProgress(0);
 
     try {
-      const { file, blob } = await generateImprintedFile();
+      const { file, blob, fileName } = await generateImprintedFile();
       const shareCaption = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}`;
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // Check if browser native share sheet supports direct file attachment (Mobile Browsers)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `GreetingAI Studio - ${activeCard.category}`,
-          text: shareCaption,
-          files: [file]
-        });
-      } else {
-        // Desktop / Non-WebShare Fallback:
-        // 1. Download imprinted video file
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
+      // Automatically download video to local drive
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
 
-        // 2. Copy caption to clipboard
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(shareCaption);
-        }
-
-        // 3. Prompt user & open WhatsApp
-        alert("Video e-card downloaded to your device & caption copied to clipboard!\n\nOpening WhatsApp... Simply attach the downloaded video and paste your message into the chat.");
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-        window.open(whatsappUrl, "_blank");
+      // Copy caption text to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption).catch(() => {});
       }
+
+      // Store prepared share data and display Share Modal
+      setPreparedShareData({
+        file,
+        blob,
+        fileName,
+        shareCaption,
+        whatsappUrl
+      });
+      setShareModalOpen(true);
     } catch (err) {
       console.log("Share sheet unhandled:", err);
     } finally {
       setIsSharing(false);
+      setDownloadProgress(0);
     }
   };
 
@@ -800,6 +803,8 @@ export default function Home() {
     ? FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship]
     : FESTIVE_DATA[selectedCategory].presets;
 
+  const canNativeShare = typeof window !== "undefined" && navigator.canShare;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-16 text-lg">
       <style jsx global>{`
@@ -815,6 +820,71 @@ export default function Home() {
         }
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* SHARE ACTION MODAL */}
+      {shareModalOpen && preparedShareData && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+            <button 
+              onClick={() => setShareModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 text-emerald-400">
+              <CheckCircle2 className="h-8 w-8 shrink-0" />
+              <div>
+                <h3 className="text-lg font-extrabold text-white">E-Card Ready to Share!</h3>
+                <p className="text-xs text-slate-300">Video downloaded & caption copied to clipboard.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
+              <p className="font-semibold text-amber-300">Greeting Caption:</p>
+              <p className="italic text-slate-200">{preparedShareData.shareCaption}</p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={() => {
+                  window.open(preparedShareData.whatsappUrl, "_blank");
+                }}
+                className="w-full bg-green-600 hover:bg-green-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span>Launch WhatsApp Chat</span>
+              </button>
+
+              {canNativeShare && (
+                <button
+                  onClick={async () => {
+                    try {
+                      if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                        await navigator.share({
+                          title: `GreetingAI Studio - ${activeCard.category}`,
+                          text: preparedShareData.shareCaption,
+                          files: [preparedShareData.file]
+                        });
+                      }
+                    } catch (e) {
+                      console.log("Native share error:", e);
+                    }
+                  }}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
+                >
+                  <Share2 className="h-5 w-5" />
+                  <span>Share via System App (WeChat / Apps)</span>
+                </button>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-400 text-center leading-tight">
+              <strong>WeChat / WhatsApp Tip:</strong> Select your contact in WhatsApp or WeChat, attach the newly downloaded video from your Downloads folder, and paste your copied caption!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* APP HEADER */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
@@ -1269,7 +1339,7 @@ export default function Home() {
                   {isSharing ? (
                     <div className="flex items-center space-x-2">
                       <RefreshCw className="h-5 w-5 animate-spin" />
-                      <span>Preparing E-Card...</span>
+                      <span>Preparing E-Card ({downloadProgress}%)</span>
                     </div>
                   ) : (
                     <>
