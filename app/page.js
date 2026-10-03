@@ -315,7 +315,7 @@ const TRANSLATIONS = {
     styles: [
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "油畫手繪 (Hand-Paint)", badge: "🎨 復古油畫風格已套用", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
-      { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
+      { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
       { key: "Motion5s", label: "5秒 AI 動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
   }
@@ -443,7 +443,7 @@ export default function Home() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false); // Play audio soundtrack by default
+  const [isMuted, setIsMuted] = useState(false); // Enable audio soundtrack by default
   const [attachedMedia, setAttachedMedia] = useState(null);
 
   const initialStaged = {
@@ -595,10 +595,15 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Soundtrack Synthesis Engine
+  // Canvas Video & Full Soundtrack Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
+
+    // Reset video playback to second 0 to record the FULL duration from start
+    video.currentTime = 0;
+    const previousMuteState = video.muted;
+    video.muted = false; // Ensure unmuted for audio track capture
 
     if (video.paused) {
       await video.play().catch(() => {});
@@ -609,10 +614,10 @@ export default function Home() {
     canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
-    // Capture canvas video stream
+    // Capture visual canvas stream at 30 fps
     const canvasStream = canvas.captureStream(30);
 
-    // Merge audio soundtrack from video element
+    // Capture audio soundtrack from video element
     try {
       let videoAudioStream = null;
       if (typeof video.captureStream === "function") {
@@ -628,7 +633,7 @@ export default function Home() {
         }
       }
     } catch (audioErr) {
-      console.log("Audio capture fallback:", audioErr);
+      console.log("Audio track capture fallback note:", audioErr);
     }
 
     const getMimeType = () => {
@@ -651,6 +656,7 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
+        video.muted = previousMuteState; // Restore user Mute setting
         const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         const blob = new Blob(chunks, { type: mimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
@@ -659,14 +665,19 @@ export default function Home() {
       };
 
       recorder.start();
-      const duration = 3200;
+
+      // Dynamic calculation: Record full length of video (e.g. 10-15s)
+      const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
+        ? video.duration * 1000 
+        : 12000;
+
       const startTime = Date.now();
 
       const loop = () => {
         const elapsed = Date.now() - startTime;
-        setDownloadProgress(Math.min(99, Math.round((elapsed / duration) * 100)));
+        setDownloadProgress(Math.min(99, Math.round((elapsed / recDuration) * 100)));
 
-        if (elapsed >= duration) {
+        if (elapsed >= recDuration) {
           recorder.stop();
         } else {
           drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
