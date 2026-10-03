@@ -16,14 +16,13 @@ import {
   Check,
   Film,
   X,
-  Type
+  Type,
+  Share2
 } from "lucide-react";
 
-// Reliable SVG Fallback Data Generator for safety
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
 
-// Point 2: Exact 9 Ordered Categories
 const ORDERED_CATEGORIES = [
   "Happy Birthday",
   "Happy Valentine's Day",
@@ -34,6 +33,14 @@ const ORDERED_CATEGORIES = [
   "Merry Christmas",
   "Happy New Year",
   "Happy Chinese New Year"
+];
+
+const FONT_OPTIONS = [
+  { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive" },
+  { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif" },
+  { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive" },
+  { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif" },
+  { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif" }
 ];
 
 const FESTIVE_DATA = {
@@ -266,7 +273,8 @@ const TRANSLATIONS = {
     surpriseBtn: "Random Prompt Generator",
     generateBtn: "Generate AI Synchronized Card",
     stageBtn: "Stage Draft to Canvas",
-    downloadBtn: "Download Imprinted High-Res Card / Video",
+    downloadBtn: "Download to Phone / Computer Device",
+    shareBtn: "Direct Share via WhatsApp / WeChat",
     creditsLeft: "Free Trial Credits",
     sessionExpired: "0/5 Free Trial Credits Expired",
     recentTitle: "TEMPORARY CANVAS MINI TV TRAYS (Imprinted Holdings)",
@@ -295,7 +303,8 @@ const TRANSLATIONS = {
     surpriseBtn: "隨機靈感點子",
     generateBtn: "生成 AI 同步個性化賀卡",
     stageBtn: "暫存預覽至畫布",
-    downloadBtn: "下載已印製高清賀卡 / 動態影片",
+    downloadBtn: "下載影片至本機裝置 (極速 < 2秒)",
+    shareBtn: "一鍵分享至 WhatsApp / 微信",
     creditsLeft: "免費試用額度",
     sessionExpired: "5次免費試用額度已用完",
     recentTitle: "暫存迷你電視畫布 (已印製文字紀錄區)",
@@ -323,13 +332,14 @@ export default function Home() {
   const [fromName, setFromName] = useState("With Love [Sender Name]");
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
-  // Point 4: Typography State
-  const [fontStyle, setFontStyle] = useState("font-serif");
-  const [fontSize, setFontSize] = useState("text-3xl");
+  // Typography Studio State (Google Fonts & Auto-Scaled Sizes)
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]); // Default: Great Vibes Script
+  const [fontSize, setFontSize] = useState("text-lg sm:text-xl");
   const [textColor, setTextColor] = useState("#fde68a");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [attachedMedia, setAttachedMedia] = useState(null);
@@ -341,6 +351,7 @@ export default function Home() {
     to: toName,
     from: fromName,
     text: customText,
+    fontCss: selectedFont.cssVar,
     url: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].url,
     fallback: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].fallback,
     media: null
@@ -360,11 +371,12 @@ export default function Home() {
       to: toName,
       from: fromName,
       text: customText,
+      fontCss: selectedFont.cssVar,
       url: attachedMedia ? attachedMedia.url : selectedPreset.url,
       fallback: selectedPreset.fallback,
       media: attachedMedia
     }));
-  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, attachedMedia]);
+  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
@@ -382,13 +394,20 @@ export default function Home() {
     setSelectedCategory(cat);
     setAttachedMedia(null);
 
+    let defaultPreset;
     if (cat === "Happy Birthday") {
-      const defaultPreset = FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship][0];
-      setSelectedPreset(defaultPreset);
+      defaultPreset = FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship][0];
     } else {
-      const defaultPreset = FESTIVE_DATA[cat].presets[0];
-      setSelectedPreset(defaultPreset);
+      defaultPreset = FESTIVE_DATA[cat].presets[0];
     }
+    
+    setSelectedPreset(defaultPreset);
+    setActiveCard((prev) => ({
+      ...prev,
+      category: cat,
+      url: defaultPreset.url,
+      fallback: defaultPreset.fallback
+    }));
 
     if (FESTIVE_DATA[cat]?.ideas.length > 0) {
       setCustomText(FESTIVE_DATA[cat].ideas[0][lang]);
@@ -400,11 +419,21 @@ export default function Home() {
     const newPreset = FESTIVE_DATA["Happy Birthday"].relationshipPresets[rel][0];
     setSelectedPreset(newPreset);
     setAttachedMedia(null);
+    setActiveCard((prev) => ({
+      ...prev,
+      url: newPreset.url,
+      fallback: newPreset.fallback
+    }));
   };
 
   const handlePresetSelect = (preset) => {
     setSelectedPreset(preset);
     setAttachedMedia(null);
+    setActiveCard((prev) => ({
+      ...prev,
+      url: preset.url,
+      fallback: preset.fallback
+    }));
   };
 
   const handleStyleSelect = (styleKey) => {
@@ -437,6 +466,7 @@ export default function Home() {
           url: event.target.result
         };
         setAttachedMedia(uploadedMediaObj);
+        setActiveCard((prev) => ({ ...prev, media: uploadedMediaObj, url: event.target.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -454,6 +484,7 @@ export default function Home() {
       to: toName,
       from: fromName,
       text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
+      fontCss: selectedFont.cssVar,
       url: attachedMedia ? attachedMedia.url : selectedPreset.url,
       fallback: selectedPreset.fallback,
       media: attachedMedia
@@ -462,152 +493,57 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  const downloadImprintedCard = () => {
+  const handleDirectDownload = async () => {
     if (!activeCard) return;
+    setIsDownloading(true);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    try {
+      const mediaUrl = activeCard.media ? activeCard.media.url : activeCard.url;
+      const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.mp4`;
 
-    const ctx = canvas.getContext("2d");
-    canvas.width = 1200;
-    canvas.height = 900;
-
-    const drawTextOverlays = () => {
-      const gradient = ctx.createLinearGradient(0, 500, 0, 900);
-      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-      gradient.addColorStop(0.5, "rgba(0, 0, 0, 0.6)");
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0.95)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 500, 1200, 400);
-
-      const canvasFontFamily = fontStyle === "font-serif" ? "serif" : fontStyle === "font-mono" ? "monospace" : "sans-serif";
-
-      if (activeCard.to) {
-        ctx.fillStyle = "#ffffff";
-        ctx.font = `italic bold 36px ${canvasFontFamily}`;
-        ctx.textAlign = "center";
-        ctx.fillText(`To: ${activeCard.to}`, 600, 710);
-      }
-
-      ctx.fillStyle = textColor;
-      ctx.font = `bold 38px ${canvasFontFamily}`;
-      ctx.textAlign = "center";
-      ctx.fillText(`"${activeCard.text}"`, 600, 775);
-
-      if (activeCard.from) {
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = `semibold 28px ${canvasFontFamily}`;
-        ctx.textAlign = "center";
-        ctx.fillText(`— ${activeCard.from}`, 600, 835);
-      }
-    };
-
-    const isVideo = activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video");
-
-    if (isVideo && videoRef.current) {
-      const videoEl = videoRef.current;
-      videoEl.currentTime = 0;
-      videoEl.muted = false;
-      videoEl.play();
-
-      const canvasStream = canvas.captureStream(30);
-      let combinedStream = canvasStream;
-      try {
-        let videoAudioTrack = null;
-        if (videoEl.captureStream) {
-          videoAudioTrack = videoEl.captureStream().getAudioTracks()[0];
-        } else if (videoEl.mozCaptureStream) {
-          videoAudioTrack = videoEl.mozCaptureStream().getAudioTracks()[0];
-        }
-
-        if (!videoAudioTrack) {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const source = audioCtx.createMediaElementSource(videoEl);
-          const destination = audioCtx.createMediaStreamDestination();
-          source.connect(destination);
-          source.connect(audioCtx.destination);
-          videoAudioTrack = destination.stream.getAudioTracks()[0];
-        }
-
-        if (videoAudioTrack) {
-          combinedStream = new MediaStream([
-            ...canvasStream.getVideoTracks(),
-            videoAudioTrack
-          ]);
-        }
-      } catch (err) {
-        console.warn("Audio capture fallback triggered:", err);
-      }
-
-      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") 
-        ? "video/webm;codecs=vp9,opus" 
-        : "video/webm";
-
-      const mediaRecorder = new MediaRecorder(combinedStream, { mimeType });
-      const chunks = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: "video/webm" });
-        const link = document.createElement("a");
-        link.download = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}.webm`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-      };
-
-      mediaRecorder.start();
-
-      let animId;
-      const renderFrame = () => {
-        if (!videoEl.paused && !videoEl.ended) {
-          const styleObj = t.styles.find((s) => s.key === activeCard.style);
-          if (styleObj) ctx.filter = styleObj.cssFilter;
-          ctx.drawImage(videoEl, 0, 0, 1200, 900);
-          ctx.filter = "none";
-          drawTextOverlays();
-          animId = requestAnimationFrame(renderFrame);
-        }
-      };
-
-      renderFrame();
-
-      const durationMs = videoEl.duration && !isNaN(videoEl.duration) ? videoEl.duration * 1000 : 15000;
-
-      const stopRecording = () => {
-        cancelAnimationFrame(animId);
-        if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
-        videoEl.removeEventListener("ended", stopRecording);
-      };
-
-      videoEl.addEventListener("ended", stopRecording);
-      setTimeout(stopRecording, durationMs + 200);
-
-      return;
-    }
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = activeCard.url;
-    img.onerror = () => {
-      img.src = activeCard.fallback || createPlaceholder(activeCard.category);
-    };
-
-    img.onload = () => {
-      const styleObj = t.styles.find((s) => s.key === activeCard.style);
-      if (styleObj) ctx.filter = styleObj.cssFilter;
-
-      ctx.drawImage(img, 0, 0, 1200, 900);
-      ctx.filter = "none";
-      drawTextOverlays();
+      const response = await fetch(mediaUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
-      link.download = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}.jpg`;
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
       link.click();
-    };
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      const link = document.createElement("a");
+      link.href = activeCard.url;
+      link.target = "_blank";
+      link.download = `GreetingAI_Card.mp4`;
+      link.click();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!activeCard) return;
+
+    const shareTitle = `GreetingAI Studio - ${activeCard.category}`;
+    const shareText = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}\nCreated with GreetingAI Studio:`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (err) {
+        console.log("Share sheet closed or unhandled:", err);
+      }
+    } else {
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
+      window.open(whatsappUrl, "_blank");
+    }
   };
 
   const handleGenerateCard = async () => {
@@ -626,6 +562,7 @@ export default function Home() {
         to: toName,
         from: fromName,
         text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
+        fontCss: selectedFont.cssVar,
         url: attachedMedia ? attachedMedia.url : selectedPreset.url,
         fallback: selectedPreset.fallback,
         media: attachedMedia
@@ -636,8 +573,8 @@ export default function Home() {
       setCredits((prev) => Math.max(0, prev - 1));
       setIsGenerating(false);
 
-      setTimeout(() => downloadImprintedCard(), 400);
-    }, 1800);
+      setTimeout(() => handleDirectDownload(), 300);
+    }, 1200);
   };
 
   const activeStyleObj = t.styles.find((s) => s.key === selectedStyle);
@@ -646,7 +583,6 @@ export default function Home() {
     return lang === "zh" ? FESTIVE_DATA[catKey]?.zhTitle || catKey : catKey;
   };
 
-  // Get current active preset list
   const currentPresets = selectedCategory === "Happy Birthday" 
     ? FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship]
     : FESTIVE_DATA[selectedCategory].presets;
@@ -712,7 +648,6 @@ export default function Home() {
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed">{t.heroDesc}</p>
           </div>
 
-          {/* Point 1: Updated YouTube Introduction Video URL */}
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
             <iframe
               src="https://www.youtube.com/embed/rdF2RL8JHDc?controls=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3"
@@ -732,7 +667,6 @@ export default function Home() {
             <div>
               <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200 mb-4">{t.categoryTitle}</label>
               
-              {/* Point 2: Exact 9 Ordered Categories */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
                 {ORDERED_CATEGORIES.map((cat) => (
                   <button
@@ -747,7 +681,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Point 3: Relationship Selector for Happy Birthday */}
               {selectedCategory === "Happy Birthday" && (
                 <div className="mb-5 bg-slate-950 p-4 rounded-xl border border-slate-800">
                   <label className="block text-sm font-bold text-amber-300 mb-3">
@@ -832,7 +765,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* STAGE DRAFT BUTTON */}
               <button
                 onClick={handleStageToCanvas}
                 className="w-full py-3.5 border border-indigo-500/60 bg-indigo-950/60 hover:bg-indigo-900/80 text-amber-300 rounded-xl font-bold text-base flex items-center justify-center space-x-2 transition shadow-md"
@@ -903,23 +835,26 @@ export default function Home() {
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3.5 text-base font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
               />
 
-              {/* Point 4: Typography Customization Bar */}
+              {/* TYPOGRAPHY STUDIO WITH GOOGLE FONTS */}
               <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
                 <span className="block text-xs font-bold text-amber-300 flex items-center space-x-1.5">
                   <Type className="h-4 w-4" />
-                  <span>Typography Studio / 字體與顏色設定</span>
+                  <span>Typography Studio / 精選 5 大藝術字體</span>
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Font / 字體</label>
+                    <label className="block text-[10px] text-slate-400 mb-1">Font / 藝術字體</label>
                     <select
-                      value={fontStyle}
-                      onChange={(e) => setFontStyle(e.target.value)}
+                      value={selectedFont.id}
+                      onChange={(e) => {
+                        const fontObj = FONT_OPTIONS.find(f => f.id === e.target.value);
+                        if (fontObj) setSelectedFont(fontObj);
+                      }}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="font-serif">Serif (典雅)</option>
-                      <option value="font-sans">Sans (現代)</option>
-                      <option value="font-mono">Mono (藝術)</option>
+                      {FONT_OPTIONS.map((f) => (
+                        <option key={f.id} value={f.id}>{f.label}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -929,10 +864,9 @@ export default function Home() {
                       onChange={(e) => setFontSize(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="text-xl">Small</option>
-                      <option value="text-2xl">Medium</option>
-                      <option value="text-3xl">Large</option>
-                      <option value="text-4xl">X-Large</option>
+                      <option value="text-sm">Small (精細)</option>
+                      <option value="text-base sm:text-lg">Medium (標準)</option>
+                      <option value="text-lg sm:text-xl">Large (清晰)</option>
                     </select>
                   </div>
                   <div>
@@ -1035,22 +969,31 @@ export default function Home() {
                       />
                     )}
 
-                    {/* Dynamic Text Overlays with Selected Typography */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex flex-col justify-end p-6 sm:p-8 pointer-events-none">
-                      <div className="text-center space-y-2 drop-shadow-lg pb-2">
+                    {/* Strictly Constrained Bottom 28% Text Zone with Dynamic Google Font */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                      <div className="text-center space-y-0.5 max-w-[92%] mx-auto drop-shadow-md">
                         {activeCard.to && (
-                          <p className={`text-base sm:text-xl font-bold text-white italic ${fontStyle}`}>
+                          <p 
+                            style={{ fontFamily: activeCard.fontCss || selectedFont.cssVar }}
+                            className="text-xs sm:text-sm font-bold text-slate-200 italic truncate"
+                          >
                             To: {activeCard.to}
                           </p>
                         )}
                         <p 
-                          style={{ color: textColor }} 
-                          className={`${fontStyle} ${fontSize} font-extrabold tracking-wide leading-snug`}
+                          style={{ 
+                            color: textColor,
+                            fontFamily: activeCard.fontCss || selectedFont.cssVar
+                          }} 
+                          className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
                         >
                           "{activeCard.text}"
                         </p>
                         {activeCard.from && (
-                          <p className={`text-base sm:text-lg font-bold text-slate-300 ${fontStyle}`}>
+                          <p 
+                            style={{ fontFamily: activeCard.fontCss || selectedFont.cssVar }}
+                            className="text-xs sm:text-sm font-bold text-slate-300 truncate"
+                          >
                             — {activeCard.from}
                           </p>
                         )}
@@ -1066,14 +1009,30 @@ export default function Home() {
               </div>
             </div>
 
+            {/* DUAL ACTION BUTTONS */}
             {activeCard && (
-              <button
-                onClick={downloadImprintedCard}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 rounded-xl flex items-center justify-center space-x-3 transition shadow-xl text-base w-full"
-              >
-                <Download className="h-6 w-6" />
-                <span>{t.downloadBtn}</span>
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                <button
+                  onClick={handleDirectDownload}
+                  disabled={isDownloading}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
+                >
+                  {isDownloading ? (
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Download className="h-5 w-5 shrink-0" />
+                  )}
+                  <span>{t.downloadBtn}</span>
+                </button>
+
+                <button
+                  onClick={handleShare}
+                  className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
+                >
+                  <Share2 className="h-5 w-5 shrink-0" />
+                  <span>{t.shareBtn}</span>
+                </button>
+              </div>
             )}
 
             {/* MINI TV TRAYS */}
