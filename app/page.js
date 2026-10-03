@@ -21,7 +21,8 @@ import {
   Volume2,
   VolumeX,
   MessageCircle,
-  CheckCircle2
+  CheckCircle2,
+  FileVideo
 } from "lucide-react";
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
@@ -448,7 +449,7 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false); // Enable audio soundtrack by default
   const [attachedMedia, setAttachedMedia] = useState(null);
 
-  // Share Modal State for bypass of browser user activation expiry
+  // Share Modal State to bypass browser user gesture token expiration
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
 
@@ -730,7 +731,7 @@ export default function Home() {
       const shareCaption = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}`;
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // Automatically download video to local drive
+      // Automatically download video file to local device
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -745,7 +746,7 @@ export default function Home() {
         await navigator.clipboard.writeText(shareCaption).catch(() => {});
       }
 
-      // Store prepared share data and display Share Modal
+      // Store prepared share data and open Share Action Modal
       setPreparedShareData({
         file,
         blob,
@@ -803,8 +804,6 @@ export default function Home() {
     ? FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship]
     : FESTIVE_DATA[selectedCategory].presets;
 
-  const canNativeShare = typeof window !== "undefined" && navigator.canShare;
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-16 text-lg">
       <style jsx global>{`
@@ -835,52 +834,57 @@ export default function Home() {
             <div className="flex items-center space-x-3 text-emerald-400">
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
-                <h3 className="text-lg font-extrabold text-white">E-Card Ready to Share!</h3>
-                <p className="text-xs text-slate-300">Video downloaded & caption copied to clipboard.</p>
+                <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
+                <p className="text-xs text-slate-300">Video downloaded & greeting caption copied.</p>
               </div>
             </div>
 
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
-              <p className="font-semibold text-amber-300">Greeting Caption:</p>
-              <p className="italic text-slate-200">{preparedShareData.shareCaption}</p>
+              <p className="font-semibold text-amber-300 flex items-center space-x-1">
+                <FileVideo className="h-4 w-4 text-amber-400" />
+                <span>Downloaded File: {preparedShareData.fileName}</span>
+              </p>
+              <p className="italic text-slate-200 pt-1">{preparedShareData.shareCaption}</p>
             </div>
 
-            <div className="space-y-2.5 pt-2">
+            <div className="space-y-3 pt-1">
+              {/* Fresh User Gesture Action: Native OS Share Sheet with Attached Video File */}
+              <button
+                onClick={async () => {
+                  try {
+                    if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                      await navigator.share({
+                        title: `GreetingAI Studio - ${activeCard.category}`,
+                        text: preparedShareData.shareCaption,
+                        files: [preparedShareData.file]
+                      });
+                    } else {
+                      window.open(preparedShareData.whatsappUrl, "_blank");
+                    }
+                  } catch (e) {
+                    console.log("Native share cancelled or failed:", e);
+                  }
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
+              >
+                <Share2 className="h-5 w-5" />
+                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
+              </button>
+
+              {/* Alternative Action: Direct WhatsApp Chat Link */}
               <button
                 onClick={() => {
                   window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
               >
-                <MessageCircle className="h-5 w-5" />
-                <span>Launch WhatsApp Chat</span>
+                <MessageCircle className="h-4 w-4 text-green-400" />
+                <span>Open WhatsApp Text Link</span>
               </button>
-
-              {canNativeShare && (
-                <button
-                  onClick={async () => {
-                    try {
-                      if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
-                        await navigator.share({
-                          title: `GreetingAI Studio - ${activeCard.category}`,
-                          text: preparedShareData.shareCaption,
-                          files: [preparedShareData.file]
-                        });
-                      }
-                    } catch (e) {
-                      console.log("Native share error:", e);
-                    }
-                  }}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
-                >
-                  <Share2 className="h-5 w-5" />
-                  <span>Share via System App (WeChat / Apps)</span>
-                </button>
-              )}
             </div>
 
-            <p className="text-[11px] text-slate-400 text-center leading-tight">
-              <strong>WeChat / WhatsApp Tip:</strong> Select your contact in WhatsApp or WeChat, attach the newly downloaded video from your Downloads folder, and paste your copied caption!
+            <p className="text-[11px] text-slate-400 text-center leading-snug">
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to send the video directly. If using WhatsApp Web on PC, drag the downloaded <strong>{preparedShareData.fileName}</strong> file into your chat!
             </p>
           </div>
         </div>
