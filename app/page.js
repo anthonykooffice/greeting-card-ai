@@ -17,7 +17,9 @@ import {
   Film,
   X,
   Type,
-  Share2
+  Share2,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
@@ -36,8 +38,8 @@ const ORDERED_CATEGORIES = [
 ];
 
 const FONT_OPTIONS = [
-  { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive", family: "'Great Vibes', cursive" },
   { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif", family: "'Playfair Display', serif" },
+  { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive", family: "'Great Vibes', cursive" },
   { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive", family: "'Dancing Script', cursive" },
   { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
   { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif", family: "'Montserrat', sans-serif" }
@@ -314,12 +316,12 @@ const TRANSLATIONS = {
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
       { key: "Paint", label: "油畫手繪 (Hand-Paint)", badge: "🎨 復古油畫風格已套用", cssFilter: "saturate(180%) sepia(40%) contrast(135%) brightness(105%)" },
       { key: "Picasso", label: "畢加索普普風 (Picasso)", badge: "🖼️ 畢加索風格已套用", cssFilter: "hue-rotate(90deg) saturate(220%) contrast(145%)" },
-      { key: "Motion5s", label: "5秒 AI動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
+      { key: "Motion5s", label: "5秒 AI 動態影片 (5s Motion)", badge: "🎬 5秒 AI 動態影片增強已套用", cssFilter: "brightness(115%) contrast(125%) saturate(135%)" }
     ]
   }
 };
 
-// Canvas Text Overlay Imprinter Engine (Uniform Font Sizing)
+// Canvas Text Overlay Imprinter Engine
 const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
@@ -343,7 +345,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.fillStyle = grad;
   ctx.fillRect(0, overlayY, w, overlayH);
 
-  // 3. Setup Canvas Text Styles (Equalized Sizing for All Fields)
+  // 3. Setup Canvas Text Styles
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -358,7 +360,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const centerX = w / 2;
   const contentCenterY = overlayY + overlayH * 0.52;
 
-  // Unified base font size across all three fields
+  // Unified base font size
   const baseFontSize = Math.round(w * 0.038);
   const toFontSize = baseFontSize;
   const msgFontSize = baseFontSize;
@@ -429,8 +431,9 @@ export default function Home() {
   const [fromName, setFromName] = useState("With Love [Sender Name]");
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
-  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
-  const [fontSize, setFontSize] = useState("text-lg sm:text-xl");
+  // Defaults updated: Classic Serif font style and Medium font size
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]); // Classic Serif
+  const [fontSize, setFontSize] = useState("text-base sm:text-lg"); // Medium
   const [textColor, setTextColor] = useState("#fde68a");
 
   const [credits, setCredits] = useState(5);
@@ -440,6 +443,7 @@ export default function Home() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // Enable sound audio playback
   const [attachedMedia, setAttachedMedia] = useState(null);
 
   const initialStaged = {
@@ -591,6 +595,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
+  // Canvas Video & Soundtrack Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
@@ -604,6 +609,28 @@ export default function Home() {
     canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
+    // Capture visual canvas stream
+    const canvasStream = canvas.captureStream(30);
+
+    // Capture and attach video soundtrack audio stream
+    try {
+      let videoAudioStream = null;
+      if (typeof video.captureStream === "function") {
+        videoAudioStream = video.captureStream();
+      } else if (typeof video.mozCaptureStream === "function") {
+        videoAudioStream = video.mozCaptureStream();
+      }
+
+      if (videoAudioStream) {
+        const audioTracks = videoAudioStream.getAudioTracks();
+        if (audioTracks && audioTracks.length > 0) {
+          audioTracks.forEach((track) => canvasStream.addTrack(track));
+        }
+      }
+    } catch (audioErr) {
+      console.log("Audio track capture fallback note:", audioErr);
+    }
+
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = ["video/mp4;codecs=h264", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
@@ -615,11 +642,10 @@ export default function Home() {
     };
 
     const mimeType = getMimeType();
-    const stream = canvas.captureStream(30);
-    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
+    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
@@ -1110,7 +1136,7 @@ export default function Home() {
                           src={activeCard.media ? activeCard.media.url : activeCard.url} 
                           autoPlay 
                           loop
-                          muted
+                          muted={isMuted}
                           playsInline 
                           crossOrigin="anonymous" 
                           onLoadedData={(e) => e.currentTarget.play()} 
@@ -1119,12 +1145,22 @@ export default function Home() {
                             activeCard.style === "Motion5s" ? "ai-motion-video" : ""
                           }`} 
                         />
-                        <button
-                          onClick={toggleVideoPlayback}
-                          className="absolute top-4 left-4 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur z-30 transition border border-white/30"
-                        >
-                          {isVideoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                        </button>
+                        <div className="absolute top-4 left-4 flex items-center space-x-2 z-30">
+                          <button
+                            onClick={toggleVideoPlayback}
+                            className="bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur transition border border-white/30"
+                            title={isVideoPlaying ? "Pause Video" : "Play Video"}
+                          >
+                            {isVideoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                          </button>
+                          <button
+                            onClick={() => setIsMuted(!isMuted)}
+                            className="bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur transition border border-white/30"
+                            title={isMuted ? "Unmute Sound" : "Mute Sound"}
+                          >
+                            {isMuted ? <VolumeX className="h-5 w-5 text-rose-400" /> : <Volume2 className="h-5 w-5 text-emerald-400" />}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <img 
@@ -1138,7 +1174,7 @@ export default function Home() {
                       />
                     )}
 
-                    {/* Strictly Constrained Bottom 28% Overlay Screen View (Uniform Sizing for To / Msg / From) */}
+                    {/* Strictly Constrained Bottom 28% Overlay Screen View */}
                     <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
                       <div className="text-center space-y-0.5 max-w-[92%] mx-auto drop-shadow-md">
                         {activeCard.to && (
