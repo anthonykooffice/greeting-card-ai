@@ -326,13 +326,17 @@ const TRANSLATIONS = {
 
 // Canvas Text Overlay Imprinter Engine
 const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColor, activeStyleObj) => {
-  const w = canvas.width;
-  const h = canvas.height;
+  const w = canvas.width || 800;
+  const h = canvas.height || 600;
 
   // 1. Draw video/image frame with active style filter
   ctx.save();
   if (activeStyleObj && activeStyleObj.cssFilter) {
-    ctx.filter = activeStyleObj.cssFilter;
+    try {
+      ctx.filter = activeStyleObj.cssFilter;
+    } catch (e) {
+      ctx.filter = "none";
+    }
   }
   if (mediaElement) {
     try {
@@ -363,40 +367,44 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   ctx.textBaseline = "middle";
 
   let fontFamily = "serif";
-  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
-  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
-  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
-  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+  if (selectedFont && selectedFont.id) {
+    if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+    else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+    else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+    else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+    else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+  }
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
   const contentCenterY = overlayY + overlayH * 0.52;
 
   // Proportional font sizing
-  const baseFontSize = Math.round(w * 0.026);
-  const toFontSize = baseFontSize;
+  const baseFontSize = Math.round(w * 0.028);
+  const toFontSize = Math.round(baseFontSize * 0.95);
   const msgFontSize = baseFontSize;
-  const fromFontSize = baseFontSize;
+  const fromFontSize = Math.round(baseFontSize * 0.95);
+
+  const fillCol = textColor || "#fde68a";
 
   // A. Draw "To: [Recipient Name]"
-  if (card.to) {
+  if (card && card.to) {
     ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
+    ctx.fillStyle = fillCol;
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.6, maxTextWidth);
   }
 
   // B. Draw Greeting Message (Multi-line Word Wrap)
   ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = textColor || "#fde68a";
+  ctx.fillStyle = fillCol;
   ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
   ctx.shadowBlur = 8;
   ctx.lineWidth = 3;
   ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
 
-  const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
+  const words = (card && card.text) ? card.text.split(" ") : ["Happy", "Greetings!"];
   let lines = [];
   let currentLine = "";
 
@@ -413,7 +421,7 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.25;
+  const lineHeight = msgFontSize * 1.3;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -422,12 +430,12 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   });
 
   // C. Draw "— [Sender Name]"
-  if (card.from) {
+  if (card && card.from) {
     ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
+    ctx.fillStyle = fillCol;
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.6, maxTextWidth);
   }
 };
 
@@ -610,7 +618,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Fixed loop stall bug)
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Guaranteed non-stalling track termination)
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     let mediaElement = video;
@@ -631,25 +639,6 @@ export default function Home() {
       video.muted = false;
       video.volume = 1.0;
       video.loop = true;
-      video.currentTime = 0;
-
-      await new Promise((resolve) => {
-        let done = false;
-        const finish = () => {
-          if (!done) {
-            done = true;
-            video.removeEventListener("seeked", finish);
-            resolve();
-          }
-        };
-        if (video.readyState >= 2 && video.currentTime === 0) {
-          setTimeout(finish, 50);
-        } else {
-          video.addEventListener("seeked", finish);
-          setTimeout(finish, 300);
-        }
-      });
-
       if (video.paused) {
         await video.play().catch(() => {});
       }
@@ -663,6 +652,9 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioStreamTrack = null;
+    let audioCtx = null;
+    let mediaSource = null;
+
     if (isVideo && video) {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -670,7 +662,7 @@ export default function Home() {
           if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
             window._sharedAudioCtx = new AudioContextClass();
           }
-          const audioCtx = window._sharedAudioCtx;
+          audioCtx = window._sharedAudioCtx;
           if (audioCtx.state === "suspended") {
             await audioCtx.resume();
           }
@@ -678,14 +670,15 @@ export default function Home() {
           if (!video._mediaElementSource) {
             video._mediaElementSource = audioCtx.createMediaElementSource(video);
           }
+          mediaSource = video._mediaElementSource;
 
           const audioDest = audioCtx.createMediaStreamDestination();
           try {
-            video._mediaElementSource.disconnect();
+            mediaSource.disconnect();
           } catch (e) {}
 
-          video._mediaElementSource.connect(audioDest);
-          video._mediaElementSource.connect(audioCtx.destination);
+          mediaSource.connect(audioDest);
+          mediaSource.connect(audioCtx.destination);
 
           const tracks = audioDest.stream.getAudioTracks();
           if (tracks && tracks.length > 0) {
@@ -727,7 +720,7 @@ export default function Home() {
     try {
       recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     } catch (e) {
-      console.warn("MediaRecorder fallback without mimeType:", e);
+      console.warn("MediaRecorder fallback without options:", e);
       recorder = new MediaRecorder(canvasStream);
     }
 
@@ -737,6 +730,15 @@ export default function Home() {
       let isFinalized = false;
       let animationFrameId = null;
 
+      const stopAllTracks = () => {
+        try {
+          canvasStream.getTracks().forEach((track) => track.stop());
+        } catch (e) {}
+        if (audioStreamTrack) {
+          try { audioStreamTrack.stop(); } catch (e) {}
+        }
+      };
+
       const finalize = () => {
         if (isFinalized) return;
         isFinalized = true;
@@ -744,6 +746,8 @@ export default function Home() {
         if (animationFrameId) {
           cancelAnimationFrame(animationFrameId);
         }
+
+        stopAllTracks();
 
         if (isVideo && video) {
           video.muted = previousMuteState;
@@ -769,7 +773,18 @@ export default function Home() {
         finalize();
       };
 
-      recorder.start(100);
+      try {
+        recorder.start(100);
+      } catch (err) {
+        console.warn("recorder.start(100) failed, trying start():", err);
+        try {
+          recorder.start();
+        } catch (e2) {
+          console.error("MediaRecorder start failed completely:", e2);
+          finalize();
+          return;
+        }
+      }
 
       const recDuration = (isVideo && video && video.duration && isFinite(video.duration) && video.duration > 0)
         ? video.duration * 1000
@@ -780,6 +795,8 @@ export default function Home() {
       let isStopping = false;
 
       const loop = () => {
+        if (isFinalized) return;
+
         const elapsed = Date.now() - startTime;
         const currentProgress = Math.min(99, Math.round((elapsed / recDuration) * 100));
 
@@ -794,6 +811,8 @@ export default function Home() {
           isStopping = true;
           setDownloadProgress(100);
 
+          stopAllTracks();
+
           if (recorder.state !== "inactive") {
             try {
               recorder.stop();
@@ -804,11 +823,8 @@ export default function Home() {
           }
 
           setTimeout(() => {
-            if (!isFinalized) {
-              console.warn("MediaRecorder stop timeout fallback triggered");
-              finalize();
-            }
-          }, 1000);
+            finalize();
+          }, 400);
         }
 
         if (!isFinalized) {
