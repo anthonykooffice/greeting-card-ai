@@ -325,7 +325,7 @@ const TRANSLATIONS = {
 };
 
 // Canvas Text Overlay Imprinter Engine
-const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
+const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
 
@@ -334,7 +334,17 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   if (activeStyleObj && activeStyleObj.cssFilter) {
     ctx.filter = activeStyleObj.cssFilter;
   }
-  ctx.drawImage(video, 0, 0, w, h);
+  if (mediaElement) {
+    try {
+      ctx.drawImage(mediaElement, 0, 0, w, h);
+    } catch (e) {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, w, h);
+    }
+  } else {
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, 0, w, h);
+  }
   ctx.restore();
 
   // 2. Draw Bottom 28% Dark Gradient Overlay Box
@@ -600,112 +610,110 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Fixed loop stall bug)
   const generateImprintedFile = async () => {
     const video = videoRef.current;
-    if (!video) throw new Error("Video stream reference not ready.");
+    let mediaElement = video;
+    let isVideo = false;
 
-    const previousMuteState = video.muted;
-    video.muted = false;
-    video.volume = 1.0;
-    video.loop = true;
-
-    video.currentTime = 0;
-
-    // Wait for seeking to timestamp 0 to complete to prevent audio clipping at start
-    await new Promise((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (!done) {
-          done = true;
-          video.removeEventListener("seeked", finish);
-          resolve();
-        }
-      };
-      if (video.readyState >= 2 && video.currentTime === 0) {
-        setTimeout(finish, 50);
-      } else {
-        video.addEventListener("seeked", finish);
-        setTimeout(finish, 300);
+    if (video && video.videoWidth > 0) {
+      isVideo = true;
+    } else {
+      const imgOnScreen = document.querySelector(".main-card-preview-img");
+      if (imgOnScreen && imgOnScreen.complete) {
+        mediaElement = imgOnScreen;
       }
-    });
+    }
 
-    if (video.paused) {
-      await video.play().catch(() => {});
+    let previousMuteState = false;
+    if (isVideo && video) {
+      previousMuteState = video.muted;
+      video.muted = false;
+      video.volume = 1.0;
+      video.loop = true;
+      video.currentTime = 0;
+
+      await new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (!done) {
+            done = true;
+            video.removeEventListener("seeked", finish);
+            resolve();
+          }
+        };
+        if (video.readyState >= 2 && video.currentTime === 0) {
+          setTimeout(finish, 50);
+        } else {
+          video.addEventListener("seeked", finish);
+          setTimeout(finish, 300);
+        }
+      });
+
+      if (video.paused) {
+        await video.play().catch(() => {});
+      }
     }
 
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 800;
-    canvas.height = video.videoHeight || 600;
+    canvas.width = (mediaElement && (mediaElement.videoWidth || mediaElement.naturalWidth)) || 800;
+    canvas.height = (mediaElement && (mediaElement.videoHeight || mediaElement.naturalHeight)) || 600;
     const ctx = canvas.getContext("2d");
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
     let audioStreamTrack = null;
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
-          window._sharedAudioCtx = new AudioContextClass();
-        }
-        const audioCtx = window._sharedAudioCtx;
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
+    if (isVideo && video) {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
+            window._sharedAudioCtx = new AudioContextClass();
+          }
+          const audioCtx = window._sharedAudioCtx;
+          if (audioCtx.state === "suspended") {
+            await audioCtx.resume();
+          }
 
-        if (!video._mediaElementSource) {
-          video._mediaElementSource = audioCtx.createMediaElementSource(video);
+          if (!video._mediaElementSource) {
+            video._mediaElementSource = audioCtx.createMediaElementSource(video);
+          }
+
+          const audioDest = audioCtx.createMediaStreamDestination();
+          try {
+            video._mediaElementSource.disconnect();
+          } catch (e) {}
+
+          video._mediaElementSource.connect(audioDest);
+          video._mediaElementSource.connect(audioCtx.destination);
+
+          const tracks = audioDest.stream.getAudioTracks();
+          if (tracks && tracks.length > 0) {
+            audioStreamTrack = tracks[0];
+          }
         }
-
-        const audioDest = audioCtx.createMediaStreamDestination();
-        try {
-          video._mediaElementSource.disconnect();
-        } catch (e) {}
-
-        video._mediaElementSource.connect(audioDest);
-        video._mediaElementSource.connect(audioCtx.destination);
-
-        const tracks = audioDest.stream.getAudioTracks();
-        if (tracks && tracks.length > 0) {
-          audioStreamTrack = tracks[0];
-        }
+      } catch (webAudioErr) {
+        console.warn("WebAudio capture note:", webAudioErr);
       }
-    } catch (webAudioErr) {
-      console.warn("WebAudio capture note:", webAudioErr);
     }
 
     if (audioStreamTrack) {
-      canvasStream.addTrack(audioStreamTrack);
-    } else {
       try {
-        let videoAudioStream = null;
-        if (typeof video.captureStream === "function") {
-          videoAudioStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          videoAudioStream = video.mozCaptureStream();
-        }
-
-        if (videoAudioStream) {
-          const audioTracks = videoAudioStream.getAudioTracks();
-          if (audioTracks && audioTracks.length > 0) {
-            canvasStream.addTrack(audioTracks[0].clone ? audioTracks[0].clone() : audioTracks[0]);
-          }
-        }
-      } catch (audioErr) {
-        console.log("Audio track capture fallback note:", audioErr);
+        canvasStream.addTrack(audioStreamTrack);
+      } catch (e) {
+        console.warn("Could not add audio track:", e);
       }
     }
 
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
-          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-          "video/mp4;codecs=h264,aac",
-          "video/mp4",
           "video/webm;codecs=vp9,opus",
           "video/webm;codecs=vp8,opus",
-          "video/webm"
+          "video/webm",
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+          "video/mp4;codecs=h264,aac",
+          "video/mp4"
         ];
         for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
@@ -715,31 +723,61 @@ export default function Home() {
     };
 
     const mimeType = getMimeType();
-    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+    let recorder;
+    try {
+      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+    } catch (e) {
+      console.warn("MediaRecorder fallback without mimeType:", e);
+      recorder = new MediaRecorder(canvasStream);
+    }
+
     const chunks = [];
 
     return new Promise((resolve) => {
+      let isFinalized = false;
+      let animationFrameId = null;
+
+      const finalize = () => {
+        if (isFinalized) return;
+        isFinalized = true;
+
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+
+        if (isVideo && video) {
+          video.muted = previousMuteState;
+        }
+
+        const ext = (mimeType && mimeType.includes("mp4")) ? "mp4" : "webm";
+        const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+        const file = new File([blob], fileName, { type: mimeType || "video/webm" });
+        resolve({ blob, file, fileName });
+      };
+
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-        const blob = new Blob(chunks, { type: mimeType });
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: mimeType });
-        resolve({ blob, file, fileName });
+        finalize();
       };
 
-      recorder.start();
+      recorder.onerror = (err) => {
+        console.error("MediaRecorder error caught:", err);
+        finalize();
+      };
 
-      const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
-        ? video.duration * 1000 
-        : 15000;
+      recorder.start(100);
+
+      const recDuration = (isVideo && video && video.duration && isFinite(video.duration) && video.duration > 0)
+        ? video.duration * 1000
+        : 5000;
 
       const startTime = Date.now();
       let lastProgress = -1;
+      let isStopping = false;
 
       const loop = () => {
         const elapsed = Date.now() - startTime;
@@ -750,15 +788,35 @@ export default function Home() {
           setDownloadProgress(currentProgress);
         }
 
-        if (elapsed >= recDuration) {
-          recorder.stop();
-        } else {
-          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
-          requestAnimationFrame(loop);
+        drawCanvasFrame(ctx, canvas, mediaElement, activeCard, selectedFont, textColor, activeStyleObj);
+
+        if (elapsed >= recDuration && !isStopping) {
+          isStopping = true;
+          setDownloadProgress(100);
+
+          if (recorder.state !== "inactive") {
+            try {
+              recorder.stop();
+            } catch (e) {
+              console.warn("Error stopping recorder:", e);
+              finalize();
+            }
+          }
+
+          setTimeout(() => {
+            if (!isFinalized) {
+              console.warn("MediaRecorder stop timeout fallback triggered");
+              finalize();
+            }
+          }, 1000);
+        }
+
+        if (!isFinalized) {
+          animationFrameId = requestAnimationFrame(loop);
         }
       };
 
-      requestAnimationFrame(loop);
+      animationFrameId = requestAnimationFrame(loop);
     });
   };
 
@@ -791,7 +849,6 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines, no custom message line)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -1351,7 +1408,7 @@ export default function Home() {
                         onError={(e) => { e.target.src = activeCard.fallback || createPlaceholder(activeCard.category); }}
                         alt="Composed Greeting Card" 
                         style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
-                        className={`max-w-full max-h-full object-contain transition-all duration-500 ${
+                        className={`main-card-preview-img max-w-full max-h-full object-contain transition-all duration-500 ${
                           activeCard.style === "Motion5s" ? "ai-motion-video" : ""
                         }`} 
                       />
