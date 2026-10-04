@@ -3,30 +3,30 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Play, 
-  Pause,
+  Pause, 
   Download, 
   Globe, 
   Sparkles, 
   RefreshCw, 
   Upload, 
   ShieldCheck, 
-  Layers,
-  Smartphone,
-  Wand2,
-  Check,
-  Film,
-  X,
-  Type,
-  Share2,
-  Volume2,
-  VolumeX,
-  MessageCircle,
-  CheckCircle2,
-  FileVideo
+  Layers, 
+  Smartphone, 
+  Wand2, 
+  Check, 
+  Film, 
+  X, 
+  Type, 
+  Share2, 
+  Volume2, 
+  VolumeX, 
+  MessageCircle, 
+  CheckCircle2, 
+  FileVideo 
 } from "lucide-react";
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
- `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
+  `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
 
 const ORDERED_CATEGORIES = [
   "Happy Birthday",
@@ -132,7 +132,7 @@ const FESTIVE_DATA = {
       { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
-      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明脈復活節！" },
+      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
       { en: "May your Easter overflow with happiness, new beginnings, and warm sunshine!", zh: "願你的復活節充滿幸福、全新開始與溫暖陽光！" },
       { en: "Sending egg-stra special warm wishes to you and your loved ones!", zh: "向你和家人致以特別的節日溫暖祝福！" },
       { en: "May the spring season renew your spirit and fill your heart with joy!", zh: "願美好春季煥發你的身心，心中充滿歡喜！" },
@@ -325,7 +325,7 @@ const TRANSLATIONS = {
 };
 
 // Canvas Text Overlay Imprinter Engine
-const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
+const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
 
@@ -334,7 +334,12 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   if (activeStyleObj && activeStyleObj.cssFilter) {
     ctx.filter = activeStyleObj.cssFilter;
   }
-  ctx.drawImage(video, 0, 0, w, h);
+  if (mediaElement) {
+    ctx.drawImage(mediaElement, 0, 0, w, h);
+  } else {
+    ctx.fillStyle = "#1e293b";
+    ctx.fillRect(0, 0, w, h);
+  }
   ctx.restore();
 
   // 2. Draw Bottom 28% Dark Gradient Overlay Box
@@ -353,11 +358,11 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.textBaseline = "middle";
 
   let fontFamily = "serif";
-  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
-  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
-  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
-  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+  if (selectedFont?.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont?.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+  else if (selectedFont?.id === "hand") fontFamily = "'Dancing Script', cursive";
+  else if (selectedFont?.id === "display") fontFamily = "'Cinzel Decorative', serif";
+  else if (selectedFont?.id === "sans") fontFamily = "'Montserrat', sans-serif";
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
@@ -450,7 +455,6 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
-  const [shareFeedback, setShareFeedback] = useState("");
 
   const initialStaged = {
     id: 1,
@@ -601,113 +605,80 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & AAC Audio Recording Engine
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine
   const generateImprintedFile = async () => {
-    const video = videoRef.current;
-    if (!video) throw new Error("Video stream reference not ready.");
-
-    const previousMuteState = video.muted;
+    let mediaElement = videoRef.current;
     
-    // 1. Unmute video element & reset playback position
-    video.muted = false;
-    video.volume = 1.0;
-    video.currentTime = 0;
-
-    try {
-      await video.play();
-    } catch (e) {
-      console.warn("Video play notice:", e);
+    // If video element is not active, load Image element as fallback
+    if (!mediaElement || (!activeCard.url?.endsWith(".mp4") && !activeCard.media?.type?.startsWith("video"))) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = activeCard.media ? activeCard.media.url : activeCard.url;
+      await new Promise((res) => {
+        img.onload = res;
+        img.onerror = res;
+      });
+      mediaElement = img;
     }
 
-    // Wait 150ms to ensure video decoder & audio pipeline are actively emitting samples
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 800;
-    canvas.height = video.videoHeight || 600;
+    canvas.width = mediaElement.videoWidth || mediaElement.width || 800;
+    canvas.height = mediaElement.videoHeight || mediaElement.height || 600;
     const ctx = canvas.getContext("2d");
 
     const canvasStream = canvas.captureStream(30);
 
-    // 2. WebAudio Pipeline for AAC Audio Stream Capture
-    let audioTrack = null;
-    try {
-      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtxClass) {
-        if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
-          window._sharedAudioCtx = new AudioCtxClass();
-        }
-        const audioCtx = window._sharedAudioCtx;
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
+    let audioDestStream = null;
+    if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
+      const video = videoRef.current;
+      video.currentTime = 0;
+      const previousMuteState = video.muted;
+      video.muted = false;
+      video.volume = 1.0;
 
-        if (!video._mediaElementSource) {
-          try {
+      if (video.paused) {
+        await video.play().catch(() => {});
+      }
+
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          if (!window._sharedAudioCtx) {
+            window._sharedAudioCtx = new AudioContextClass();
+          }
+          const audioCtx = window._sharedAudioCtx;
+          if (audioCtx.state === "suspended") {
+            await audioCtx.resume();
+          }
+
+          if (!video._mediaElementSource) {
             video._mediaElementSource = audioCtx.createMediaElementSource(video);
-          } catch (err) {
-            console.warn("createMediaElementSource error:", err);
           }
-        }
-
-        if (video._mediaElementSource) {
-          const source = video._mediaElementSource;
-          const audioDest = audioCtx.createMediaStreamDestination();
           
-          try { source.disconnect(); } catch (err) {}
-          source.connect(audioDest);
-          source.connect(audioCtx.destination);
-
-          const destTracks = audioDest.stream.getAudioTracks();
-          if (destTracks && destTracks.length > 0) {
-            audioTrack = destTracks[0];
-          }
+          const audioDest = audioCtx.createMediaStreamDestination();
+          video._mediaElementSource.disconnect();
+          video._mediaElementSource.connect(audioDest);
+          video._mediaElementSource.connect(audioCtx.destination);
+          audioDestStream = audioDest.stream;
         }
+      } catch (webAudioErr) {
+        console.warn("WebAudio capture fallback:", webAudioErr);
       }
-    } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
-    }
 
-    // Fallback: Direct video captureStream if WebAudio did not yield a track
-    if (!audioTrack) {
-      try {
-        let vStream = null;
-        if (typeof video.captureStream === "function") {
-          vStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          vStream = video.mozCaptureStream();
-        }
-        if (vStream) {
-          const aTracks = vStream.getAudioTracks();
-          if (aTracks && aTracks.length > 0) {
-            audioTrack = aTracks[0];
-          }
-        }
-      } catch (e) {
-        console.warn("Direct video captureStream note:", e);
+      if (audioDestStream) {
+        const audioTracks = audioDestStream.getAudioTracks();
+        audioTracks.forEach((track) => canvasStream.addTrack(track));
       }
     }
 
-    if (audioTrack) {
-      try {
-        canvasStream.addTrack(audioTrack);
-      } catch (e) {
-        console.warn("Could not add audio track to canvasStream:", e);
-      }
-    }
-
-    // Standardized ISO/IEC MIME string format for MP4 (H.264 Video + AAC-LC Audio)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
-          'video/mp4; codecs="avc1.424028, mp4a.40.2"',
-          'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
-          'video/mp4; codecs="avc1.64003E, mp4a.40.2"',
-          'video/mp4; codecs="avc1, mp4a.40.2"',
-          'video/mp4',
-          'video/webm; codecs="vp9, opus"',
-          'video/webm; codecs="vp8, opus"',
-          'video/webm'
+          "video/mp4;codecs=h264,aac",
+          "video/mp4",
+          "video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus",
+          "video/webm"
         ];
         for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
@@ -717,16 +688,28 @@ export default function Home() {
     };
 
     const mimeType = getMimeType();
-    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+    let recorder;
+    try {
+      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+    } catch (e) {
+      try {
+        recorder = new MediaRecorder(canvasStream, { mimeType: "video/webm" });
+      } catch (e2) {
+        recorder = new MediaRecorder(canvasStream);
+      }
+    }
+
     const chunks = [];
 
     return new Promise((resolve) => {
-      let isResolved = false;
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
 
-      const finishAndResolve = () => {
-        if (isResolved) return;
-        isResolved = true;
-        video.muted = previousMuteState;
+      recorder.onstop = () => {
+        if (videoRef.current) {
+          videoRef.current.muted = isMuted;
+        }
         const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         const blob = new Blob(chunks, { type: mimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
@@ -734,19 +717,11 @@ export default function Home() {
         resolve({ blob, file, fileName });
       };
 
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
-      };
+      recorder.start();
 
-      recorder.onstop = () => {
-        finishAndResolve();
-      };
-
-      recorder.start(100);
-
-      const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
-        ? video.duration * 1000 
-        : 15000;
+      const recDuration = (videoRef.current?.duration && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) 
+        ? videoRef.current.duration * 1000 
+        : 5000;
 
       const startTime = Date.now();
 
@@ -755,19 +730,9 @@ export default function Home() {
         setDownloadProgress(Math.min(99, Math.round((elapsed / recDuration) * 100)));
 
         if (elapsed >= recDuration) {
-          setDownloadProgress(100);
-          if (recorder.state !== "inactive") {
-            try {
-              recorder.stop();
-            } catch (e) {
-              finishAndResolve();
-            }
-          }
-          setTimeout(() => {
-            finishAndResolve();
-          }, 300);
+          recorder.stop();
         } else {
-          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
+          drawCanvasFrame(ctx, canvas, mediaElement, activeCard, selectedFont, textColor, activeStyleObj);
           requestAnimationFrame(loop);
         }
       };
@@ -791,7 +756,7 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
       const link = document.createElement("a");
@@ -804,15 +769,13 @@ export default function Home() {
     }
   };
 
-  // Structured 4-line share caption (D21.jpeg compliant)
+  // Structured multi-line share caption (Strictly 4 lines, no custom greeting message line)
   const buildShareCaption = (card, lang) => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    const dateStr = lang === "zh" 
-      ? `${year}年${month}月${day}日` 
-      : now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
 
     const catTitle = lang === "zh" ? (FESTIVE_DATA[card.category]?.zhTitle || card.category) : card.category;
     const toText = card.to ? (lang === "zh" ? `致 ${card.to}` : `to ${card.to}`) : "";
@@ -837,6 +800,7 @@ export default function Home() {
       const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
+      // 1. Download imprinted video file locally
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -844,12 +808,17 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 
+      // 2. Copy caption to clipboard
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareCaption).catch(() => {});
       }
 
+      // 3. Open WhatsApp text sharing automatically in new window/tab
+      window.open(whatsappUrl, "_blank");
+
+      // 4. Show Share Action Modal
       setPreparedShareData({
         file,
         blob,
@@ -857,7 +826,6 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
-      setShareFeedback("");
       setShareModalOpen(true);
     } catch (err) {
       console.log("Share sheet unhandled:", err);
@@ -953,59 +921,37 @@ export default function Home() {
               </div>
             </div>
 
-            {/* REAL-TIME FEEDBACK BADGE */}
-            {shareFeedback && (
-              <div className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 p-3 rounded-xl text-xs font-bold text-center">
-                {shareFeedback}
-              </div>
-            )}
+            <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>✓ Caption copied & WhatsApp opened! Drag the downloaded video into your chat.</span>
+            </div>
 
             <div className="space-y-3 pt-1">
               <button
                 onClick={async () => {
-                  setShareFeedback("Processing share request...");
                   try {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                      await navigator.clipboard.writeText(preparedShareData.shareCaption).catch(() => {});
-                    }
-
-                    let sharedNatively = false;
                     if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
-                      try {
-                        await navigator.share({
-                          title: `GreetingAI Studio - ${activeCard.category}`,
-                          text: preparedShareData.shareCaption,
-                          files: [preparedShareData.file]
-                        });
-                        sharedNatively = true;
-                        setShareFeedback("✓ Video file shared successfully!");
-                      } catch (shareErr) {
-                        console.log("Native share dismissed or unsupported:", shareErr);
-                      }
-                    }
-
-                    if (!sharedNatively) {
+                      await navigator.share({
+                        title: `GreetingAI Studio - ${activeCard.category}`,
+                        text: preparedShareData.shareCaption,
+                        files: [preparedShareData.file]
+                      });
+                    } else {
                       window.open(preparedShareData.whatsappUrl, "_blank");
-                      setShareFeedback("✓ Caption copied & WhatsApp opened! Drag the downloaded video into your chat.");
                     }
                   } catch (e) {
-                    window.open(preparedShareData.whatsappUrl, "_blank");
-                    setShareFeedback("✓ Opened WhatsApp text link. Drag the downloaded video into your chat!");
+                    console.log("Native share cancelled or failed:", e);
                   }
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
               >
                 <Share2 className="h-5 w-5" />
-                <span>{shareFeedback.includes("Processing") ? "Sharing Video..." : "Share Video File (WhatsApp / WeChat / Apps)"}</span>
+                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
               </button>
 
               <button
                 onClick={() => {
-                  if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(preparedShareData.shareCaption).catch(() => {});
-                  }
                   window.open(preparedShareData.whatsappUrl, "_blank");
-                  setShareFeedback("✓ Caption copied to clipboard & WhatsApp opened!");
                 }}
                 className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
               >
