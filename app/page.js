@@ -605,10 +605,30 @@ export default function Home() {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    video.currentTime = 0;
     const previousMuteState = video.muted;
     video.muted = false;
     video.volume = 1.0;
+    video.loop = true;
+
+    video.currentTime = 0;
+
+    // Wait for seeking to timestamp 0 to complete to prevent audio clipping at start
+    await new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (!done) {
+          done = true;
+          video.removeEventListener("seeked", finish);
+          resolve();
+        }
+      };
+      if (video.readyState >= 2 && video.currentTime === 0) {
+        setTimeout(finish, 50);
+      } else {
+        video.addEventListener("seeked", finish);
+        setTimeout(finish, 300);
+      }
+    });
 
     if (video.paused) {
       await video.play().catch(() => {});
@@ -622,11 +642,11 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
-    let audioDestStream = null;
+    let audioStreamTrack = null;
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
+        if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
           window._sharedAudioCtx = new AudioContextClass();
         }
         const audioCtx = window._sharedAudioCtx;
@@ -637,20 +657,26 @@ export default function Home() {
         if (!video._mediaElementSource) {
           video._mediaElementSource = audioCtx.createMediaElementSource(video);
         }
-        
+
         const audioDest = audioCtx.createMediaStreamDestination();
-        video._mediaElementSource.disconnect();
+        try {
+          video._mediaElementSource.disconnect();
+        } catch (e) {}
+
         video._mediaElementSource.connect(audioDest);
         video._mediaElementSource.connect(audioCtx.destination);
-        audioDestStream = audioDest.stream;
+
+        const tracks = audioDest.stream.getAudioTracks();
+        if (tracks && tracks.length > 0) {
+          audioStreamTrack = tracks[0];
+        }
       }
     } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
+      console.warn("WebAudio capture note:", webAudioErr);
     }
 
-    if (audioDestStream) {
-      const audioTracks = audioDestStream.getAudioTracks();
-      audioTracks.forEach((track) => canvasStream.addTrack(track));
+    if (audioStreamTrack) {
+      canvasStream.addTrack(audioStreamTrack);
     } else {
       try {
         let videoAudioStream = null;
@@ -662,9 +688,9 @@ export default function Home() {
 
         if (videoAudioStream) {
           const audioTracks = videoAudioStream.getAudioTracks();
-          audioTracks.forEach((track) => {
-            canvasStream.addTrack(track.clone ? track.clone() : track);
-          });
+          if (audioTracks && audioTracks.length > 0) {
+            canvasStream.addTrack(audioTracks[0].clone ? audioTracks[0].clone() : audioTracks[0]);
+          }
         }
       } catch (audioErr) {
         console.log("Audio track capture fallback note:", audioErr);
@@ -674,6 +700,7 @@ export default function Home() {
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
           "video/mp4;codecs=h264,aac",
           "video/mp4",
           "video/webm;codecs=vp9,opus",
@@ -712,10 +739,16 @@ export default function Home() {
         : 15000;
 
       const startTime = Date.now();
+      let lastProgress = -1;
 
       const loop = () => {
         const elapsed = Date.now() - startTime;
-        setDownloadProgress(Math.min(99, Math.round((elapsed / recDuration) * 100)));
+        const currentProgress = Math.min(99, Math.round((elapsed / recDuration) * 100));
+
+        if (currentProgress !== lastProgress) {
+          lastProgress = currentProgress;
+          setDownloadProgress(currentProgress);
+        }
 
         if (elapsed >= recDuration) {
           recorder.stop();
@@ -731,6 +764,7 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
+    setIsMuted(false);
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -780,6 +814,7 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
+    setIsMuted(false);
     setIsSharing(true);
     setDownloadProgress(0);
 
