@@ -132,7 +132,7 @@ const FESTIVE_DATA = {
       { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
-      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
+      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明脈復活節！" },
       { en: "May your Easter overflow with happiness, new beginnings, and warm sunshine!", zh: "願你的復活節充滿幸福、全新開始與溫暖陽光！" },
       { en: "Sending egg-stra special warm wishes to you and your loved ones!", zh: "向你和家人致以特別的節日溫暖祝福！" },
       { en: "May the spring season renew your spirit and fill your heart with joy!", zh: "願美好春季煥發你的身心，心中充滿歡喜！" },
@@ -600,20 +600,26 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Fixed Audio Extraction)
+  // Canvas Video & AAC Audio Recording Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    // Unmute video and reset playback so audio is present during MediaRecorder capture
-    video.currentTime = 0;
     const previousMuteState = video.muted;
+    
+    // 1. Unmute video element & reset playback position
     video.muted = false;
     video.volume = 1.0;
+    video.currentTime = 0;
 
-    if (video.paused) {
-      await video.play().catch(() => {});
+    try {
+      await video.play();
+    } catch (e) {
+      console.warn("Video play notice:", e);
     }
+
+    // Wait 150ms to ensure video decoder & audio pipeline are actively emitting samples
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -622,74 +628,85 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture audio tracks directly from WebAudio destination / video element
-    let capturedAudioTrack = null;
+    // 2. WebAudio Pipeline for AAC Audio Stream Capture
+    let audioTrack = null;
     try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtxClass) {
         if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
-          window._sharedAudioCtx = new AudioContextClass();
+          window._sharedAudioCtx = new AudioCtxClass();
         }
         const audioCtx = window._sharedAudioCtx;
         if (audioCtx.state === "suspended") {
           await audioCtx.resume();
         }
 
-        // Reuse existing MediaElementSource or create once
         if (!video._mediaElementSource) {
-          video._mediaElementSource = audioCtx.createMediaElementSource(video);
+          try {
+            video._mediaElementSource = audioCtx.createMediaElementSource(video);
+          } catch (err) {
+            console.warn("createMediaElementSource error:", err);
+          }
         }
-        const mediaSource = video._mediaElementSource;
 
-        const audioDest = audioCtx.createMediaStreamDestination();
-        
-        try {
-          mediaSource.disconnect();
-        } catch (e) {}
+        if (video._mediaElementSource) {
+          const source = video._mediaElementSource;
+          const audioDest = audioCtx.createMediaStreamDestination();
+          
+          try { source.disconnect(); } catch (err) {}
+          source.connect(audioDest);
+          source.connect(audioCtx.destination);
 
-        mediaSource.connect(audioDest);
-        mediaSource.connect(audioCtx.destination);
-
-        const tracks = audioDest.stream.getAudioTracks();
-        if (tracks && tracks.length > 0) {
-          capturedAudioTrack = tracks[0];
+          const destTracks = audioDest.stream.getAudioTracks();
+          if (destTracks && destTracks.length > 0) {
+            audioTrack = destTracks[0];
+          }
         }
       }
     } catch (webAudioErr) {
-      console.warn("WebAudio capture note:", webAudioErr);
+      console.warn("WebAudio capture fallback:", webAudioErr);
     }
 
-    // Secondary fallback: Direct video captureStream audio extraction
-    if (!capturedAudioTrack) {
+    // Fallback: Direct video captureStream if WebAudio did not yield a track
+    if (!audioTrack) {
       try {
-        let directAudioStream = null;
-        if (typeof video.captureStream === "function") directAudioStream = video.captureStream();
-        else if (typeof video.mozCaptureStream === "function") directAudioStream = video.mozCaptureStream();
-
-        if (directAudioStream) {
-          const tracks = directAudioStream.getAudioTracks();
-          if (tracks && tracks.length > 0) {
-            capturedAudioTrack = tracks[0];
+        let vStream = null;
+        if (typeof video.captureStream === "function") {
+          vStream = video.captureStream();
+        } else if (typeof video.mozCaptureStream === "function") {
+          vStream = video.mozCaptureStream();
+        }
+        if (vStream) {
+          const aTracks = vStream.getAudioTracks();
+          if (aTracks && aTracks.length > 0) {
+            audioTrack = aTracks[0];
           }
         }
       } catch (e) {
-        console.warn("Direct captureStream audio fallback note:", e);
+        console.warn("Direct video captureStream note:", e);
       }
     }
 
-    if (capturedAudioTrack) {
-      canvasStream.addTrack(capturedAudioTrack);
+    if (audioTrack) {
+      try {
+        canvasStream.addTrack(audioTrack);
+      } catch (e) {
+        console.warn("Could not add audio track to canvasStream:", e);
+      }
     }
 
-    // Preferred MP4 formats for WhatsApp / WeChat video compatibility
+    // Standardized ISO/IEC MIME string format for MP4 (H.264 Video + AAC-LC Audio)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
-          "video/mp4;codecs=h264,aac",
-          "video/mp4",
-          "video/webm;codecs=vp9,opus",
-          "video/webm;codecs=vp8,opus",
-          "video/webm"
+          'video/mp4; codecs="avc1.424028, mp4a.40.2"',
+          'video/mp4; codecs="avc1.42E01E, mp4a.40.2"',
+          'video/mp4; codecs="avc1.64003E, mp4a.40.2"',
+          'video/mp4; codecs="avc1, mp4a.40.2"',
+          'video/mp4',
+          'video/webm; codecs="vp9, opus"',
+          'video/webm; codecs="vp8, opus"',
+          'video/webm'
         ];
         for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
@@ -726,7 +743,6 @@ export default function Home() {
 
       recorder.start(100);
 
-      // Full 15-second duration matching current video loop length
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
         : 15000;
@@ -787,7 +803,7 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption matching D21.jpeg exactly (4 Lines)
+  // Structured multi-line share caption (Strictly 4 lines as requested in D21.jpeg)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
