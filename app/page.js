@@ -363,8 +363,8 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const centerX = w / 2;
   const contentCenterY = overlayY + overlayH * 0.52;
 
-  // Equalized base font size across To, Message, and From
-  const baseFontSize = Math.round(w * 0.038);
+  // Proportional font sizing
+  const baseFontSize = Math.round(w * 0.026);
   const toFontSize = baseFontSize;
   const msgFontSize = baseFontSize;
   const fromFontSize = baseFontSize;
@@ -375,7 +375,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
     ctx.fillStyle = textColor || "#fde68a";
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.4, maxTextWidth);
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
   }
 
   // B. Draw Greeting Message (Multi-line Word Wrap)
@@ -403,7 +403,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.2;
+  const lineHeight = msgFontSize * 1.25;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -417,7 +417,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
     ctx.fillStyle = textColor || "#fde68a";
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.4, maxTextWidth);
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
   }
 };
 
@@ -434,9 +434,8 @@ export default function Home() {
   const [fromName, setFromName] = useState("With Love [Sender Name]");
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
-  // Default font style: Classic Serif; Default size: Medium
-  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]); // Classic Serif
-  const [fontSize, setFontSize] = useState("text-base sm:text-lg"); // Medium
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
+  const [fontSize, setFontSize] = useState("text-base sm:text-lg");
   const [textColor, setTextColor] = useState("#fde68a");
 
   const [credits, setCredits] = useState(5);
@@ -446,10 +445,9 @@ export default function Home() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false); // Enable audio soundtrack by default
+  const [isMuted, setIsMuted] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState(null);
 
-  // Share Modal State to bypass browser user gesture token expiration
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
 
@@ -607,10 +605,10 @@ export default function Home() {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    // Reset video playback to second 0 to record full 10-15s duration
     video.currentTime = 0;
     const previousMuteState = video.muted;
     video.muted = false;
+    video.volume = 1.0;
 
     if (video.paused) {
       await video.play().catch(() => {});
@@ -634,7 +632,9 @@ export default function Home() {
       if (videoAudioStream) {
         const audioTracks = videoAudioStream.getAudioTracks();
         if (audioTracks && audioTracks.length > 0) {
-          audioTracks.forEach((track) => canvasStream.addTrack(track));
+          audioTracks.forEach((track) => {
+            canvasStream.addTrack(track.clone ? track.clone() : track);
+          });
         }
       }
     } catch (audioErr) {
@@ -721,6 +721,27 @@ export default function Home() {
     }
   };
 
+  // Structured multi-line share caption (Strictly 4 lines, no custom message line)
+  const buildShareCaption = (card, lang) => {
+    const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+
+    const catTitle = lang === "zh" ? (FESTIVE_DATA[card.category]?.zhTitle || card.category) : card.category;
+    const toText = card.to ? (lang === "zh" ? `致 ${card.to}` : `to ${card.to}`) : "";
+    const fromText = card.from ? (lang === "zh" ? `祝福來自：${card.from}` : `Greeting from ${card.from}`) : "";
+    const dateText = lang === "zh" ? `日期：${dateStr}` : `Date: ${dateStr}`;
+
+    const line1 = "GreetingAI Studio";
+    const line2 = `${catTitle} ${toText}`.trim();
+    const line3 = fromText;
+    const line4 = dateText;
+
+    return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
+  };
+
   const handleShare = async () => {
     if (!activeCard) return;
     setIsSharing(true);
@@ -728,10 +749,9 @@ export default function Home() {
 
     try {
       const { file, blob, fileName } = await generateImprintedFile();
-      const shareCaption = `🎁 ${activeCard.to ? `To ${activeCard.to}: ` : ""}"${activeCard.text}" ${activeCard.from ? `— From ${activeCard.from}` : ""}`;
+      const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // Automatically download video file to local device
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -741,12 +761,10 @@ export default function Home() {
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
 
-      // Copy caption text to clipboard
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareCaption).catch(() => {});
       }
 
-      // Store prepared share data and open Share Action Modal
       setPreparedShareData({
         file,
         blob,
@@ -835,20 +853,21 @@ export default function Home() {
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
                 <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
-                <p className="text-xs text-slate-300">Video downloaded & greeting caption copied.</p>
+                <p className="text-xs text-slate-300">Video downloaded & caption copied.</p>
               </div>
             </div>
 
-            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
+            <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
               <p className="font-semibold text-amber-300 flex items-center space-x-1">
                 <FileVideo className="h-4 w-4 text-amber-400" />
                 <span>Downloaded File: {preparedShareData.fileName}</span>
               </p>
-              <p className="italic text-slate-200 pt-1">{preparedShareData.shareCaption}</p>
+              <div className="bg-slate-900 p-2.5 rounded-lg whitespace-pre-wrap font-sans text-slate-200 border border-slate-800">
+                {preparedShareData.shareCaption}
+              </div>
             </div>
 
             <div className="space-y-3 pt-1">
-              {/* Fresh User Gesture Action: Native OS Share Sheet with Attached Video File */}
               <button
                 onClick={async () => {
                   try {
@@ -871,7 +890,6 @@ export default function Home() {
                 <span>Share Video File (WhatsApp / WeChat / Apps)</span>
               </button>
 
-              {/* Alternative Action: Direct WhatsApp Chat Link */}
               <button
                 onClick={() => {
                   window.open(preparedShareData.whatsappUrl, "_blank");
@@ -1151,9 +1169,9 @@ export default function Home() {
                       onChange={(e) => setFontSize(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="text-sm">Small (精細)</option>
-                      <option value="text-base sm:text-lg">Medium (標準)</option>
-                      <option value="text-lg sm:text-xl">Large (清晰)</option>
+                      <option value="text-xs sm:text-sm">Small (精細)</option>
+                      <option value="text-sm sm:text-base">Medium (標準)</option>
+                      <option value="text-base sm:text-lg">Large (清晰)</option>
                     </select>
                   </div>
                   <div>
@@ -1268,9 +1286,9 @@ export default function Home() {
                       />
                     )}
 
-                    {/* Strictly Constrained Bottom 28% Overlay Screen View */}
+                    {/* Proportional Screen Preview Text Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                      <div className="text-center space-y-0.5 max-w-[92%] mx-auto drop-shadow-md">
+                      <div className="text-center space-y-1 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                           <p 
                             style={{ 
