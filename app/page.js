@@ -450,6 +450,7 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
+  const [shareFeedback, setShareFeedback] = useState("");
 
   const initialStaged = {
     id: 1,
@@ -803,13 +804,15 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines as requested in D21.jpeg)
+  // Structured 4-line share caption (D21.jpeg compliant)
   const buildShareCaption = (card, lang) => {
-    const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+    const dateStr = lang === "zh" 
+      ? `${year}年${month}月${day}日` 
+      : now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
     const catTitle = lang === "zh" ? (FESTIVE_DATA[card.category]?.zhTitle || card.category) : card.category;
     const toText = card.to ? (lang === "zh" ? `致 ${card.to}` : `to ${card.to}`) : "";
@@ -854,6 +857,7 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
+      setShareFeedback("");
       setShareModalOpen(true);
     } catch (err) {
       console.log("Share sheet unhandled:", err);
@@ -949,32 +953,59 @@ export default function Home() {
               </div>
             </div>
 
+            {/* REAL-TIME FEEDBACK BADGE */}
+            {shareFeedback && (
+              <div className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 p-3 rounded-xl text-xs font-bold text-center">
+                {shareFeedback}
+              </div>
+            )}
+
             <div className="space-y-3 pt-1">
               <button
                 onClick={async () => {
+                  setShareFeedback("Processing share request...");
                   try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                      await navigator.clipboard.writeText(preparedShareData.shareCaption).catch(() => {});
+                    }
+
+                    let sharedNatively = false;
                     if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
-                      await navigator.share({
-                        title: `GreetingAI Studio - ${activeCard.category}`,
-                        text: preparedShareData.shareCaption,
-                        files: [preparedShareData.file]
-                      });
-                    } else {
+                      try {
+                        await navigator.share({
+                          title: `GreetingAI Studio - ${activeCard.category}`,
+                          text: preparedShareData.shareCaption,
+                          files: [preparedShareData.file]
+                        });
+                        sharedNatively = true;
+                        setShareFeedback("✓ Video file shared successfully!");
+                      } catch (shareErr) {
+                        console.log("Native share dismissed or unsupported:", shareErr);
+                      }
+                    }
+
+                    if (!sharedNatively) {
                       window.open(preparedShareData.whatsappUrl, "_blank");
+                      setShareFeedback("✓ Caption copied & WhatsApp opened! Drag the downloaded video into your chat.");
                     }
                   } catch (e) {
-                    console.log("Native share cancelled or failed:", e);
+                    window.open(preparedShareData.whatsappUrl, "_blank");
+                    setShareFeedback("✓ Opened WhatsApp text link. Drag the downloaded video into your chat!");
                   }
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
               >
                 <Share2 className="h-5 w-5" />
-                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
+                <span>{shareFeedback.includes("Processing") ? "Sharing Video..." : "Share Video File (WhatsApp / WeChat / Apps)"}</span>
               </button>
 
               <button
                 onClick={() => {
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(preparedShareData.shareCaption).catch(() => {});
+                  }
                   window.open(preparedShareData.whatsappUrl, "_blank");
+                  setShareFeedback("✓ Caption copied to clipboard & WhatsApp opened!");
                 }}
                 className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
               >
