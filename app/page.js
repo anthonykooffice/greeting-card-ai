@@ -600,7 +600,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack Recording Engine
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
@@ -621,29 +621,65 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
+    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
+    let audioDestStream = null;
     try {
-      let videoAudioStream = null;
-      if (typeof video.captureStream === "function") {
-        videoAudioStream = video.captureStream();
-      } else if (typeof video.mozCaptureStream === "function") {
-        videoAudioStream = video.mozCaptureStream();
-      }
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        if (!window._sharedAudioCtx) {
+          window._sharedAudioCtx = new AudioContextClass();
+        }
+        const audioCtx = window._sharedAudioCtx;
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
 
-      if (videoAudioStream) {
-        const audioTracks = videoAudioStream.getAudioTracks();
-        if (audioTracks && audioTracks.length > 0) {
+        if (!video._mediaElementSource) {
+          video._mediaElementSource = audioCtx.createMediaElementSource(video);
+        }
+        
+        const audioDest = audioCtx.createMediaStreamDestination();
+        video._mediaElementSource.disconnect();
+        video._mediaElementSource.connect(audioDest);
+        video._mediaElementSource.connect(audioCtx.destination);
+        audioDestStream = audioDest.stream;
+      }
+    } catch (webAudioErr) {
+      console.warn("WebAudio capture fallback:", webAudioErr);
+    }
+
+    if (audioDestStream) {
+      const audioTracks = audioDestStream.getAudioTracks();
+      audioTracks.forEach((track) => canvasStream.addTrack(track));
+    } else {
+      try {
+        let videoAudioStream = null;
+        if (typeof video.captureStream === "function") {
+          videoAudioStream = video.captureStream();
+        } else if (typeof video.mozCaptureStream === "function") {
+          videoAudioStream = video.mozCaptureStream();
+        }
+
+        if (videoAudioStream) {
+          const audioTracks = videoAudioStream.getAudioTracks();
           audioTracks.forEach((track) => {
             canvasStream.addTrack(track.clone ? track.clone() : track);
           });
         }
+      } catch (audioErr) {
+        console.log("Audio track capture fallback note:", audioErr);
       }
-    } catch (audioErr) {
-      console.log("Audio track capture fallback note:", audioErr);
     }
 
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const types = ["video/mp4;codecs=h264", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+        const types = [
+          "video/mp4;codecs=h264,aac",
+          "video/mp4",
+          "video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus",
+          "video/webm"
+        ];
         for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
