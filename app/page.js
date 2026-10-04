@@ -132,7 +132,7 @@ const FESTIVE_DATA = {
       { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
-      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明脈復活節！" },
+      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
       { en: "May your Easter overflow with happiness, new beginnings, and warm sunshine!", zh: "願你的復活節充滿幸福、全新開始與溫暖陽光！" },
       { en: "Sending egg-stra special warm wishes to you and your loved ones!", zh: "向你和家人致以特別的節日溫暖祝福！" },
       { en: "May the spring season renew your spirit and fill your heart with joy!", zh: "願美好春季煥發你的身心，心中充滿歡喜！" },
@@ -600,11 +600,12 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Guaranteed 100% Completion Fail-Safe)
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Fixed Audio Extraction)
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
+    // Unmute video and reset playback so audio is present during MediaRecorder capture
     video.currentTime = 0;
     const previousMuteState = video.muted;
     video.muted = false;
@@ -621,12 +622,12 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
-    let audioDestStream = null;
+    // Capture audio tracks directly from WebAudio destination / video element
+    let capturedAudioTrack = null;
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
+        if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
           window._sharedAudioCtx = new AudioContextClass();
         }
         const audioCtx = window._sharedAudioCtx;
@@ -634,44 +635,53 @@ export default function Home() {
           await audioCtx.resume();
         }
 
+        // Reuse existing MediaElementSource or create once
         if (!video._mediaElementSource) {
           video._mediaElementSource = audioCtx.createMediaElementSource(video);
         }
-        
+        const mediaSource = video._mediaElementSource;
+
         const audioDest = audioCtx.createMediaStreamDestination();
-        video._mediaElementSource.disconnect();
-        video._mediaElementSource.connect(audioDest);
-        video._mediaElementSource.connect(audioCtx.destination);
-        audioDestStream = audioDest.stream;
+        
+        try {
+          mediaSource.disconnect();
+        } catch (e) {}
+
+        mediaSource.connect(audioDest);
+        mediaSource.connect(audioCtx.destination);
+
+        const tracks = audioDest.stream.getAudioTracks();
+        if (tracks && tracks.length > 0) {
+          capturedAudioTrack = tracks[0];
+        }
       }
     } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
+      console.warn("WebAudio capture note:", webAudioErr);
     }
 
-    if (audioDestStream) {
-      const audioTracks = audioDestStream.getAudioTracks();
-      audioTracks.forEach((track) => canvasStream.addTrack(track));
-    } else {
+    // Secondary fallback: Direct video captureStream audio extraction
+    if (!capturedAudioTrack) {
       try {
-        let videoAudioStream = null;
-        if (typeof video.captureStream === "function") {
-          videoAudioStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          videoAudioStream = video.mozCaptureStream();
-        }
+        let directAudioStream = null;
+        if (typeof video.captureStream === "function") directAudioStream = video.captureStream();
+        else if (typeof video.mozCaptureStream === "function") directAudioStream = video.mozCaptureStream();
 
-        if (videoAudioStream) {
-          const audioTracks = videoAudioStream.getAudioTracks();
-          audioTracks.forEach((track) => {
-            canvasStream.addTrack(track.clone ? track.clone() : track);
-          });
+        if (directAudioStream) {
+          const tracks = directAudioStream.getAudioTracks();
+          if (tracks && tracks.length > 0) {
+            capturedAudioTrack = tracks[0];
+          }
         }
-      } catch (audioErr) {
-        console.log("Audio track capture fallback note:", audioErr);
+      } catch (e) {
+        console.warn("Direct captureStream audio fallback note:", e);
       }
     }
 
-    // MP4 listed FIRST for full WhatsApp / WeChat inline playback compatibility
+    if (capturedAudioTrack) {
+      canvasStream.addTrack(capturedAudioTrack);
+    }
+
+    // Preferred MP4 formats for WhatsApp / WeChat video compatibility
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
@@ -716,6 +726,7 @@ export default function Home() {
 
       recorder.start(100);
 
+      // Full 15-second duration matching current video loop length
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
         : 15000;
@@ -735,7 +746,6 @@ export default function Home() {
               finishAndResolve();
             }
           }
-          // Fail-safe timer guarantees resolution in 300ms if onstop event is delayed
           setTimeout(() => {
             finishAndResolve();
           }, 300);
@@ -777,7 +787,7 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines for clear WhatsApp presentation)
+  // Structured multi-line share caption matching D21.jpeg exactly (4 Lines)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
