@@ -132,7 +132,7 @@ const FESTIVE_DATA = {
       { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
-      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
+      { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明脈復活節！" },
       { en: "May your Easter overflow with happiness, new beginnings, and warm sunshine!", zh: "願你的復活節充滿幸福、全新開始與溫暖陽光！" },
       { en: "Sending egg-stra special warm wishes to you and your loved ones!", zh: "向你和家人致以特別的節日溫暖祝福！" },
       { en: "May the spring season renew your spirit and fill your heart with joy!", zh: "願美好春季煥發你的身心，心中充滿歡喜！" },
@@ -325,30 +325,16 @@ const TRANSLATIONS = {
 };
 
 // Canvas Text Overlay Imprinter Engine
-const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColor, activeStyleObj) => {
-  const w = canvas.width || 800;
-  const h = canvas.height || 600;
+const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
+  const w = canvas.width;
+  const h = canvas.height;
 
   // 1. Draw video/image frame with active style filter
   ctx.save();
   if (activeStyleObj && activeStyleObj.cssFilter) {
-    try {
-      ctx.filter = activeStyleObj.cssFilter;
-    } catch (e) {
-      ctx.filter = "none";
-    }
+    ctx.filter = activeStyleObj.cssFilter;
   }
-  if (mediaElement) {
-    try {
-      ctx.drawImage(mediaElement, 0, 0, w, h);
-    } catch (e) {
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(0, 0, w, h);
-    }
-  } else {
-    ctx.fillStyle = "#0f172a";
-    ctx.fillRect(0, 0, w, h);
-  }
+  ctx.drawImage(video, 0, 0, w, h);
   ctx.restore();
 
   // 2. Draw Bottom 28% Dark Gradient Overlay Box
@@ -367,44 +353,40 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   ctx.textBaseline = "middle";
 
   let fontFamily = "serif";
-  if (selectedFont && selectedFont.id) {
-    if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
-    else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-    else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
-    else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
-    else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
-  }
+  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
   const contentCenterY = overlayY + overlayH * 0.52;
 
   // Proportional font sizing
-  const baseFontSize = Math.round(w * 0.028);
-  const toFontSize = Math.round(baseFontSize * 0.95);
+  const baseFontSize = Math.round(w * 0.026);
+  const toFontSize = baseFontSize;
   const msgFontSize = baseFontSize;
-  const fromFontSize = Math.round(baseFontSize * 0.95);
-
-  const fillCol = textColor || "#fde68a";
+  const fromFontSize = baseFontSize;
 
   // A. Draw "To: [Recipient Name]"
-  if (card && card.to) {
+  if (card.to) {
     ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = fillCol;
+    ctx.fillStyle = textColor || "#fde68a";
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.6, maxTextWidth);
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
   }
 
   // B. Draw Greeting Message (Multi-line Word Wrap)
   ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = fillCol;
+  ctx.fillStyle = textColor || "#fde68a";
   ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
   ctx.shadowBlur = 8;
   ctx.lineWidth = 3;
   ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
 
-  const words = (card && card.text) ? card.text.split(" ") : ["Happy", "Greetings!"];
+  const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
   let lines = [];
   let currentLine = "";
 
@@ -421,7 +403,7 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.3;
+  const lineHeight = msgFontSize * 1.25;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -430,12 +412,12 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   });
 
   // C. Draw "— [Sender Name]"
-  if (card && card.from) {
+  if (card.from) {
     ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-    ctx.fillStyle = fillCol;
+    ctx.fillStyle = textColor || "#fde68a";
     ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
     ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.6, maxTextWidth);
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
   }
 };
 
@@ -618,95 +600,86 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Guaranteed non-stalling track termination)
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine (Guaranteed 100% Completion Fail-Safe)
   const generateImprintedFile = async () => {
     const video = videoRef.current;
-    let mediaElement = video;
-    let isVideo = false;
+    if (!video) throw new Error("Video stream reference not ready.");
 
-    if (video && video.videoWidth > 0) {
-      isVideo = true;
-    } else {
-      const imgOnScreen = document.querySelector(".main-card-preview-img");
-      if (imgOnScreen && imgOnScreen.complete) {
-        mediaElement = imgOnScreen;
-      }
-    }
+    video.currentTime = 0;
+    const previousMuteState = video.muted;
+    video.muted = false;
+    video.volume = 1.0;
 
-    let previousMuteState = false;
-    if (isVideo && video) {
-      previousMuteState = video.muted;
-      video.muted = false;
-      video.volume = 1.0;
-      video.loop = true;
-      if (video.paused) {
-        await video.play().catch(() => {});
-      }
+    if (video.paused) {
+      await video.play().catch(() => {});
     }
 
     const canvas = document.createElement("canvas");
-    canvas.width = (mediaElement && (mediaElement.videoWidth || mediaElement.naturalWidth)) || 800;
-    canvas.height = (mediaElement && (mediaElement.videoHeight || mediaElement.naturalHeight)) || 600;
+    canvas.width = video.videoWidth || 800;
+    canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
     const canvasStream = canvas.captureStream(30);
 
-    let audioStreamTrack = null;
-    let audioCtx = null;
-    let mediaSource = null;
-
-    if (isVideo && video) {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          if (!window._sharedAudioCtx || window._sharedAudioCtx.state === "closed") {
-            window._sharedAudioCtx = new AudioContextClass();
-          }
-          audioCtx = window._sharedAudioCtx;
-          if (audioCtx.state === "suspended") {
-            await audioCtx.resume();
-          }
-
-          if (!video._mediaElementSource) {
-            video._mediaElementSource = audioCtx.createMediaElementSource(video);
-          }
-          mediaSource = video._mediaElementSource;
-
-          const audioDest = audioCtx.createMediaStreamDestination();
-          try {
-            mediaSource.disconnect();
-          } catch (e) {}
-
-          mediaSource.connect(audioDest);
-          mediaSource.connect(audioCtx.destination);
-
-          const tracks = audioDest.stream.getAudioTracks();
-          if (tracks && tracks.length > 0) {
-            audioStreamTrack = tracks[0];
-          }
+    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
+    let audioDestStream = null;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        if (!window._sharedAudioCtx) {
+          window._sharedAudioCtx = new AudioContextClass();
         }
-      } catch (webAudioErr) {
-        console.warn("WebAudio capture note:", webAudioErr);
+        const audioCtx = window._sharedAudioCtx;
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
+
+        if (!video._mediaElementSource) {
+          video._mediaElementSource = audioCtx.createMediaElementSource(video);
+        }
+        
+        const audioDest = audioCtx.createMediaStreamDestination();
+        video._mediaElementSource.disconnect();
+        video._mediaElementSource.connect(audioDest);
+        video._mediaElementSource.connect(audioCtx.destination);
+        audioDestStream = audioDest.stream;
       }
+    } catch (webAudioErr) {
+      console.warn("WebAudio capture fallback:", webAudioErr);
     }
 
-    if (audioStreamTrack) {
+    if (audioDestStream) {
+      const audioTracks = audioDestStream.getAudioTracks();
+      audioTracks.forEach((track) => canvasStream.addTrack(track));
+    } else {
       try {
-        canvasStream.addTrack(audioStreamTrack);
-      } catch (e) {
-        console.warn("Could not add audio track:", e);
+        let videoAudioStream = null;
+        if (typeof video.captureStream === "function") {
+          videoAudioStream = video.captureStream();
+        } else if (typeof video.mozCaptureStream === "function") {
+          videoAudioStream = video.mozCaptureStream();
+        }
+
+        if (videoAudioStream) {
+          const audioTracks = videoAudioStream.getAudioTracks();
+          audioTracks.forEach((track) => {
+            canvasStream.addTrack(track.clone ? track.clone() : track);
+          });
+        }
+      } catch (audioErr) {
+        console.log("Audio track capture fallback note:", audioErr);
       }
     }
 
+    // MP4 listed FIRST for full WhatsApp / WeChat inline playback compatibility
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
+          "video/mp4;codecs=h264,aac",
+          "video/mp4",
           "video/webm;codecs=vp9,opus",
           "video/webm;codecs=vp8,opus",
-          "video/webm",
-          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-          "video/mp4;codecs=h264,aac",
-          "video/mp4"
+          "video/webm"
         ];
         for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
@@ -716,47 +689,20 @@ export default function Home() {
     };
 
     const mimeType = getMimeType();
-    let recorder;
-    try {
-      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
-    } catch (e) {
-      console.warn("MediaRecorder fallback without options:", e);
-      recorder = new MediaRecorder(canvasStream);
-    }
-
+    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
     return new Promise((resolve) => {
-      let isFinalized = false;
-      let animationFrameId = null;
+      let isResolved = false;
 
-      const stopAllTracks = () => {
-        try {
-          canvasStream.getTracks().forEach((track) => track.stop());
-        } catch (e) {}
-        if (audioStreamTrack) {
-          try { audioStreamTrack.stop(); } catch (e) {}
-        }
-      };
-
-      const finalize = () => {
-        if (isFinalized) return;
-        isFinalized = true;
-
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-        }
-
-        stopAllTracks();
-
-        if (isVideo && video) {
-          video.muted = previousMuteState;
-        }
-
-        const ext = (mimeType && mimeType.includes("mp4")) ? "mp4" : "webm";
-        const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+      const finishAndResolve = () => {
+        if (isResolved) return;
+        isResolved = true;
+        video.muted = previousMuteState;
+        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        const blob = new Blob(chunks, { type: mimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: mimeType || "video/webm" });
+        const file = new File([blob], fileName, { type: mimeType });
         resolve({ blob, file, fileName });
       };
 
@@ -765,80 +711,46 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        finalize();
+        finishAndResolve();
       };
 
-      recorder.onerror = (err) => {
-        console.error("MediaRecorder error caught:", err);
-        finalize();
-      };
+      recorder.start(100);
 
-      try {
-        recorder.start(100);
-      } catch (err) {
-        console.warn("recorder.start(100) failed, trying start():", err);
-        try {
-          recorder.start();
-        } catch (e2) {
-          console.error("MediaRecorder start failed completely:", e2);
-          finalize();
-          return;
-        }
-      }
-
-      const recDuration = (isVideo && video && video.duration && isFinite(video.duration) && video.duration > 0)
-        ? video.duration * 1000
-        : 5000;
+      const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
+        ? video.duration * 1000 
+        : 15000;
 
       const startTime = Date.now();
-      let lastProgress = -1;
-      let isStopping = false;
 
       const loop = () => {
-        if (isFinalized) return;
-
         const elapsed = Date.now() - startTime;
-        const currentProgress = Math.min(99, Math.round((elapsed / recDuration) * 100));
+        setDownloadProgress(Math.min(99, Math.round((elapsed / recDuration) * 100)));
 
-        if (currentProgress !== lastProgress) {
-          lastProgress = currentProgress;
-          setDownloadProgress(currentProgress);
-        }
-
-        drawCanvasFrame(ctx, canvas, mediaElement, activeCard, selectedFont, textColor, activeStyleObj);
-
-        if (elapsed >= recDuration && !isStopping) {
-          isStopping = true;
+        if (elapsed >= recDuration) {
           setDownloadProgress(100);
-
-          stopAllTracks();
-
           if (recorder.state !== "inactive") {
             try {
               recorder.stop();
             } catch (e) {
-              console.warn("Error stopping recorder:", e);
-              finalize();
+              finishAndResolve();
             }
           }
-
+          // Fail-safe timer guarantees resolution in 300ms if onstop event is delayed
           setTimeout(() => {
-            finalize();
-          }, 400);
-        }
-
-        if (!isFinalized) {
-          animationFrameId = requestAnimationFrame(loop);
+            finishAndResolve();
+          }, 300);
+        } else {
+          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
+          requestAnimationFrame(loop);
         }
       };
 
-      animationFrameId = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
     });
   };
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
-    setIsMuted(false);
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -865,6 +777,7 @@ export default function Home() {
     }
   };
 
+  // Structured multi-line share caption (Strictly 4 lines for clear WhatsApp presentation)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -887,7 +800,6 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
-    setIsMuted(false);
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -1424,7 +1336,7 @@ export default function Home() {
                         onError={(e) => { e.target.src = activeCard.fallback || createPlaceholder(activeCard.category); }}
                         alt="Composed Greeting Card" 
                         style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
-                        className={`main-card-preview-img max-w-full max-h-full object-contain transition-all duration-500 ${
+                        className={`max-w-full max-h-full object-contain transition-all duration-500 ${
                           activeCard.style === "Motion5s" ? "ai-motion-video" : ""
                         }`} 
                       />
