@@ -1,7 +1,7 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with restored Canvas text imprinting and
-                dual-payload (Video + Text) Web Share API for WhatsApp.
+   DESCRIPTION: GreetingAI Studio with fixed WebAudio soundtrack capture engine,
+                30% bottom box text layout, and golden typography styling.
    ============================================================================ */
 
 "use client";
@@ -31,7 +31,7 @@ import {
   FileVideo 
 } from "lucide-react";
 
-const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
+const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23ffd700") => 
   `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
 
 const ORDERED_CATEGORIES = [
@@ -330,7 +330,7 @@ const TRANSLATIONS = {
   }
 };
 
-// Canvas Text Overlay Imprinter Engine
+// Canvas Text Overlay Imprinter Engine (Refined to 30% height & Gold Text)
 const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
@@ -343,18 +343,18 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.drawImage(video, 0, 0, w, h);
   ctx.restore();
 
-  // 2. Draw Bottom 28% Dark Gradient Overlay Box
-  const overlayH = h * 0.28;
+  // 2. Draw Bottom 30% Dark Gradient Overlay Box
+  const overlayH = h * 0.30;
   const overlayY = h - overlayH;
   const grad = ctx.createLinearGradient(0, overlayY, 0, h);
   grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.3, "rgba(0,0,0,0.75)");
+  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
   grad.addColorStop(1, "rgba(0,0,0,0.95)");
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, overlayY, w, overlayH);
 
-  // 3. Setup Canvas Text Styles
+  // 3. Setup Canvas Text Styles & Golden Color Palette
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -367,30 +367,32 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
-  const contentCenterY = overlayY + overlayH * 0.52;
+  const contentCenterY = overlayY + (overlayH * 0.50);
 
-  // Proportional font sizing
-  const baseFontSize = Math.round(w * 0.026);
-  const toFontSize = baseFontSize;
+  // Proportionally scaled compact font sizing to fit inside 30% bottom box
+  const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
+  const toFontSize = Math.round(baseFontSize * 0.95);
   const msgFontSize = baseFontSize;
-  const fromFontSize = baseFontSize;
+  const fromFontSize = Math.round(baseFontSize * 0.90);
+
+  const activeTextColor = textColor || "#ffd700";
 
   // A. Draw "To: [Recipient Name]"
   if (card.to) {
     ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
   }
 
   // B. Draw Greeting Message (Multi-line Word Wrap)
   ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = textColor || "#fde68a";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-  ctx.shadowBlur = 8;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillStyle = activeTextColor;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
 
   const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
   let lines = [];
@@ -409,7 +411,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.25;
+  const lineHeight = msgFontSize * 1.20;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -420,10 +422,10 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   // C. Draw "— [Sender Name]"
   if (card.from) {
     ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
   }
 };
 
@@ -441,8 +443,8 @@ export default function Home() {
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
-  const [fontSize, setFontSize] = useState("text-base sm:text-lg");
-  const [textColor, setTextColor] = useState("#fde68a");
+  const [fontSize, setFontSize] = useState("text-xs sm:text-sm");
+  const [textColor, setTextColor] = useState("#ffd700");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -606,7 +608,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine
+  // Canvas Video Recording Engine with Audio Track Capture
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
@@ -627,54 +629,51 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
-    let audioDestStream = null;
+    // Audio Capture Engine (direct video audio stream + Web Audio API fallback)
+    let audioTrack = null;
     try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
-          window._sharedAudioCtx = new AudioContextClass();
+      if (typeof video.captureStream === "function") {
+        const vStream = video.captureStream();
+        if (vStream && vStream.getAudioTracks().length > 0) {
+          audioTrack = vStream.getAudioTracks()[0];
         }
-        const audioCtx = window._sharedAudioCtx;
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
-
-        if (!video._mediaElementSource) {
-          video._mediaElementSource = audioCtx.createMediaElementSource(video);
-        }
-        
-        const audioDest = audioCtx.createMediaStreamDestination();
-        video._mediaElementSource.disconnect();
-        video._mediaElementSource.connect(audioDest);
-        video._mediaElementSource.connect(audioCtx.destination);
-        audioDestStream = audioDest.stream;
       }
-    } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
+    } catch (e) {
+      console.warn("Direct video captureStream audio notice:", e);
     }
 
-    if (audioDestStream) {
-      const audioTracks = audioDestStream.getAudioTracks();
-      audioTracks.forEach((track) => canvasStream.addTrack(track));
-    } else {
+    if (!audioTrack) {
       try {
-        let videoAudioStream = null;
-        if (typeof video.captureStream === "function") {
-          videoAudioStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          videoAudioStream = video.mozCaptureStream();
-        }
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          if (!window._sharedAudioCtx) {
+            window._sharedAudioCtx = new AudioContextClass();
+          }
+          const audioCtx = window._sharedAudioCtx;
+          if (audioCtx.state === "suspended") {
+            await audioCtx.resume();
+          }
 
-        if (videoAudioStream) {
-          const audioTracks = videoAudioStream.getAudioTracks();
-          audioTracks.forEach((track) => {
-            canvasStream.addTrack(track.clone ? track.clone() : track);
-          });
+          if (!video._mediaElementSource) {
+            video._mediaElementSource = audioCtx.createMediaElementSource(video);
+          }
+          
+          const audioDest = audioCtx.createMediaStreamDestination();
+          video._mediaElementSource.disconnect();
+          video._mediaElementSource.connect(audioDest);
+          video._mediaElementSource.connect(audioCtx.destination);
+          
+          if (audioDest.stream.getAudioTracks().length > 0) {
+            audioTrack = audioDest.stream.getAudioTracks()[0];
+          }
         }
-      } catch (audioErr) {
-        console.log("Audio track capture fallback note:", audioErr);
+      } catch (webAudioErr) {
+        console.warn("WebAudio capture fallback notice:", webAudioErr);
       }
+    }
+
+    if (audioTrack) {
+      canvasStream.addTrack(audioTrack);
     }
 
     const getMimeType = () => {
@@ -910,7 +909,6 @@ export default function Home() {
             </div>
 
             <div className="space-y-3 pt-1">
-              {/* RESTORED DUAL-PAYLOAD SHARE (FILE + TITLE + TEXT) */}
               <button
                 onClick={async () => {
                   try {
@@ -1224,10 +1222,10 @@ export default function Home() {
                       onChange={(e) => setTextColor(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="#fde68a">Gold (尊爵金)</option>
-                      <option value="#ffffff">White (純白)</option>
-                      <option value="#f43f5e">Rose (浪漫粉)</option>
-                      <option value="#67e8f9">Cyan (璀璨藍)</option>
+                      <option value="#ffd700">Classic Gold (尊爵金)</option>
+                      <option value="#ffffff">Pure White (純白)</option>
+                      <option value="#f43f5e">Rose Pink (浪漫粉)</option>
+                      <option value="#67e8f9">Cyan Blue (璀璨藍)</option>
                     </select>
                   </div>
                 </div>
@@ -1329,14 +1327,14 @@ export default function Home() {
                       />
                     )}
 
-                    {/* Proportional Screen Preview Text Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                      <div className="text-center space-y-1 max-w-[90%] mx-auto drop-shadow-md">
+                    {/* Proportional Screen Preview Text Overlay (Strict 30% height) */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                      <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold italic truncate`}
                           >
@@ -1345,7 +1343,7 @@ export default function Home() {
                         )}
                         <p 
                           style={{ 
-                            color: textColor,
+                            color: textColor || "#ffd700",
                             fontFamily: activeCard.fontCss || selectedFont.cssVar
                           }} 
                           className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
@@ -1356,7 +1354,7 @@ export default function Home() {
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold truncate`}
                           >
