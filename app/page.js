@@ -605,11 +605,11 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine
+  // Canvas Video & High-Quality WebAudio Recording Engine
   const generateImprintedFile = async () => {
     let mediaElement = videoRef.current;
     
-    // If video element is not active, load Image element as fallback
+    // Fallback if video element not ready or image mode active
     if (!mediaElement || (!activeCard.url?.endsWith(".mp4") && !activeCard.media?.type?.startsWith("video"))) {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -632,7 +632,6 @@ export default function Home() {
     if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
       const video = videoRef.current;
       video.currentTime = 0;
-      const previousMuteState = video.muted;
       video.muted = false;
       video.volume = 1.0;
 
@@ -690,7 +689,11 @@ export default function Home() {
     const mimeType = getMimeType();
     let recorder;
     try {
-      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+      recorder = new MediaRecorder(canvasStream, { 
+        mimeType, 
+        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
+        audioBitsPerSecond: 128000   // High Fidelity 128kbps Audio
+      });
     } catch (e) {
       try {
         recorder = new MediaRecorder(canvasStream, { mimeType: "video/webm" });
@@ -769,7 +772,7 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines, no custom greeting message line)
+  // Strictly 4-line Share Caption Layout
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -798,37 +801,41 @@ export default function Home() {
     try {
       const { file, blob, fileName } = await generateImprintedFile();
       const shareCaption = buildShareCaption(activeCard, lang);
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Download imprinted video file locally
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      // 1. Trigger Native OS Web Share (Mobile direct to WhatsApp Video + Caption -> D32 Output)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `GreetingAI Studio - ${activeCard.category}`,
+          text: shareCaption,
+          files: [file]
+        });
+      } else {
+        // 2. PC / Web Browser Desktop Fallback
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 
-      // 2. Copy caption to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        }
+
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+        setPreparedShareData({
+          file,
+          blob,
+          fileName,
+          shareCaption,
+          whatsappUrl
+        });
+        setShareModalOpen(true);
       }
-
-      // 3. Open WhatsApp text sharing automatically in new window/tab
-      window.open(whatsappUrl, "_blank");
-
-      // 4. Show Share Action Modal
-      setPreparedShareData({
-        file,
-        blob,
-        fileName,
-        shareCaption,
-        whatsappUrl
-      });
-      setShareModalOpen(true);
     } catch (err) {
-      console.log("Share sheet unhandled:", err);
+      console.log("Share sheet cancelled or unhandled:", err);
     } finally {
       setIsSharing(false);
       setDownloadProgress(0);
@@ -892,7 +899,7 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* SHARE ACTION MODAL */}
+      {/* SHARE ACTION MODAL FOR DESKTOP FALLBACK */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
@@ -923,7 +930,7 @@ export default function Home() {
 
             <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>✓ Caption copied & WhatsApp opened! Drag the downloaded video into your chat.</span>
+              <span>✓ Video downloaded! Drag {preparedShareData.fileName} into your WhatsApp Web chat.</span>
             </div>
 
             <div className="space-y-3 pt-1">
