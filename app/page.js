@@ -1,8 +1,7 @@
 /* ============================================================================
-   REFERENCE FILE NO: REF-APP-PAGE-V2.3
    FILE PATH: app/page.js
-   DESCRIPTION: Fixes WhatsApp video attachment sharing by separating Web Share 
-                file payload from text string and auto-copying text caption.
+   DESCRIPTION: Fixed share button label truncation (WhatsApp / WeChat / Apps)
+                and responsive text wrapping for mobile screens (P12 fix).
    ============================================================================ */
 
 "use client";
@@ -903,7 +902,7 @@ export default function Home() {
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
                 <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
-                <p className="text-xs text-slate-300">Video saved & caption copied to clipboard.</p>
+                <p className="text-xs text-slate-300">Video downloaded & caption copied.</p>
               </div>
             </div>
 
@@ -917,8 +916,14 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Banner Notice matching P12 screenshot */}
+            <div className="bg-emerald-950/80 border border-emerald-500/50 rounded-xl p-3 text-xs text-emerald-200 font-medium flex items-center space-x-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
+            </div>
+
             <div className="space-y-3 pt-1">
-              {/* MEDIA-FIRST SHARE BUTTON: Pass ONLY 'files' to ensure video attachment opens */}
+              {/* PRIMARY SHARE BUTTON - Clean full label, no truncation */}
               <button
                 onClick={async () => {
                   try {
@@ -934,25 +939,25 @@ export default function Home() {
                     window.open(preparedShareData.whatsappUrl, "_blank");
                   }
                 }}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-xs sm:text-sm text-center leading-snug"
               >
-                <Share2 className="h-5 w-5" />
-                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
+                <Share2 className="h-5 w-5 shrink-0" />
+                <span className="whitespace-normal">Share Video File (WhatsApp / WeChat / Apps)</span>
               </button>
 
               <button
                 onClick={() => {
                   window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs text-center"
               >
-                <MessageCircle className="h-4 w-4 text-green-400" />
+                <MessageCircle className="h-4 w-4 text-green-400 shrink-0" />
                 <span>Open WhatsApp Text Link</span>
               </button>
             </div>
 
             <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to send the video attachment to WhatsApp. The text caption is copied to your clipboard so you can paste it into the chat!
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
             </p>
           </div>
         </div>
