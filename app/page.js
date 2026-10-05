@@ -490,24 +490,6 @@ export default function Home() {
     }));
   }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
-  // Synchronous Mobile Audio Context Activation Helper
-  const ensureAudioContext = async () => {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-      if (!window._sharedAudioCtx) {
-        window._sharedAudioCtx = new AudioContextClass();
-      }
-      if (window._sharedAudioCtx.state === "suspended") {
-        await window._sharedAudioCtx.resume();
-      }
-      return window._sharedAudioCtx;
-    } catch (e) {
-      console.warn("Mobile WebAudio initialization fallback:", e);
-      return null;
-    }
-  };
-
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
       if (isVideoPlaying) {
@@ -625,9 +607,6 @@ export default function Home() {
 
   // Canvas Video & Mobile High-Fidelity Audio Recording Engine
   const generateImprintedFile = async () => {
-    // Un-mute mobile WebAudio Context directly
-    const audioCtx = await ensureAudioContext();
-
     let mediaElement = videoRef.current;
     
     // Fallback if video element not ready or image mode active
@@ -649,75 +628,112 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    let audioDestStream = null;
+    // Audio capture logic using direct HTMLMediaElement captureStream (Mobile Unmute Fix)
     if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
       const video = videoRef.current;
       video.currentTime = 0;
       video.muted = false;
       video.volume = 1.0;
 
-      if (video.paused) {
-        await video.play().catch(() => {});
+      try {
+        await video.play();
+      } catch (e) {
+        console.warn("Video playback capture trigger:", e);
       }
 
-      if (audioCtx) {
+      let sourceAudioStream = null;
+      if (video.captureStream) {
+        sourceAudioStream = video.captureStream();
+      } else if (video.mozCaptureStream) {
+        sourceAudioStream = video.mozCaptureStream();
+      }
+
+      if (sourceAudioStream && sourceAudioStream.getAudioTracks().length > 0) {
+        const audioTrack = sourceAudioStream.getAudioTracks()[0].clone();
+        canvasStream.addTrack(audioTrack);
+      } else {
+        // WebAudio Context Fallback
         try {
-          if (!video._mediaElementSource) {
-            video._mediaElementSource = audioCtx.createMediaElementSource(video);
-          }
-          
-          const audioDest = audioCtx.createMediaStreamDestination();
-          video._mediaElementSource.disconnect();
-          video._mediaElementSource.connect(audioDest);
-          video._mediaElementSource.connect(audioCtx.destination);
-          audioDestStream = audioDest.stream;
-        } catch (webAudioErr) {
-          console.warn("WebAudio capture node fallback:", webAudioErr);
-        }
-      }
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            if (!window._sharedAudioCtx) {
+              window._sharedAudioCtx = new AudioContextClass();
+            }
+            const audioCtx = window._sharedAudioCtx;
+            if (audioCtx.state === "suspended") {
+              await audioCtx.resume();
+            }
 
-      if (audioDestStream) {
-        const audioTracks = audioDestStream.getAudioTracks();
-        audioTracks.forEach((track) => canvasStream.addTrack(track));
+            if (!video._mediaElementSource) {
+              video._mediaElementSource = audioCtx.createMediaElementSource(video);
+            }
+            
+            const audioDest = audioCtx.createMediaStreamDestination();
+            video._mediaElementSource.disconnect();
+            video._mediaElementSource.connect(audioDest);
+            video._mediaElementSource.connect(audioCtx.destination);
+            
+            if (audioDest.stream.getAudioTracks().length > 0) {
+              canvasStream.addTrack(audioDest.stream.getAudioTracks()[0]);
+            }
+          }
+        } catch (webAudioErr) {
+          console.warn("WebAudio capture fallback warning:", webAudioErr);
+        }
       }
     }
 
-    const getMimeType = () => {
+    // MIME type & container extension determination to fix WhatsApp processing errors
+    const getMimeConfig = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const types = [
-          "video/mp4;codecs=avc1,mp4a.40.2",
+        const mp4Types = [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
           "video/mp4;codecs=h264,aac",
-          "video/mp4",
+          "video/mp4"
+        ];
+        for (const type of mp4Types) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            return { mimeType: type, ext: "mp4" };
+          }
+        }
+        const webmTypes = [
           "video/webm;codecs=vp9,opus",
           "video/webm;codecs=vp8,opus",
           "video/webm"
         ];
-        for (const type of types) {
-          if (MediaRecorder.isTypeSupported(type)) return type;
+        for (const type of webmTypes) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            return { mimeType: type, ext: "webm" };
+          }
         }
       }
-      return "video/mp4";
+      return { mimeType: "video/mp4", ext: "mp4" };
     };
 
-    const mimeType = getMimeType();
+    const { mimeType, ext } = getMimeConfig();
     let recorder;
     try {
       recorder = new MediaRecorder(canvasStream, { 
         mimeType, 
-        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
-        audioBitsPerSecond: 128000   // High Fidelity 128kbps AAC Audio
+        videoBitsPerSecond: 3500000,
+        audioBitsPerSecond: 128000
       });
     } catch (e) {
       try {
-        recorder = new MediaRecorder(canvasStream, { mimeType: "video/webm" });
-      } catch (e2) {
         recorder = new MediaRecorder(canvasStream);
+      } catch (e2) {
+        console.error("MediaRecorder init failed:", e2);
       }
     }
 
     const chunks = [];
 
     return new Promise((resolve) => {
+      if (!recorder) {
+        resolve({ blob: null, file: null, fileName: `GreetingAI_Card.${ext}` });
+        return;
+      }
+
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
@@ -726,10 +742,11 @@ export default function Home() {
         if (videoRef.current) {
           videoRef.current.muted = isMuted;
         }
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-        const blob = new Blob(chunks, { type: mimeType });
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: mimeType });
+        const actualMime = recorder.mimeType || mimeType;
+        const actualExt = actualMime.includes("webm") ? "webm" : "mp4";
+        const blob = new Blob(chunks, { type: actualMime });
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${actualExt}`;
+        const file = new File([blob], fileName, { type: actualMime });
         resolve({ blob, file, fileName });
       };
 
@@ -759,7 +776,6 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
-    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -809,7 +825,6 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
-    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -828,14 +843,16 @@ export default function Home() {
       });
 
       // 2. Download video file
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      if (blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
 
       // 3. Copy caption
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -845,7 +862,7 @@ export default function Home() {
       let nativeShareSuccess = false;
 
       // 4. Mobile Native Web Share API trigger
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             title: `GreetingAI Studio - ${activeCard.category}`,
@@ -877,7 +894,6 @@ export default function Home() {
       return;
     }
 
-    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -967,8 +983,7 @@ export default function Home() {
               <button
                 onClick={async () => {
                   try {
-                    await ensureAudioContext();
-                    if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                    if (preparedShareData.file && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
                         title: `GreetingAI Studio - ${activeCard.category}`,
                         text: preparedShareData.shareCaption,
