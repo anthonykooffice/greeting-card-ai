@@ -1,3 +1,10 @@
+/* ============================================================================
+   REFERENCE FILE NO: REF-APP-PAGE-V2.1
+   FILE PATH: app/page.js
+   DESCRIPTION: Restores E-Card Share Modal Popup & fixes inner "Share Video File"
+                button with synchronous native share and instant WhatsApp fallback.
+   ============================================================================ */
+
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -490,6 +497,24 @@ export default function Home() {
     }));
   }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
+  // Synchronous Mobile Audio Context Activation Helper
+  const ensureAudioContext = async () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!window._sharedAudioCtx) {
+        window._sharedAudioCtx = new AudioContextClass();
+      }
+      if (window._sharedAudioCtx.state === "suspended") {
+        await window._sharedAudioCtx.resume();
+      }
+      return window._sharedAudioCtx;
+    } catch (e) {
+      console.warn("Mobile WebAudio initialization fallback:", e);
+      return null;
+    }
+  };
+
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
       if (isVideoPlaying) {
@@ -605,8 +630,10 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Mobile Audio Recording Engine
+  // Canvas Video & Mobile High-Fidelity Audio Recording Engine
   const generateImprintedFile = async () => {
+    const audioCtx = await ensureAudioContext();
+
     let mediaElement = videoRef.current;
     
     // Fallback if video element not ready or image mode active
@@ -628,112 +655,75 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Direct stream capture for soundtrack
+    let audioDestStream = null;
     if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
       const video = videoRef.current;
       video.currentTime = 0;
       video.muted = false;
       video.volume = 1.0;
 
-      try {
-        await video.play();
-      } catch (e) {
-        console.warn("Video playback capture trigger:", e);
+      if (video.paused) {
+        await video.play().catch(() => {});
       }
 
-      let sourceAudioStream = null;
-      if (video.captureStream) {
-        sourceAudioStream = video.captureStream();
-      } else if (video.mozCaptureStream) {
-        sourceAudioStream = video.mozCaptureStream();
-      }
-
-      if (sourceAudioStream && sourceAudioStream.getAudioTracks().length > 0) {
-        const audioTrack = sourceAudioStream.getAudioTracks()[0].clone();
-        canvasStream.addTrack(audioTrack);
-      } else {
-        // WebAudio Context Fallback
+      if (audioCtx) {
         try {
-          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-          if (AudioContextClass) {
-            if (!window._sharedAudioCtx) {
-              window._sharedAudioCtx = new AudioContextClass();
-            }
-            const audioCtx = window._sharedAudioCtx;
-            if (audioCtx.state === "suspended") {
-              await audioCtx.resume();
-            }
-
-            if (!video._mediaElementSource) {
-              video._mediaElementSource = audioCtx.createMediaElementSource(video);
-            }
-            
-            const audioDest = audioCtx.createMediaStreamDestination();
-            video._mediaElementSource.disconnect();
-            video._mediaElementSource.connect(audioDest);
-            video._mediaElementSource.connect(audioCtx.destination);
-            
-            if (audioDest.stream.getAudioTracks().length > 0) {
-              canvasStream.addTrack(audioDest.stream.getAudioTracks()[0]);
-            }
+          if (!video._mediaElementSource) {
+            video._mediaElementSource = audioCtx.createMediaElementSource(video);
           }
+          
+          const audioDest = audioCtx.createMediaStreamDestination();
+          video._mediaElementSource.disconnect();
+          video._mediaElementSource.connect(audioDest);
+          video._mediaElementSource.connect(audioCtx.destination);
+          audioDestStream = audioDest.stream;
         } catch (webAudioErr) {
-          console.warn("WebAudio capture fallback warning:", webAudioErr);
+          console.warn("WebAudio capture node fallback:", webAudioErr);
         }
+      }
+
+      if (audioDestStream) {
+        const audioTracks = audioDestStream.getAudioTracks();
+        audioTracks.forEach((track) => canvasStream.addTrack(track));
       }
     }
 
-    // MIME type & container extension determination
-    const getMimeConfig = () => {
+    const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const mp4Types = [
-          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+        const types = [
+          "video/mp4;codecs=avc1,mp4a.40.2",
           "video/mp4;codecs=h264,aac",
-          "video/mp4"
-        ];
-        for (const type of mp4Types) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            return { mimeType: type, ext: "mp4" };
-          }
-        }
-        const webmTypes = [
+          "video/mp4",
           "video/webm;codecs=vp9,opus",
           "video/webm;codecs=vp8,opus",
           "video/webm"
         ];
-        for (const type of webmTypes) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            return { mimeType: type, ext: "webm" };
-          }
+        for (const type of types) {
+          if (MediaRecorder.isTypeSupported(type)) return type;
         }
       }
-      return { mimeType: "video/mp4", ext: "mp4" };
+      return "video/mp4";
     };
 
-    const { mimeType, ext } = getMimeConfig();
+    const mimeType = getMimeType();
     let recorder;
     try {
       recorder = new MediaRecorder(canvasStream, { 
         mimeType, 
-        videoBitsPerSecond: 3500000,
-        audioBitsPerSecond: 128000
+        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
+        audioBitsPerSecond: 128000   // High Fidelity 128kbps AAC Audio
       });
     } catch (e) {
       try {
-        recorder = new MediaRecorder(canvasStream);
+        recorder = new MediaRecorder(canvasStream, { mimeType: "video/webm" });
       } catch (e2) {
-        console.error("MediaRecorder init failed:", e2);
+        recorder = new MediaRecorder(canvasStream);
       }
     }
 
     const chunks = [];
 
     return new Promise((resolve) => {
-      if (!recorder) {
-        resolve({ blob: null, file: null, fileName: `GreetingAI_Card.${ext}` });
-        return;
-      }
-
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
@@ -742,11 +732,10 @@ export default function Home() {
         if (videoRef.current) {
           videoRef.current.muted = isMuted;
         }
-        const actualMime = recorder.mimeType || mimeType;
-        const actualExt = actualMime.includes("webm") ? "webm" : "mp4";
-        const blob = new Blob(chunks, { type: actualMime });
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${actualExt}`;
-        const file = new File([blob], fileName, { type: actualMime });
+        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+        const blob = new Blob(chunks, { type: mimeType });
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+        const file = new File([blob], fileName, { type: mimeType });
         resolve({ blob, file, fileName });
       };
 
@@ -774,9 +763,9 @@ export default function Home() {
     });
   };
 
-  // BUTTON (1): Sole Function = Direct Local File Download Only
   const handleDirectDownload = async () => {
     if (!activeCard) return;
+    await ensureAudioContext();
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -803,7 +792,7 @@ export default function Home() {
     }
   };
 
-  // Strictly 4-line Share Caption
+  // Strictly 4-line Share Caption Layout
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -824,9 +813,10 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
-  // BUTTON (2): Sole Function = Direct Share Video via Native OS Sheet (WhatsApp/WeChat)
+  // BUTTON (2): Direct Share Trigger -> Auto-Download + Copy Caption + Open Modal Popup
   const handleShare = async () => {
     if (!activeCard) return;
+    await ensureAudioContext();
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -835,24 +825,7 @@ export default function Home() {
       const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Direct Web Share API execution (Preserving active user gesture token)
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: `GreetingAI Studio - ${activeCard.category}`,
-            text: shareCaption,
-            files: [file]
-          });
-          // Direct share succeeded natively! End execution without extra downloads or popups.
-          setIsSharing(false);
-          setDownloadProgress(0);
-          return;
-        } catch (shareErr) {
-          console.log("Native share sheet dismissed by user:", shareErr);
-        }
-      }
-
-      // 2. Fallback Modal ONLY if native file sharing is unsupported (e.g. Desktop browsers)
+      // 1. Save data for popup modal
       setPreparedShareData({
         file,
         blob,
@@ -860,8 +833,26 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
-      setShareModalOpen(true);
 
+      // 2. Direct Video File Download to local storage
+      if (blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
+
+      // 3. Copy Text Caption to Clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption).catch(() => {});
+      }
+
+      // 4. Always display "E-Card Video Ready to Share!" Modal Popup (Image P8)
+      setShareModalOpen(true);
     } catch (err) {
       console.error("Share handling error:", err);
       alert("An error occurred during video creation. Please try again.");
@@ -877,6 +868,7 @@ export default function Home() {
       return;
     }
 
+    await ensureAudioContext();
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -928,7 +920,7 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* DESKTOP FALLBACK SHARE MODAL */}
+      {/* SHARE ACTION MODAL POPUP (Image P8) */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
@@ -942,41 +934,67 @@ export default function Home() {
             <div className="flex items-center space-x-3 text-emerald-400">
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
-                <h3 className="text-lg font-extrabold text-white">E-Card Video Ready!</h3>
-                <p className="text-xs text-slate-300">Desktop Fallback Sharing Mode</p>
+                <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
+                <p className="text-xs text-slate-300">Video downloaded & caption copied.</p>
               </div>
             </div>
 
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
               <p className="font-semibold text-amber-300 flex items-center space-x-1">
                 <FileVideo className="h-4 w-4 text-amber-400" />
-                <span>Video File: {preparedShareData.fileName}</span>
+                <span>Downloaded File: {preparedShareData.fileName}</span>
               </p>
               <div className="bg-slate-900 p-2.5 rounded-lg whitespace-pre-wrap font-sans text-slate-200 border border-slate-800">
                 {preparedShareData.shareCaption}
               </div>
             </div>
 
+            <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
+            </div>
+
             <div className="space-y-3 pt-1">
+              {/* INNER BUTTON WITH GUARANTEED FAIL-SAFE WHATSAPP FALLBACK */}
               <button
-                onClick={() => {
-                  if (preparedShareData.blob) {
-                    const blobUrl = URL.createObjectURL(preparedShareData.blob);
-                    const link = document.createElement("a");
-                    link.href = blobUrl;
-                    link.download = preparedShareData.fileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                onClick={async () => {
+                  try {
+                    if (preparedShareData?.file && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                      await navigator.share({
+                        title: `GreetingAI Studio - ${activeCard.category}`,
+                        text: preparedShareData.shareCaption,
+                        files: [preparedShareData.file]
+                      });
+                    } else {
+                      window.open(preparedShareData.whatsappUrl, "_blank");
+                    }
+                  } catch (e) {
+                    console.log("Native share blocked or closed, opening WhatsApp directly:", e);
+                    if (preparedShareData?.whatsappUrl) {
+                      window.open(preparedShareData.whatsappUrl, "_blank");
+                    }
                   }
-                  window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
               >
                 <Share2 className="h-5 w-5" />
-                <span>Download & Open WhatsApp</span>
+                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  window.open(preparedShareData.whatsappUrl, "_blank");
+                }}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
+              >
+                <MessageCircle className="h-4 w-4 text-green-400" />
+                <span>Open WhatsApp Text Link</span>
               </button>
             </div>
+
+            <p className="text-[11px] text-slate-400 text-center leading-snug">
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
+            </p>
           </div>
         </div>
       )}
@@ -1405,10 +1423,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* SEPARATE DUAL ACTION BUTTONS */}
+            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                {/* BUTTON (1): DIRECT DOWNLOAD ONLY */}
                 <button
                   onClick={handleDirectDownload}
                   disabled={isDownloading || isSharing}
@@ -1427,7 +1444,7 @@ export default function Home() {
                   )}
                 </button>
 
-                {/* BUTTON (2): DIRECT VIDEO SHARE VIA WHATSAPP / WECHAT */}
+                {/* BUTTON (2): DIRECT SHARE VIA WHATSAPP / WECHAT */}
                 <button
                   onClick={handleShare}
                   disabled={isDownloading || isSharing}
