@@ -490,6 +490,24 @@ export default function Home() {
     }));
   }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
+  // Synchronous Mobile Audio Context Activation Helper
+  const ensureAudioContext = async () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!window._sharedAudioCtx) {
+        window._sharedAudioCtx = new AudioContextClass();
+      }
+      if (window._sharedAudioCtx.state === "suspended") {
+        await window._sharedAudioCtx.resume();
+      }
+      return window._sharedAudioCtx;
+    } catch (e) {
+      console.warn("Mobile WebAudio initialization fallback:", e);
+      return null;
+    }
+  };
+
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
       if (isVideoPlaying) {
@@ -605,8 +623,11 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & High-Quality WebAudio Recording Engine
+  // Canvas Video & Mobile High-Fidelity Audio Recording Engine
   const generateImprintedFile = async () => {
+    // Un-mute mobile WebAudio Context directly
+    const audioCtx = await ensureAudioContext();
+
     let mediaElement = videoRef.current;
     
     // Fallback if video element not ready or image mode active
@@ -639,17 +660,8 @@ export default function Home() {
         await video.play().catch(() => {});
       }
 
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          if (!window._sharedAudioCtx) {
-            window._sharedAudioCtx = new AudioContextClass();
-          }
-          const audioCtx = window._sharedAudioCtx;
-          if (audioCtx.state === "suspended") {
-            await audioCtx.resume();
-          }
-
+      if (audioCtx) {
+        try {
           if (!video._mediaElementSource) {
             video._mediaElementSource = audioCtx.createMediaElementSource(video);
           }
@@ -659,9 +671,9 @@ export default function Home() {
           video._mediaElementSource.connect(audioDest);
           video._mediaElementSource.connect(audioCtx.destination);
           audioDestStream = audioDest.stream;
+        } catch (webAudioErr) {
+          console.warn("WebAudio capture node fallback:", webAudioErr);
         }
-      } catch (webAudioErr) {
-        console.warn("WebAudio capture fallback:", webAudioErr);
       }
 
       if (audioDestStream) {
@@ -673,6 +685,7 @@ export default function Home() {
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
+          "video/mp4;codecs=avc1,mp4a.40.2",
           "video/mp4;codecs=h264,aac",
           "video/mp4",
           "video/webm;codecs=vp9,opus",
@@ -683,7 +696,7 @@ export default function Home() {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
       }
-      return "video/webm";
+      return "video/mp4";
     };
 
     const mimeType = getMimeType();
@@ -691,8 +704,8 @@ export default function Home() {
     try {
       recorder = new MediaRecorder(canvasStream, { 
         mimeType, 
-        videoBitsPerSecond: 3500000, // High-definition 3.5Mbps
-        audioBitsPerSecond: 128000   // Clean 128kbps stereo audio
+        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
+        audioBitsPerSecond: 128000   // High Fidelity 128kbps AAC Audio
       });
     } catch (e) {
       try {
@@ -746,6 +759,7 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
+    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -795,6 +809,7 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
+    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -803,7 +818,7 @@ export default function Home() {
       const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Save prepared data
+      // 1. Store prepared data
       setPreparedShareData({
         file,
         blob,
@@ -812,7 +827,7 @@ export default function Home() {
         whatsappUrl
       });
 
-      // 2. Automatically download the imprinted video file locally
+      // 2. Download video file
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -822,14 +837,14 @@ export default function Home() {
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 
-      // 3. Copy text caption to clipboard automatically
+      // 3. Copy caption
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareCaption).catch(() => {});
       }
 
       let nativeShareSuccess = false;
 
-      // 4. Attempt native share sheet if browser gesture token is still valid
+      // 4. Mobile Native Web Share API trigger
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -843,7 +858,7 @@ export default function Home() {
         }
       }
 
-      // 5. Always display the Share Modal if native share was blocked/cancelled
+      // 5. Fallback Share Modal
       if (!nativeShareSuccess) {
         setShareModalOpen(true);
       }
@@ -862,6 +877,7 @@ export default function Home() {
       return;
     }
 
+    await ensureAudioContext(); // Immediate Mobile Unlock
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -951,6 +967,7 @@ export default function Home() {
               <button
                 onClick={async () => {
                   try {
+                    await ensureAudioContext();
                     if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
                         title: `GreetingAI Studio - ${activeCard.category}`,
