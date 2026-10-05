@@ -1,7 +1,7 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: Fixes non-responsive Web Share API file button, adds multi-tier
-                mobile/desktop fallbacks, and prevents label text truncation.
+   DESCRIPTION: GreetingAI Studio with restored Canvas text imprinting and
+                dual-payload (Video + Text) Web Share API for WhatsApp.
    ============================================================================ */
 
 "use client";
@@ -456,7 +456,6 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
-  const [modalShareState, setModalShareState] = useState("");
 
   const initialStaged = {
     id: 1,
@@ -681,7 +680,6 @@ export default function Home() {
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
-          "video/mp4;codecs=avc1,mp4a.40.2",
           "video/mp4;codecs=h264,aac",
           "video/mp4",
           "video/webm;codecs=vp9,opus",
@@ -692,17 +690,11 @@ export default function Home() {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
       }
-      return "video/mp4";
+      return "video/webm";
     };
 
     const mimeType = getMimeType();
-    let recorder;
-    try {
-      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 3500000 });
-    } catch (e) {
-      recorder = new MediaRecorder(canvasStream);
-    }
-
+    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
     return new Promise((resolve) => {
@@ -758,7 +750,7 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
       const link = document.createElement("a");
@@ -809,7 +801,7 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      URL.revokeObjectURL(blobUrl);
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareCaption).catch(() => {});
@@ -822,7 +814,6 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
-      setModalShareState("");
       setShareModalOpen(true);
     } catch (err) {
       console.log("Share sheet unhandled:", err);
@@ -918,64 +909,35 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Banner Notice matching P12/P13 screenshot */}
-            <div className="bg-emerald-950/80 border border-emerald-500/50 rounded-xl p-3 text-xs text-emerald-200 font-medium flex items-center space-x-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
-            </div>
-
             <div className="space-y-3 pt-1">
-              {/* PRIMARY MULTI-TIER SHARE BUTTON */}
+              {/* RESTORED DUAL-PAYLOAD SHARE (FILE + TITLE + TEXT) */}
               <button
                 onClick={async () => {
-                  setModalShareState("opening");
                   try {
-                    // Tier 1: Native Mobile File Share Sheet
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
-                      await navigator.share({
-                        files: [preparedShareData.file]
-                      });
-                      setModalShareState("");
-                      return;
-                    }
-                    // Tier 2: Native Web Share Text Sheet
-                    if (navigator.share) {
+                    if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
                         title: `GreetingAI Studio - ${activeCard.category}`,
                         text: preparedShareData.shareCaption,
-                        url: window.location.href
+                        files: [preparedShareData.file]
                       });
-                      setModalShareState("");
-                      return;
+                    } else {
+                      window.open(preparedShareData.whatsappUrl, "_blank");
                     }
                   } catch (e) {
-                    console.warn("Native share sheet cancelled or fallback:", e);
+                    console.log("Native share cancelled or failed:", e);
                   }
-
-                  // Tier 3: Universal WhatsApp Link Fallback
-                  setModalShareState("");
-                  window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-xs sm:text-sm text-center leading-snug"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
               >
-                {modalShareState === "opening" ? (
-                  <>
-                    <RefreshCw className="h-5 w-5 animate-spin shrink-0" />
-                    <span>Opening OS Share Sheet...</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="h-5 w-5 shrink-0" />
-                    <span className="whitespace-normal">Share Video File (WhatsApp / WeChat / Apps)</span>
-                  </>
-                )}
+                <Share2 className="h-5 w-5 shrink-0" />
+                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
               </button>
 
               <button
                 onClick={() => {
                   window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs text-center"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
               >
                 <MessageCircle className="h-4 w-4 text-green-400 shrink-0" />
                 <span>Open WhatsApp Text Link</span>
@@ -983,7 +945,7 @@ export default function Home() {
             </div>
 
             <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to send the video directly. If using WhatsApp Web on PC, drag the downloaded <strong>{preparedShareData.fileName}</strong> file into your chat!
             </p>
           </div>
         </div>
