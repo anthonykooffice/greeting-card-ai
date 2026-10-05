@@ -1,8 +1,8 @@
 /* ============================================================================
-   REFERENCE FILE NO: REF-APP-PAGE-V2.1
+   REFERENCE FILE NO: REF-APP-PAGE-V2.3
    FILE PATH: app/page.js
-   DESCRIPTION: Restores E-Card Share Modal Popup & fixes inner "Share Video File"
-                button with synchronous native share and instant WhatsApp fallback.
+   DESCRIPTION: Fixes WhatsApp video attachment sharing by separating Web Share 
+                file payload from text string and auto-copying text caption.
    ============================================================================ */
 
 "use client";
@@ -332,7 +332,7 @@ const TRANSLATIONS = {
 };
 
 // Canvas Text Overlay Imprinter Engine
-const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColor, activeStyleObj) => {
+const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
 
@@ -341,12 +341,7 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   if (activeStyleObj && activeStyleObj.cssFilter) {
     ctx.filter = activeStyleObj.cssFilter;
   }
-  if (mediaElement) {
-    ctx.drawImage(mediaElement, 0, 0, w, h);
-  } else {
-    ctx.fillStyle = "#1e293b";
-    ctx.fillRect(0, 0, w, h);
-  }
+  ctx.drawImage(video, 0, 0, w, h);
   ctx.restore();
 
   // 2. Draw Bottom 28% Dark Gradient Overlay Box
@@ -365,11 +360,11 @@ const drawCanvasFrame = (ctx, canvas, mediaElement, card, selectedFont, textColo
   ctx.textBaseline = "middle";
 
   let fontFamily = "serif";
-  if (selectedFont?.id === "serif") fontFamily = "'Playfair Display', serif";
-  else if (selectedFont?.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-  else if (selectedFont?.id === "hand") fontFamily = "'Dancing Script', cursive";
-  else if (selectedFont?.id === "display") fontFamily = "'Cinzel Decorative', serif";
-  else if (selectedFont?.id === "sans") fontFamily = "'Montserrat', sans-serif";
+  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
@@ -497,24 +492,6 @@ export default function Home() {
     }));
   }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
-  // Synchronous Mobile Audio Context Activation Helper
-  const ensureAudioContext = async () => {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-      if (!window._sharedAudioCtx) {
-        window._sharedAudioCtx = new AudioContextClass();
-      }
-      if (window._sharedAudioCtx.state === "suspended") {
-        await window._sharedAudioCtx.resume();
-      }
-      return window._sharedAudioCtx;
-    } catch (e) {
-      console.warn("Mobile WebAudio initialization fallback:", e);
-      return null;
-    }
-  };
-
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
       if (isVideoPlaying) {
@@ -630,61 +607,74 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Mobile High-Fidelity Audio Recording Engine
+  // Canvas Video & Full Soundtrack WebAudio Recording Engine
   const generateImprintedFile = async () => {
-    const audioCtx = await ensureAudioContext();
+    const video = videoRef.current;
+    if (!video) throw new Error("Video stream reference not ready.");
 
-    let mediaElement = videoRef.current;
-    
-    // Fallback if video element not ready or image mode active
-    if (!mediaElement || (!activeCard.url?.endsWith(".mp4") && !activeCard.media?.type?.startsWith("video"))) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = activeCard.media ? activeCard.media.url : activeCard.url;
-      await new Promise((res) => {
-        img.onload = res;
-        img.onerror = res;
-      });
-      mediaElement = img;
+    video.currentTime = 0;
+    const previousMuteState = video.muted;
+    video.muted = false;
+    video.volume = 1.0;
+
+    if (video.paused) {
+      await video.play().catch(() => {});
     }
 
     const canvas = document.createElement("canvas");
-    canvas.width = mediaElement.videoWidth || mediaElement.width || 800;
-    canvas.height = mediaElement.videoHeight || mediaElement.height || 600;
+    canvas.width = video.videoWidth || 800;
+    canvas.height = video.videoHeight || 600;
     const ctx = canvas.getContext("2d");
 
     const canvasStream = canvas.captureStream(30);
 
+    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
     let audioDestStream = null;
-    if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
-      const video = videoRef.current;
-      video.currentTime = 0;
-      video.muted = false;
-      video.volume = 1.0;
-
-      if (video.paused) {
-        await video.play().catch(() => {});
-      }
-
-      if (audioCtx) {
-        try {
-          if (!video._mediaElementSource) {
-            video._mediaElementSource = audioCtx.createMediaElementSource(video);
-          }
-          
-          const audioDest = audioCtx.createMediaStreamDestination();
-          video._mediaElementSource.disconnect();
-          video._mediaElementSource.connect(audioDest);
-          video._mediaElementSource.connect(audioCtx.destination);
-          audioDestStream = audioDest.stream;
-        } catch (webAudioErr) {
-          console.warn("WebAudio capture node fallback:", webAudioErr);
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        if (!window._sharedAudioCtx) {
+          window._sharedAudioCtx = new AudioContextClass();
         }
-      }
+        const audioCtx = window._sharedAudioCtx;
+        if (audioCtx.state === "suspended") {
+          await audioCtx.resume();
+        }
 
-      if (audioDestStream) {
-        const audioTracks = audioDestStream.getAudioTracks();
-        audioTracks.forEach((track) => canvasStream.addTrack(track));
+        if (!video._mediaElementSource) {
+          video._mediaElementSource = audioCtx.createMediaElementSource(video);
+        }
+        
+        const audioDest = audioCtx.createMediaStreamDestination();
+        video._mediaElementSource.disconnect();
+        video._mediaElementSource.connect(audioDest);
+        video._mediaElementSource.connect(audioCtx.destination);
+        audioDestStream = audioDest.stream;
+      }
+    } catch (webAudioErr) {
+      console.warn("WebAudio capture fallback:", webAudioErr);
+    }
+
+    if (audioDestStream) {
+      const audioTracks = audioDestStream.getAudioTracks();
+      audioTracks.forEach((track) => canvasStream.addTrack(track));
+    } else {
+      try {
+        let videoAudioStream = null;
+        if (typeof video.captureStream === "function") {
+          videoAudioStream = video.captureStream();
+        } else if (typeof video.mozCaptureStream === "function") {
+          videoAudioStream = video.mozCaptureStream();
+        }
+
+        if (videoAudioStream) {
+          const audioTracks = videoAudioStream.getAudioTracks();
+          audioTracks.forEach((track) => {
+            canvasStream.addTrack(track.clone ? track.clone() : track);
+          });
+        }
+      } catch (audioErr) {
+        console.log("Audio track capture fallback note:", audioErr);
       }
     }
 
@@ -708,17 +698,9 @@ export default function Home() {
     const mimeType = getMimeType();
     let recorder;
     try {
-      recorder = new MediaRecorder(canvasStream, { 
-        mimeType, 
-        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
-        audioBitsPerSecond: 128000   // High Fidelity 128kbps AAC Audio
-      });
+      recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 3500000 });
     } catch (e) {
-      try {
-        recorder = new MediaRecorder(canvasStream, { mimeType: "video/webm" });
-      } catch (e2) {
-        recorder = new MediaRecorder(canvasStream);
-      }
+      recorder = new MediaRecorder(canvasStream);
     }
 
     const chunks = [];
@@ -729,9 +711,7 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        if (videoRef.current) {
-          videoRef.current.muted = isMuted;
-        }
+        video.muted = previousMuteState;
         const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         const blob = new Blob(chunks, { type: mimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
@@ -741,9 +721,9 @@ export default function Home() {
 
       recorder.start();
 
-      const recDuration = (videoRef.current?.duration && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) 
-        ? videoRef.current.duration * 1000 
-        : 5000;
+      const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
+        ? video.duration * 1000 
+        : 15000;
 
       const startTime = Date.now();
 
@@ -754,7 +734,7 @@ export default function Home() {
         if (elapsed >= recDuration) {
           recorder.stop();
         } else {
-          drawCanvasFrame(ctx, canvas, mediaElement, activeCard, selectedFont, textColor, activeStyleObj);
+          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
           requestAnimationFrame(loop);
         }
       };
@@ -765,7 +745,6 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
-    await ensureAudioContext();
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -792,7 +771,7 @@ export default function Home() {
     }
   };
 
-  // Strictly 4-line Share Caption Layout
+  // Structured multi-line share caption
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -813,10 +792,8 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
-  // BUTTON (2): Direct Share Trigger -> Auto-Download + Copy Caption + Open Modal Popup
   const handleShare = async () => {
     if (!activeCard) return;
-    await ensureAudioContext();
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -825,7 +802,19 @@ export default function Home() {
       const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Save data for popup modal
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption).catch(() => {});
+      }
+
       setPreparedShareData({
         file,
         blob,
@@ -833,29 +822,9 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
-
-      // 2. Direct Video File Download to local storage
-      if (blob) {
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      }
-
-      // 3. Copy Text Caption to Clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
-      }
-
-      // 4. Always display "E-Card Video Ready to Share!" Modal Popup (Image P8)
       setShareModalOpen(true);
     } catch (err) {
-      console.error("Share handling error:", err);
-      alert("An error occurred during video creation. Please try again.");
+      console.log("Share sheet unhandled:", err);
     } finally {
       setIsSharing(false);
       setDownloadProgress(0);
@@ -868,7 +837,6 @@ export default function Home() {
       return;
     }
 
-    await ensureAudioContext();
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -920,7 +888,7 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* SHARE ACTION MODAL POPUP (Image P8) */}
+      {/* SHARE ACTION MODAL */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
@@ -935,7 +903,7 @@ export default function Home() {
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
                 <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
-                <p className="text-xs text-slate-300">Video downloaded & caption copied.</p>
+                <p className="text-xs text-slate-300">Video saved & caption copied to clipboard.</p>
               </div>
             </div>
 
@@ -949,30 +917,21 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
-            </div>
-
             <div className="space-y-3 pt-1">
-              {/* INNER BUTTON WITH GUARANTEED FAIL-SAFE WHATSAPP FALLBACK */}
+              {/* MEDIA-FIRST SHARE BUTTON: Pass ONLY 'files' to ensure video attachment opens */}
               <button
                 onClick={async () => {
                   try {
-                    if (preparedShareData?.file && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                    if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
-                        title: `GreetingAI Studio - ${activeCard.category}`,
-                        text: preparedShareData.shareCaption,
                         files: [preparedShareData.file]
                       });
                     } else {
                       window.open(preparedShareData.whatsappUrl, "_blank");
                     }
                   } catch (e) {
-                    console.log("Native share blocked or closed, opening WhatsApp directly:", e);
-                    if (preparedShareData?.whatsappUrl) {
-                      window.open(preparedShareData.whatsappUrl, "_blank");
-                    }
+                    console.log("Native share fallback triggered:", e);
+                    window.open(preparedShareData.whatsappUrl, "_blank");
                   }
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
@@ -993,7 +952,7 @@ export default function Home() {
             </div>
 
             <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to send the video attachment to WhatsApp. The text caption is copied to your clipboard so you can paste it into the chat!
             </p>
           </div>
         </div>
@@ -1444,7 +1403,6 @@ export default function Home() {
                   )}
                 </button>
 
-                {/* BUTTON (2): DIRECT SHARE VIA WHATSAPP / WECHAT */}
                 <button
                   onClick={handleShare}
                   disabled={isDownloading || isSharing}
