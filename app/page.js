@@ -691,8 +691,8 @@ export default function Home() {
     try {
       recorder = new MediaRecorder(canvasStream, { 
         mimeType, 
-        videoBitsPerSecond: 3500000, // HD Quality 3.5Mbps
-        audioBitsPerSecond: 128000   // High Fidelity 128kbps Audio
+        videoBitsPerSecond: 3500000, // High-definition 3.5Mbps
+        audioBitsPerSecond: 128000   // Clean 128kbps stereo audio
       });
     } catch (e) {
       try {
@@ -801,41 +801,55 @@ export default function Home() {
     try {
       const { file, blob, fileName } = await generateImprintedFile();
       const shareCaption = buildShareCaption(activeCard, lang);
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Trigger Native OS Web Share (Mobile direct to WhatsApp Video + Caption -> D32 Output)
+      // 1. Save prepared data
+      setPreparedShareData({
+        file,
+        blob,
+        fileName,
+        shareCaption,
+        whatsappUrl
+      });
+
+      // 2. Automatically download the imprinted video file locally
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      // 3. Copy text caption to clipboard automatically
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption).catch(() => {});
+      }
+
+      let nativeShareSuccess = false;
+
+      // 4. Attempt native share sheet if browser gesture token is still valid
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `GreetingAI Studio - ${activeCard.category}`,
-          text: shareCaption,
-          files: [file]
-        });
-      } else {
-        // 2. PC / Web Browser Desktop Fallback
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        try {
+          await navigator.share({
+            title: `GreetingAI Studio - ${activeCard.category}`,
+            text: shareCaption,
+            files: [file]
+          });
+          nativeShareSuccess = true;
+        } catch (shareErr) {
+          console.log("Native share gesture token timed out or closed, opening modal:", shareErr);
         }
+      }
 
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-        setPreparedShareData({
-          file,
-          blob,
-          fileName,
-          shareCaption,
-          whatsappUrl
-        });
+      // 5. Always display the Share Modal if native share was blocked/cancelled
+      if (!nativeShareSuccess) {
         setShareModalOpen(true);
       }
     } catch (err) {
-      console.log("Share sheet cancelled or unhandled:", err);
+      console.error("Share handling error:", err);
+      alert("An error occurred during video creation. Please try again.");
     } finally {
       setIsSharing(false);
       setDownloadProgress(0);
@@ -899,7 +913,7 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* SHARE ACTION MODAL FOR DESKTOP FALLBACK */}
+      {/* SHARE ACTION MODAL */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
@@ -930,7 +944,7 @@ export default function Home() {
 
             <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>✓ Video downloaded! Drag {preparedShareData.fileName} into your WhatsApp Web chat.</span>
+              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
             </div>
 
             <div className="space-y-3 pt-1">
@@ -968,7 +982,7 @@ export default function Home() {
             </div>
 
             <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to send the video directly. If using WhatsApp Web on PC, drag the downloaded <strong>{preparedShareData.fileName}</strong> file into your chat!
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
             </p>
           </div>
         </div>
