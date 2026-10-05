@@ -628,7 +628,7 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Audio capture logic using direct HTMLMediaElement captureStream (Mobile Unmute Fix)
+    // Direct Audio stream capture fix
     if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
       const video = videoRef.current;
       video.currentTime = 0;
@@ -683,7 +683,7 @@ export default function Home() {
       }
     }
 
-    // MIME type & container extension determination to fix WhatsApp processing errors
+    // MIME type & container extension determination
     const getMimeConfig = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const mp4Types = [
@@ -980,8 +980,10 @@ export default function Home() {
             </div>
 
             <div className="space-y-3 pt-1">
+              {/* FIXED SHARE BUTTON WITH ROBUST DIRECT FALLBACK */}
               <button
                 onClick={async () => {
+                  let sharedSuccessfully = false;
                   try {
                     if (preparedShareData.file && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
@@ -989,11 +991,15 @@ export default function Home() {
                         text: preparedShareData.shareCaption,
                         files: [preparedShareData.file]
                       });
-                    } else {
-                      window.open(preparedShareData.whatsappUrl, "_blank");
+                      sharedSuccessfully = true;
                     }
                   } catch (e) {
-                    console.log("Native share cancelled or failed:", e);
+                    console.warn("Native share sheet failed/cancelled:", e);
+                  }
+
+                  // Robust fallback: Always open WhatsApp URL if native share wasn't triggered
+                  if (!sharedSuccessfully && preparedShareData.whatsappUrl) {
+                    window.open(preparedShareData.whatsappUrl, "_blank");
                   }
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
@@ -1014,7 +1020,7 @@ export default function Home() {
             </div>
 
             <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the video attached!
+              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the text caption attached. Then attach <strong>{preparedShareData.fileName}</strong> from your device's downloads!
             </p>
           </div>
         </div>
