@@ -1,7 +1,7 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: Fixed share button label truncation (WhatsApp / WeChat / Apps)
-                and responsive text wrapping for mobile screens (P12 fix).
+   DESCRIPTION: Fixes non-responsive Web Share API file button, adds multi-tier
+                mobile/desktop fallbacks, and prevents label text truncation.
    ============================================================================ */
 
 "use client";
@@ -456,6 +456,7 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
+  const [modalShareState, setModalShareState] = useState("");
 
   const initialStaged = {
     id: 1,
@@ -821,6 +822,7 @@ export default function Home() {
         shareCaption,
         whatsappUrl
       });
+      setModalShareState("");
       setShareModalOpen(true);
     } catch (err) {
       console.log("Share sheet unhandled:", err);
@@ -916,33 +918,57 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Banner Notice matching P12 screenshot */}
+            {/* Banner Notice matching P12/P13 screenshot */}
             <div className="bg-emerald-950/80 border border-emerald-500/50 rounded-xl p-3 text-xs text-emerald-200 font-medium flex items-center space-x-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
               <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
             </div>
 
             <div className="space-y-3 pt-1">
-              {/* PRIMARY SHARE BUTTON - Clean full label, no truncation */}
+              {/* PRIMARY MULTI-TIER SHARE BUTTON */}
               <button
                 onClick={async () => {
+                  setModalShareState("opening");
                   try {
-                    if (navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
+                    // Tier 1: Native Mobile File Share Sheet
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
                       await navigator.share({
                         files: [preparedShareData.file]
                       });
-                    } else {
-                      window.open(preparedShareData.whatsappUrl, "_blank");
+                      setModalShareState("");
+                      return;
+                    }
+                    // Tier 2: Native Web Share Text Sheet
+                    if (navigator.share) {
+                      await navigator.share({
+                        title: `GreetingAI Studio - ${activeCard.category}`,
+                        text: preparedShareData.shareCaption,
+                        url: window.location.href
+                      });
+                      setModalShareState("");
+                      return;
                     }
                   } catch (e) {
-                    console.log("Native share fallback triggered:", e);
-                    window.open(preparedShareData.whatsappUrl, "_blank");
+                    console.warn("Native share sheet cancelled or fallback:", e);
                   }
+
+                  // Tier 3: Universal WhatsApp Link Fallback
+                  setModalShareState("");
+                  window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-xs sm:text-sm text-center leading-snug"
               >
-                <Share2 className="h-5 w-5 shrink-0" />
-                <span className="whitespace-normal">Share Video File (WhatsApp / WeChat / Apps)</span>
+                {modalShareState === "opening" ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 animate-spin shrink-0" />
+                    <span>Opening OS Share Sheet...</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-5 w-5 shrink-0" />
+                    <span className="whitespace-normal">Share Video File (WhatsApp / WeChat / Apps)</span>
+                  </>
+                )}
               </button>
 
               <button
