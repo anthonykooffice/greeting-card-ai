@@ -605,7 +605,7 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Mobile High-Fidelity Audio Recording Engine
+  // Canvas Video & Mobile Audio Recording Engine
   const generateImprintedFile = async () => {
     let mediaElement = videoRef.current;
     
@@ -628,7 +628,7 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Direct Audio stream capture fix
+    // Direct stream capture for soundtrack
     if (videoRef.current && (activeCard.url?.endsWith(".mp4") || activeCard.media?.type === "video")) {
       const video = videoRef.current;
       video.currentTime = 0;
@@ -774,6 +774,7 @@ export default function Home() {
     });
   };
 
+  // BUTTON (1): Sole Function = Direct Local File Download Only
   const handleDirectDownload = async () => {
     if (!activeCard) return;
     setIsDownloading(true);
@@ -802,7 +803,7 @@ export default function Home() {
     }
   };
 
-  // Strictly 4-line Share Caption Layout
+  // Strictly 4-line Share Caption
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -823,6 +824,7 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
+  // BUTTON (2): Sole Function = Direct Share Video via Native OS Sheet (WhatsApp/WeChat)
   const handleShare = async () => {
     if (!activeCard) return;
     setIsSharing(true);
@@ -833,35 +835,7 @@ export default function Home() {
       const shareCaption = buildShareCaption(activeCard, lang);
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
 
-      // 1. Store prepared data
-      setPreparedShareData({
-        file,
-        blob,
-        fileName,
-        shareCaption,
-        whatsappUrl
-      });
-
-      // 2. Download video file
-      if (blob) {
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      }
-
-      // 3. Copy caption
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
-      }
-
-      let nativeShareSuccess = false;
-
-      // 4. Mobile Native Web Share API trigger
+      // 1. Direct Web Share API execution (Preserving active user gesture token)
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -869,16 +843,25 @@ export default function Home() {
             text: shareCaption,
             files: [file]
           });
-          nativeShareSuccess = true;
+          // Direct share succeeded natively! End execution without extra downloads or popups.
+          setIsSharing(false);
+          setDownloadProgress(0);
+          return;
         } catch (shareErr) {
-          console.log("Native share gesture token timed out or closed, opening modal:", shareErr);
+          console.log("Native share sheet dismissed by user:", shareErr);
         }
       }
 
-      // 5. Fallback Share Modal
-      if (!nativeShareSuccess) {
-        setShareModalOpen(true);
-      }
+      // 2. Fallback Modal ONLY if native file sharing is unsupported (e.g. Desktop browsers)
+      setPreparedShareData({
+        file,
+        blob,
+        fileName,
+        shareCaption,
+        whatsappUrl
+      });
+      setShareModalOpen(true);
+
     } catch (err) {
       console.error("Share handling error:", err);
       alert("An error occurred during video creation. Please try again.");
@@ -945,7 +928,7 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* SHARE ACTION MODAL */}
+      {/* DESKTOP FALLBACK SHARE MODAL */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
@@ -959,69 +942,41 @@ export default function Home() {
             <div className="flex items-center space-x-3 text-emerald-400">
               <CheckCircle2 className="h-8 w-8 shrink-0" />
               <div>
-                <h3 className="text-lg font-extrabold text-white">E-Card Video Ready to Share!</h3>
-                <p className="text-xs text-slate-300">Video downloaded & caption copied.</p>
+                <h3 className="text-lg font-extrabold text-white">E-Card Video Ready!</h3>
+                <p className="text-xs text-slate-300">Desktop Fallback Sharing Mode</p>
               </div>
             </div>
 
             <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
               <p className="font-semibold text-amber-300 flex items-center space-x-1">
                 <FileVideo className="h-4 w-4 text-amber-400" />
-                <span>Downloaded File: {preparedShareData.fileName}</span>
+                <span>Video File: {preparedShareData.fileName}</span>
               </p>
               <div className="bg-slate-900 p-2.5 rounded-lg whitespace-pre-wrap font-sans text-slate-200 border border-slate-800">
                 {preparedShareData.shareCaption}
               </div>
             </div>
 
-            <div className="bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl text-xs font-bold text-emerald-300 text-center flex items-center justify-center space-x-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
-            </div>
-
             <div className="space-y-3 pt-1">
-              {/* FIXED SHARE BUTTON WITH ROBUST DIRECT FALLBACK */}
               <button
-                onClick={async () => {
-                  let sharedSuccessfully = false;
-                  try {
-                    if (preparedShareData.file && navigator.canShare && navigator.canShare({ files: [preparedShareData.file] })) {
-                      await navigator.share({
-                        title: `GreetingAI Studio - ${activeCard.category}`,
-                        text: preparedShareData.shareCaption,
-                        files: [preparedShareData.file]
-                      });
-                      sharedSuccessfully = true;
-                    }
-                  } catch (e) {
-                    console.warn("Native share sheet failed/cancelled:", e);
+                onClick={() => {
+                  if (preparedShareData.blob) {
+                    const blobUrl = URL.createObjectURL(preparedShareData.blob);
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    link.download = preparedShareData.fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                   }
-
-                  // Robust fallback: Always open WhatsApp URL if native share wasn't triggered
-                  if (!sharedSuccessfully && preparedShareData.whatsappUrl) {
-                    window.open(preparedShareData.whatsappUrl, "_blank");
-                  }
+                  window.open(preparedShareData.whatsappUrl, "_blank");
                 }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center space-x-2 transition shadow-lg text-sm"
               >
                 <Share2 className="h-5 w-5" />
-                <span>Share Video File (WhatsApp / WeChat / Apps)</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  window.open(preparedShareData.whatsappUrl, "_blank");
-                }}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-extrabold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition text-xs"
-              >
-                <MessageCircle className="h-4 w-4 text-green-400" />
-                <span>Open WhatsApp Text Link</span>
+                <span>Download & Open WhatsApp</span>
               </button>
             </div>
-
-            <p className="text-[11px] text-slate-400 text-center leading-snug">
-              <strong>Tip:</strong> Tap <em>"Share Video File"</em> above to open WhatsApp directly with the text caption attached. Then attach <strong>{preparedShareData.fileName}</strong> from your device's downloads!
-            </p>
           </div>
         </div>
       )}
@@ -1450,9 +1405,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
+            {/* SEPARATE DUAL ACTION BUTTONS */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                {/* BUTTON (1): DIRECT DOWNLOAD ONLY */}
                 <button
                   onClick={handleDirectDownload}
                   disabled={isDownloading || isSharing}
@@ -1471,6 +1427,7 @@ export default function Home() {
                   )}
                 </button>
 
+                {/* BUTTON (2): DIRECT VIDEO SHARE VIA WHATSAPP / WECHAT */}
                 <button
                   onClick={handleShare}
                   disabled={isDownloading || isSharing}
