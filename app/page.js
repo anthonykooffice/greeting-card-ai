@@ -1,8 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Direct WebAudio MediaElement Capture.
-                Routes live unmuted HTML5 video audio into MediaRecorder to 
-                guarantee synchronized music playback on WhatsApp transfers.
+   DESCRIPTION: GreetingAI Studio with Synchronous User-Gesture Audio Capture.
+                Resolves silent mobile recordings by binding WebAudio unmuting 
+                and MediaElementSource routing strictly to direct user clicks.
    ============================================================================ */
 
 "use client";
@@ -471,22 +471,6 @@ export default function Home() {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
 
-  const ensureAudioContext = () => {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
-          window._sharedAudioCtx = new AudioContextClass();
-        }
-        if (window._sharedAudioCtx.state === "suspended") {
-          window._sharedAudioCtx.resume();
-        }
-      }
-    } catch (e) {
-      console.warn("AudioContext wake-up exception:", e);
-    }
-  };
-
   useEffect(() => {
     setActiveCard((prev) => ({
       ...prev,
@@ -621,23 +605,12 @@ export default function Home() {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
-    window._sharedAudioCtx = audioCtx;
-    if (audioCtx.state === "suspended") {
-      await audioCtx.resume();
-    }
-
+    // Video MUST be already playing and unmuted directly by the click handler.
+    // We just rewind it back to 0.
     video.currentTime = 0;
-    const previousMuteState = video.muted;
-    
-    // Crucial fix: video.muted MUST be false so audio passes into MediaElementSourceNode
-    video.muted = false;
-    video.volume = 1.0;
 
-    if (video.paused) {
-      await video.play().catch(() => {});
-    }
+    const audioCtx = window._sharedAudioCtx;
+    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -647,35 +620,37 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
-    let mediaElementSource = video._mediaElementSource;
 
-    try {
-      if (!mediaElementSource) {
-        video.crossOrigin = "anonymous";
-        mediaElementSource = audioCtx.createMediaElementSource(video);
-        video._mediaElementSource = mediaElementSource;
+    // Direct User-Gesture Audio Routing
+    if (!video._mediaElementSource) {
+      video.crossOrigin = "anonymous";
+      try {
+        video._mediaElementSource = audioCtx.createMediaElementSource(video);
+      } catch (e) {
+        console.warn("Failed creating MediaElementSource:", e);
       }
+    }
 
+    if (video._mediaElementSource) {
       const audioDest = audioCtx.createMediaStreamDestination();
+      try { video._mediaElementSource.disconnect(); } catch (e) {}
       
-      try { mediaElementSource.disconnect(); } catch (e) {}
+      video._mediaElementSource.connect(audioDest);
+      video._mediaElementSource.connect(audioCtx.destination); // Play out loud immediately
 
-      mediaElementSource.connect(audioDest);
-      mediaElementSource.connect(audioCtx.destination);
+      const tracks = audioDest.stream.getAudioTracks();
+      if (tracks.length > 0) {
+        audioTrack = tracks[0];
+      }
+    }
 
-      if (audioDest.stream.getAudioTracks().length > 0) {
-        audioTrack = audioDest.stream.getAudioTracks()[0];
-        audioTrack.enabled = true;
-      }
-    } catch (e) {
-      console.warn("WebAudio MediaElementSource capture notice:", e);
-      if (typeof video.captureStream === "function") {
-        const vStream = video.captureStream();
-        if (vStream && vStream.getAudioTracks().length > 0) {
-          audioTrack = vStream.getAudioTracks()[0];
-          audioTrack.enabled = true;
-        }
-      }
+    // Fallback if strict CORS strips MediaElement Audio
+    if (!audioTrack && typeof video.captureStream === "function") {
+      try {
+        const vs = video.captureStream();
+        const vTracks = vs.getAudioTracks();
+        if (vTracks.length > 0) audioTrack = vTracks[0];
+      } catch (e) {}
     }
 
     if (audioTrack) {
@@ -684,25 +659,17 @@ export default function Home() {
 
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        if (MediaRecorder.isTypeSupported("video/mp4")) {
-          return "video/mp4";
-        }
-        const webmTypes = [
-          "video/webm;codecs=vp8,opus",
-          "video/webm;codecs=vp9,opus",
-          "video/webm"
-        ];
-        for (const type of webmTypes) {
-          if (MediaRecorder.isTypeSupported(type)) return type;
-        }
+        // Priority for Android WhatsApp Opus decoding
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
+        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
       return "video/webm";
     };
 
     const mimeType = getMimeType();
-    const isMp4 = mimeType.includes("mp4");
-    const ext = isMp4 ? "mp4" : "webm";
-    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
+    const ext = mimeType.includes("mp4") ? "mp4" : "webm";
+    const baseMimeType = mimeType.split(';')[0]; 
 
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
@@ -713,9 +680,15 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
+        // Restore standard audio processing when recording stops
+        if (video._mediaElementSource) {
+          try {
+            video._mediaElementSource.disconnect();
+            video._mediaElementSource.connect(audioCtx.destination);
+          } catch (e) {}
+        }
         
-        const blob = new Blob(chunks, { type: mimeType });
+        const blob = new Blob(chunks, { type: baseMimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
         const file = new File([blob], fileName, { type: baseMimeType });
         
@@ -746,32 +719,83 @@ export default function Home() {
     });
   };
 
-  const handleDirectDownload = async () => {
+  const executeExport = async (mode) => {
     if (!activeCard) return;
-    ensureAudioContext(); 
     
-    setIsDownloading(true);
+    // CRITICAL: Synchronously handle User Gesture constraints for mobile unmuting
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
+    window._sharedAudioCtx = audioCtx;
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+
+    const video = videoRef.current;
+    if (video) {
+      video.muted = false;
+      video.volume = 1.0;
+      try {
+        await video.play(); 
+      } catch (e) {
+        console.warn("Mobile autoplay restriction blocked video execution:", e);
+        alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
+        return;
+      }
+    }
+
     setDownloadProgress(0);
+    if (mode === 'download') setIsDownloading(true);
+    else setIsSharing(true);
 
     try {
-      const { blob, fileName } = await generateImprintedFile();
-      const blobUrl = URL.createObjectURL(blob);
+      const { file, blob, fileName } = await generateImprintedFile();
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      if (mode === 'download') {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        const shareCaption = buildShareCaption(activeCard, lang);
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        }
+
+        setPreparedShareData({
+          file,
+          blob,
+          fileName,
+          shareCaption,
+          whatsappUrl
+        });
+        setShareModalOpen(true);
+      }
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
-      const link = document.createElement("a");
-      link.href = activeCard.url;
-      link.download = `GreetingAI_Card.mp4`;
-      link.click();
+      if (mode === 'download') {
+        const link = document.createElement("a");
+        link.href = activeCard.url;
+        link.download = `GreetingAI_Card.mp4`;
+        link.click();
+      }
     } finally {
       setIsDownloading(false);
+      setIsSharing(false);
       setDownloadProgress(0);
     }
   };
@@ -796,54 +820,14 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
-  const handleShare = async () => {
-    if (!activeCard) return;
-    ensureAudioContext(); 
-
-    setIsSharing(true);
-    setDownloadProgress(0);
-
-    try {
-      const { file, blob, fileName } = await generateImprintedFile();
-      const shareCaption = buildShareCaption(activeCard, lang);
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
-      }
-
-      setPreparedShareData({
-        file,
-        blob,
-        fileName,
-        shareCaption,
-        whatsappUrl
-      });
-      setShareModalOpen(true);
-    } catch (err) {
-      console.log("Share sheet unhandled:", err);
-    } finally {
-      setIsSharing(false);
-      setDownloadProgress(0);
-    }
-  };
-
-  const handleGenerateCard = async () => {
+  const handleGenerateCard = () => {
     if (credits <= 0) {
       alert(t.sessionExpired);
       return;
     }
     
-    ensureAudioContext(); 
+    // Simulate generation to stage card - NO Asynchronous auto-download
+    // Allows user to explicitly click "Share" to validate the OS user gesture limits
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -864,8 +848,6 @@ export default function Home() {
       setHistory((prev) => [generatedCard, ...prev.slice(0, 4)]);
       setCredits((prev) => Math.max(0, prev - 1));
       setIsGenerating(false);
-
-      setTimeout(() => handleDirectDownload(), 300);
     }, 1200);
   };
 
@@ -1276,7 +1258,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ACTION GENERATE BUTTON */}
+            {/* ACTION GENERATE BUTTON (Stages Card ONLY) */}
             <div className="pt-2">
               <button
                 onClick={handleGenerateCard}
@@ -1393,11 +1375,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
+            {/* DUAL ACTION BUTTONS (Explicit User-Gesture Export Commands) */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
-                  onClick={handleDirectDownload}
+                  onClick={() => executeExport('download')}
                   disabled={isDownloading || isSharing}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
                 >
@@ -1415,7 +1397,7 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={handleShare}
+                  onClick={() => executeExport('share')}
                   disabled={isDownloading || isSharing}
                   className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
                 >
