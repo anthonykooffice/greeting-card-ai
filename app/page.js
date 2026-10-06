@@ -1,7 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Mobile AudioContext Wake-Up and 
-                H.264 prioritization to preserve audio on WhatsApp Android.
+   DESCRIPTION: GreetingAI Studio with Dynamic Native Media Formatting.
+                Stops spoofing WebM as MP4 on Android to prevent WhatsApp 
+                audio stripping and OS-level "Cannot process video" crashes.
    ============================================================================ */
 
 "use client";
@@ -239,7 +240,7 @@ const FESTIVE_DATA = {
     ],
     ideas: [
       { en: "May 2027 bring you health, wealth, prosperity, and endless joy!", zh: "願新的一年帶給你健康、財富與無限喜悅！" },
-      { en: "New year, new opportunities! Here's to making every moment count.", zh: "新的一年， বাঙ্গ, 新的機遇！願我們珍惜每個精彩瞬間。" },
+      { en: "New year, new opportunities! Here's to making every moment count.", zh: "新的一年，新的機遇！願我們珍惜每個精彩瞬間。" },
       { en: "Wishing you 365 days of peace, love, and brilliant achievements!", zh: "祝你擁有 365 天和平安、愛與輝煌成就！" },
       { en: "Cheers to fresh starts and bright new beginnings. Happy New Year!", zh: "為全新的開始與明亮的前程乾杯，新年快樂！" },
       { en: "May your year ahead be as glittering and hopeful as midnight fireworks!", zh: "願你新的一年如午夜煙花般絢麗璀璨！" }
@@ -470,7 +471,6 @@ export default function Home() {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
 
-  // Helper to ensure AudioContext wakes up on mobile tap events
   const ensureAudioContext = () => {
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -639,7 +639,6 @@ export default function Home() {
 
     let audioTrack = null;
     
-    // First attempt to grab raw audio directly from the video stream
     try {
       if (typeof video.captureStream === "function") {
         const vStream = video.captureStream();
@@ -652,7 +651,6 @@ export default function Home() {
       console.warn("Direct video captureStream audio notice:", e);
     }
 
-    // Fallback to explicitly routed WebAudio API (critical for mobile iOS/Android)
     if (!audioTrack) {
       try {
         if (window._sharedAudioCtx) {
@@ -682,16 +680,20 @@ export default function Home() {
       canvasStream.addTrack(audioTrack);
     }
 
-    // Force H.264 video codec if possible to bypass WhatsApp Android transcoder stripping audio
+    // Dynamic Native Formatting: Check true browser support instead of spoofing
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const types = [
-          "video/mp4", // Safari preferred
-          "video/webm;codecs=h264,opus", // Android Chrome forced H.264 video 
+        // iOS Safari Native Support
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+          return "video/mp4";
+        }
+        // Android Chrome Native Support
+        const webmTypes = [
           "video/webm;codecs=vp8,opus",
+          "video/webm;codecs=vp9,opus",
           "video/webm"
         ];
-        for (const type of types) {
+        for (const type of webmTypes) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
       }
@@ -699,6 +701,12 @@ export default function Home() {
     };
 
     const mimeType = getMimeType();
+    
+    // Assign proper extension based on ACTUAL native capabilities
+    const isMp4 = mimeType.includes("mp4");
+    const ext = isMp4 ? "mp4" : "webm";
+    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
+
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
@@ -712,9 +720,11 @@ export default function Home() {
         
         const blob = new Blob(chunks, { type: mimeType });
         
-        // Revert to MP4 spoofing to get the single-bubble layout back and avoid P19 processing crash
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.mp4`;
-        const file = new File([blob], fileName, { type: "video/mp4" });
+        // CRITICAL FIX: The file extension and File MIME type MUST match the blob.
+        // Android will output a true `.webm` file here instead of a disguised `.mp4`,
+        // preventing the media scanner crash and preserving the audio track in WhatsApp.
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+        const file = new File([blob], fileName, { type: baseMimeType });
         
         resolve({ blob, file, fileName });
       };
@@ -745,7 +755,7 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
-    ensureAudioContext(); // Wake up mobile audio synchronously
+    ensureAudioContext(); 
     
     setIsDownloading(true);
     setDownloadProgress(0);
@@ -795,7 +805,7 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
-    ensureAudioContext(); // Wake up mobile audio synchronously
+    ensureAudioContext(); 
 
     setIsSharing(true);
     setDownloadProgress(0);
@@ -840,7 +850,7 @@ export default function Home() {
       return;
     }
     
-    ensureAudioContext(); // Wake up mobile audio synchronously
+    ensureAudioContext(); 
     setIsGenerating(true);
 
     setTimeout(() => {
