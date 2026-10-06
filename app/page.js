@@ -1,8 +1,7 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Synchronous User-Gesture Audio Capture.
-                Resolves silent mobile recordings by binding WebAudio unmuting 
-                and MediaElementSource routing strictly to direct user clicks.
+   DESCRIPTION: GreetingAI Studio with Universal iOS MP4 Container Prioritization.
+                Forces MP4 recording formats to eliminate iOS WebM sharing errors.
    ============================================================================ */
 
 "use client";
@@ -605,10 +604,7 @@ export default function Home() {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
-    // Video MUST be already playing and unmuted directly by the click handler.
-    // We just rewind it back to 0.
     video.currentTime = 0;
-
     const audioCtx = window._sharedAudioCtx;
     if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
@@ -621,14 +617,11 @@ export default function Home() {
 
     let audioTrack = null;
 
-    // Direct User-Gesture Audio Routing
     if (!video._mediaElementSource) {
       video.crossOrigin = "anonymous";
       try {
         video._mediaElementSource = audioCtx.createMediaElementSource(video);
-      } catch (e) {
-        console.warn("Failed creating MediaElementSource:", e);
-      }
+      } catch (e) {}
     }
 
     if (video._mediaElementSource) {
@@ -636,15 +629,12 @@ export default function Home() {
       try { video._mediaElementSource.disconnect(); } catch (e) {}
       
       video._mediaElementSource.connect(audioDest);
-      video._mediaElementSource.connect(audioCtx.destination); // Play out loud immediately
+      video._mediaElementSource.connect(audioCtx.destination);
 
       const tracks = audioDest.stream.getAudioTracks();
-      if (tracks.length > 0) {
-        audioTrack = tracks[0];
-      }
+      if (tracks.length > 0) audioTrack = tracks[0];
     }
 
-    // Fallback if strict CORS strips MediaElement Audio
     if (!audioTrack && typeof video.captureStream === "function") {
       try {
         const vs = video.captureStream();
@@ -657,19 +647,25 @@ export default function Home() {
       canvasStream.addTrack(audioTrack);
     }
 
+    // STRICT UNIVERSAL MIME TYPE PRIORITIZATION (MP4 for iPhone, WebM for Android)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        // Priority for Android WhatsApp Opus decoding
+        const mp4Types = [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+          "video/mp4"
+        ];
+        for (const type of mp4Types) {
+          if (MediaRecorder.isTypeSupported(type)) return type;
+        }
         if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
-        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
-        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
-      return "video/webm";
+      return "video/mp4";
     };
 
     const mimeType = getMimeType();
-    const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-    const baseMimeType = mimeType.split(';')[0]; 
+    const isMp4 = mimeType.includes("mp4");
+    const ext = isMp4 ? "mp4" : "webm";
+    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
 
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
@@ -680,7 +676,6 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        // Restore standard audio processing when recording stops
         if (video._mediaElementSource) {
           try {
             video._mediaElementSource.disconnect();
@@ -722,7 +717,6 @@ export default function Home() {
   const executeExport = async (mode) => {
     if (!activeCard) return;
     
-    // CRITICAL: Synchronously handle User Gesture constraints for mobile unmuting
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     const audioCtx = window._sharedAudioCtx || new AudioContextClass();
     window._sharedAudioCtx = audioCtx;
@@ -737,7 +731,6 @@ export default function Home() {
       try {
         await video.play(); 
       } catch (e) {
-        console.warn("Mobile autoplay restriction blocked video execution:", e);
         alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
         return;
       }
@@ -826,8 +819,6 @@ export default function Home() {
       return;
     }
     
-    // Simulate generation to stage card - NO Asynchronous auto-download
-    // Allows user to explicitly click "Share" to validate the OS user gesture limits
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -1258,7 +1249,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ACTION GENERATE BUTTON (Stages Card ONLY) */}
+            {/* ACTION GENERATE BUTTON */}
             <div className="pt-2">
               <button
                 onClick={handleGenerateCard}
@@ -1375,7 +1366,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS (Explicit User-Gesture Export Commands) */}
+            {/* DUAL ACTION BUTTONS */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
