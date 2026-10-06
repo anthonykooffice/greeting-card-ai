@@ -1,8 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Dynamic Native Media Formatting.
-                Stops spoofing WebM as MP4 on Android to prevent WhatsApp 
-                audio stripping and OS-level "Cannot process video" crashes.
+   DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
+                Bypasses mobile DOM captureStream() bugs by explicitly fetching 
+                and decoding the audio track to guarantee sound on Android shares.
    ============================================================================ */
 
 "use client";
@@ -623,9 +623,10 @@ export default function Home() {
 
     video.currentTime = 0;
     const previousMuteState = video.muted;
-    video.muted = false;
-    video.volume = 1.0;
-
+    
+    // We mute the HTML video element because we will inject the audio buffer natively.
+    video.muted = true;
+    
     if (video.paused) {
       await video.play().catch(() => {});
     }
@@ -638,8 +639,35 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
+    let sourceNode = null;
     
+    // CRITICAL FIX: Bypass mobile DOM bugs entirely.
+    // Fetch the video file into memory, decode the pure audio buffer, 
+    // and inject it directly into the MediaRecorder stream.
     try {
+      const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      window._sharedAudioCtx = audioCtx;
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+
+      const dest = audioCtx.createMediaStreamDestination();
+      
+      const srcUrl = activeCard.media ? activeCard.media.url : activeCard.url;
+      const response = await fetch(srcUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      
+      sourceNode = audioCtx.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(dest);
+      sourceNode.connect(audioCtx.destination); // Play aloud so user hears it during recording
+      
+      if (dest.stream.getAudioTracks().length > 0) {
+        audioTrack = dest.stream.getAudioTracks()[0];
+        audioTrack.enabled = true;
+      }
+    } catch (e) {
+      console.warn("Direct audio buffer extraction failed, falling back to DOM capture:", e);
+      // Fallback if fetch fails (e.g., severe strict CORS policies on specific networks)
       if (typeof video.captureStream === "function") {
         const vStream = video.captureStream();
         if (vStream && vStream.getAudioTracks().length > 0) {
@@ -647,47 +675,17 @@ export default function Home() {
           audioTrack.enabled = true; 
         }
       }
-    } catch (e) {
-      console.warn("Direct video captureStream audio notice:", e);
-    }
-
-    if (!audioTrack) {
-      try {
-        if (window._sharedAudioCtx) {
-          const audioCtx = window._sharedAudioCtx;
-          
-          if (!video._mediaElementSource) {
-            video.crossOrigin = "anonymous";
-            video._mediaElementSource = audioCtx.createMediaElementSource(video);
-          }
-          
-          const audioDest = audioCtx.createMediaStreamDestination();
-          video._mediaElementSource.disconnect();
-          video._mediaElementSource.connect(audioDest);
-          video._mediaElementSource.connect(audioCtx.destination);
-          
-          if (audioDest.stream.getAudioTracks().length > 0) {
-            audioTrack = audioDest.stream.getAudioTracks()[0];
-            audioTrack.enabled = true;
-          }
-        }
-      } catch (webAudioErr) {
-        console.warn("WebAudio capture fallback notice:", webAudioErr);
-      }
     }
 
     if (audioTrack) {
       canvasStream.addTrack(audioTrack);
     }
 
-    // Dynamic Native Formatting: Check true browser support instead of spoofing
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        // iOS Safari Native Support
         if (MediaRecorder.isTypeSupported("video/mp4")) {
           return "video/mp4";
         }
-        // Android Chrome Native Support
         const webmTypes = [
           "video/webm;codecs=vp8,opus",
           "video/webm;codecs=vp9,opus",
@@ -702,7 +700,6 @@ export default function Home() {
 
     const mimeType = getMimeType();
     
-    // Assign proper extension based on ACTUAL native capabilities
     const isMp4 = mimeType.includes("mp4");
     const ext = isMp4 ? "mp4" : "webm";
     const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
@@ -716,13 +713,16 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
+        // Cleanup the manual audio injection node
+        if (sourceNode) {
+          try {
+            sourceNode.stop();
+            sourceNode.disconnect();
+          } catch(err) {}
+        }
+        video.muted = previousMuteState; // Restore user's previous mute state
         
         const blob = new Blob(chunks, { type: mimeType });
-        
-        // CRITICAL FIX: The file extension and File MIME type MUST match the blob.
-        // Android will output a true `.webm` file here instead of a disguised `.mp4`,
-        // preventing the media scanner crash and preserving the audio track in WhatsApp.
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
         const file = new File([blob], fileName, { type: baseMimeType });
         
@@ -730,6 +730,11 @@ export default function Home() {
       };
 
       recorder.start();
+      
+      // Start the pristine audio buffer perfectly synced with the video recorder
+      if (sourceNode) {
+        try { sourceNode.start(0); } catch(err) {}
+      }
 
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
