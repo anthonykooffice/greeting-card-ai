@@ -1,7 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Web Share API MIME-type spoofing fix 
-                to preserve audio tracks in WhatsApp/WeChat, and UI alignments.
+   DESCRIPTION: GreetingAI Studio with aligned MIME-type Share Intent fix 
+                to ensure WhatsApp mobile retains audio tracks while keeping 
+                the single-bubble video+caption layout.
    ============================================================================ */
 
 "use client";
@@ -330,7 +331,6 @@ const TRANSLATIONS = {
   }
 };
 
-// Canvas Text Overlay Imprinter Engine (Refined to 30% height & Gold Text)
 const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
   const w = canvas.width;
   const h = canvas.height;
@@ -695,14 +695,19 @@ export default function Home() {
       recorder.onstop = () => {
         video.muted = previousMuteState;
         
-        // CRITICAL FIX: Spoof MIME type to generic 'video/mp4' to prevent WhatsApp 
-        // from treating the shared video as a muted GIF or dropping the Opus audio track.
-        const blob = new Blob(chunks, { type: mimeType });
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.mp4`;
+        // Ensure extension perfectly matches container
+        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
         
-        // Passing 'video/mp4' (without specific codec strings) ensures the Android 
-        // Share Intent routes it correctly to WhatsApp's full Media Editor with audio.
-        const file = new File([blob], fileName, { type: "video/mp4" });
+        // Clean base MIME type (without parameters) to pass safely to the Share Intent
+        const baseMimeType = mimeType.includes("mp4") ? "video/mp4" : "video/webm";
+        
+        const blob = new Blob(chunks, { type: mimeType });
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+        
+        // CRITICAL FIX: Align the File object's MIME type perfectly with the actual recorded container.
+        // Forcing a WebM blob to identify as 'video/mp4' causes WhatsApp's intent compressor 
+        // to drop the unrecognized Opus audio track. Sending it honestly preserves the audio.
+        const file = new File([blob], fileName, { type: baseMimeType });
         
         resolve({ blob, file, fileName });
       };
@@ -904,7 +909,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Success Banner Matching UI Layout (P10_2.jpeg) */}
             <div className="bg-emerald-900/30 border border-emerald-600/50 rounded-xl p-3 flex items-start space-x-2 text-emerald-400 text-sm font-bold">
               <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
               <span>✓ Video saved to device & caption copied! Tap green button below to send to WhatsApp.</span>
