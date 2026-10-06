@@ -1,8 +1,7 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with aligned MIME-type Share Intent fix 
-                to ensure WhatsApp mobile retains audio tracks while keeping 
-                the single-bubble video+caption layout.
+   DESCRIPTION: GreetingAI Studio with Mobile AudioContext Wake-Up and 
+                H.264 prioritization to preserve audio on WhatsApp Android.
    ============================================================================ */
 
 "use client";
@@ -240,7 +239,7 @@ const FESTIVE_DATA = {
     ],
     ideas: [
       { en: "May 2027 bring you health, wealth, prosperity, and endless joy!", zh: "願新的一年帶給你健康、財富與無限喜悅！" },
-      { en: "New year, new opportunities! Here's to making every moment count.", zh: "新的一年，新的機遇！願我們珍惜每個精彩瞬間。" },
+      { en: "New year, new opportunities! Here's to making every moment count.", zh: "新的一年， বাঙ্গ, 新的機遇！願我們珍惜每個精彩瞬間。" },
       { en: "Wishing you 365 days of peace, love, and brilliant achievements!", zh: "祝你擁有 365 天和平安、愛與輝煌成就！" },
       { en: "Cheers to fresh starts and bright new beginnings. Happy New Year!", zh: "為全新的開始與明亮的前程乾杯，新年快樂！" },
       { en: "May your year ahead be as glittering and hopeful as midnight fireworks!", zh: "願你新的一年如午夜煙花般絢麗璀璨！" }
@@ -471,6 +470,23 @@ export default function Home() {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
 
+  // Helper to ensure AudioContext wakes up on mobile tap events
+  const ensureAudioContext = () => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        if (!window._sharedAudioCtx) {
+          window._sharedAudioCtx = new AudioContextClass();
+        }
+        if (window._sharedAudioCtx.state === "suspended") {
+          window._sharedAudioCtx.resume();
+        }
+      }
+    } catch (e) {
+      console.warn("AudioContext wake-up exception:", e);
+    }
+  };
+
   useEffect(() => {
     setActiveCard((prev) => ({
       ...prev,
@@ -622,30 +638,28 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
+    
+    // First attempt to grab raw audio directly from the video stream
     try {
       if (typeof video.captureStream === "function") {
         const vStream = video.captureStream();
         if (vStream && vStream.getAudioTracks().length > 0) {
           audioTrack = vStream.getAudioTracks()[0];
+          audioTrack.enabled = true; 
         }
       }
     } catch (e) {
       console.warn("Direct video captureStream audio notice:", e);
     }
 
+    // Fallback to explicitly routed WebAudio API (critical for mobile iOS/Android)
     if (!audioTrack) {
       try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          if (!window._sharedAudioCtx) {
-            window._sharedAudioCtx = new AudioContextClass();
-          }
+        if (window._sharedAudioCtx) {
           const audioCtx = window._sharedAudioCtx;
-          if (audioCtx.state === "suspended") {
-            await audioCtx.resume();
-          }
-
+          
           if (!video._mediaElementSource) {
+            video.crossOrigin = "anonymous";
             video._mediaElementSource = audioCtx.createMediaElementSource(video);
           }
           
@@ -656,6 +670,7 @@ export default function Home() {
           
           if (audioDest.stream.getAudioTracks().length > 0) {
             audioTrack = audioDest.stream.getAudioTracks()[0];
+            audioTrack.enabled = true;
           }
         }
       } catch (webAudioErr) {
@@ -667,12 +682,12 @@ export default function Home() {
       canvasStream.addTrack(audioTrack);
     }
 
+    // Force H.264 video codec if possible to bypass WhatsApp Android transcoder stripping audio
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
-          "video/mp4;codecs=h264,aac",
-          "video/mp4",
-          "video/webm;codecs=vp9,opus",
+          "video/mp4", // Safari preferred
+          "video/webm;codecs=h264,opus", // Android Chrome forced H.264 video 
           "video/webm;codecs=vp8,opus",
           "video/webm"
         ];
@@ -695,19 +710,11 @@ export default function Home() {
       recorder.onstop = () => {
         video.muted = previousMuteState;
         
-        // Ensure extension perfectly matches container
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-        
-        // Clean base MIME type (without parameters) to pass safely to the Share Intent
-        const baseMimeType = mimeType.includes("mp4") ? "video/mp4" : "video/webm";
-        
         const blob = new Blob(chunks, { type: mimeType });
-        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
         
-        // CRITICAL FIX: Align the File object's MIME type perfectly with the actual recorded container.
-        // Forcing a WebM blob to identify as 'video/mp4' causes WhatsApp's intent compressor 
-        // to drop the unrecognized Opus audio track. Sending it honestly preserves the audio.
-        const file = new File([blob], fileName, { type: baseMimeType });
+        // Revert to MP4 spoofing to get the single-bubble layout back and avoid P19 processing crash
+        const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.mp4`;
+        const file = new File([blob], fileName, { type: "video/mp4" });
         
         resolve({ blob, file, fileName });
       };
@@ -738,6 +745,8 @@ export default function Home() {
 
   const handleDirectDownload = async () => {
     if (!activeCard) return;
+    ensureAudioContext(); // Wake up mobile audio synchronously
+    
     setIsDownloading(true);
     setDownloadProgress(0);
 
@@ -786,6 +795,8 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
+    ensureAudioContext(); // Wake up mobile audio synchronously
+
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -828,7 +839,8 @@ export default function Home() {
       alert(t.sessionExpired);
       return;
     }
-
+    
+    ensureAudioContext(); // Wake up mobile audio synchronously
     setIsGenerating(true);
 
     setTimeout(() => {
