@@ -2,7 +2,6 @@
    FILE PATH: app/page.js
    DESCRIPTION: GreetingAI Studio with Universal iOS MP4 Container Prioritization.
                 Forces MP4 recording formats to eliminate iOS WebM sharing errors.
-                (Restored to Proven Audio Engine + Customer Policy Modal Added)
    ============================================================================ */
 
 "use client";
@@ -291,14 +290,6 @@ const TRANSLATIONS = {
     sessionExpired: "0/5 Free Trial Credits Expired",
     recentTitle: "TEMPORARY CANVAS MINI TV TRAYS (Imprinted Holdings)",
     disclaimer: "Legal Guardrail: Uploaded reference media are processed in browser memory and temporary runtime only. No local device folders are accessed.",
-    policyTitle: "GreetingAI Studio – Free Trial & Security Policy",
-    policyTrialTitle: "Free Trial Usage",
-    policyTrialText: "Welcome! During our start-up phase, you receive 5 free trial credits per session. When your credits run out, simply refresh your browser to reset your counter. Enjoy exploring and creating without limits!",
-    policyPrivacyTitle: "Privacy & Data Security",
-    policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
-    policyLegalTitle: "Legal Protection & Disclaimer",
-    policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
-    closeBtn: "I Understand & Agree",
     categories: ORDERED_CATEGORIES,
     styles: [
       { key: "Photo", label: "4K Photorealistic", badge: "📷 4K Photo Style Active", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
@@ -329,14 +320,6 @@ const TRANSLATIONS = {
     sessionExpired: "5次免費試用額度已用完",
     recentTitle: "暫存迷你電視畫布 (已印製文字紀錄區)",
     disclaimer: "安全與法律聲明：您選擇上傳的參考媒體僅在瀏覽器內存與臨時 AI 雲端傳輸處理，本系統絕不會存取或洩漏您個人裝置中的檔案。",
-    policyTitle: "GreetingAI 賀卡工作室 – 免費試用與安全條款",
-    policyTrialTitle: "免費試用與使用",
-    policyTrialText: "歡迎！在我們的初創階段，您每次存取網頁將獲得 5 次免費試用額度。當額度用完後，只需重新整理瀏覽器頁面即可重置計數器。請盡情探索與創作，目前完全免費！",
-    policyPrivacyTitle: "隱私與資料安全",
-    policyPrivacyText: "您的隱私是我們的首要考量。您輸入的任何自訂文字、姓名或上傳的參考媒體，僅在您的瀏覽器暫存記憶體或臨時雲端環境中進行安全處理，專門用於生成您的賀卡。我們絕不會永久儲存您的個人媒體檔案，也絕不會存取您裝置中的私人本機資料夾。",
-    policyLegalTitle: "法律保護與免責聲明",
-    policyLegalText: "GreetingAI Studio 按「現狀」提供，僅供個人、娛樂及非商業用途之分享。使用者須對其創作及傳送的訊息與自訂媒體承擔全部責任。我們對外部第三方平台（如 WhatsApp 或微信的檔案限制）的傳送規則概不負責。請負責任地傳遞喜悅與祝福！",
-    closeBtn: "我瞭解並同意",
     categories: ORDERED_CATEGORIES,
     styles: [
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
@@ -351,7 +334,6 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const w = canvas.width;
   const h = canvas.height;
 
-  // 1. Draw video/image frame with active style filter
   ctx.save();
   if (activeStyleObj && activeStyleObj.cssFilter) {
     ctx.filter = activeStyleObj.cssFilter;
@@ -359,18 +341,16 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.drawImage(video, 0, 0, w, h);
   ctx.restore();
 
-  // 2. Draw Bottom 28% Dark Gradient Overlay Box
-  const overlayH = h * 0.28;
+  const overlayH = h * 0.30;
   const overlayY = h - overlayH;
   const grad = ctx.createLinearGradient(0, overlayY, 0, h);
   grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.3, "rgba(0,0,0,0.75)");
+  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
   grad.addColorStop(1, "rgba(0,0,0,0.95)");
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, overlayY, w, overlayH);
 
-  // 3. Setup Canvas Text Styles
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -383,30 +363,29 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
-  const contentCenterY = overlayY + overlayH * 0.52;
+  const contentCenterY = overlayY + (overlayH * 0.50);
 
-  // Proportional font sizing
-  const baseFontSize = Math.round(w * 0.026);
-  const toFontSize = baseFontSize;
+  const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
+  const toFontSize = Math.round(baseFontSize * 0.95);
   const msgFontSize = baseFontSize;
-  const fromFontSize = baseFontSize;
+  const fromFontSize = Math.round(baseFontSize * 0.90);
 
-  // A. Draw "To: [Recipient Name]"
+  const activeTextColor = textColor || "#ffd700";
+
   if (card.to) {
     ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
   }
 
-  // B. Draw Greeting Message (Multi-line Word Wrap)
   ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = textColor || "#fde68a";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-  ctx.shadowBlur = 8;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillStyle = activeTextColor;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
 
   const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
   let lines = [];
@@ -425,7 +404,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.25;
+  const lineHeight = msgFontSize * 1.20;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -433,13 +412,12 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
     ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
   });
 
-  // C. Draw "— [Sender Name]"
   if (card.from) {
     ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
   }
 };
 
@@ -457,8 +435,8 @@ export default function Home() {
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
-  const [fontSize, setFontSize] = useState("text-base sm:text-lg");
-  const [textColor, setTextColor] = useState("#fde68a");
+  const [fontSize, setFontSize] = useState("text-xs sm:text-sm");
+  const [textColor, setTextColor] = useState("#ffd700");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -472,8 +450,6 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
-  
-  const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
   const initialStaged = {
     id: 1,
@@ -624,19 +600,13 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
-    const previousMuteState = video.muted;
-    video.muted = false;
-    video.volume = 1.0;
-
-    if (video.paused) {
-      await video.play().catch(() => {});
-    }
+    const audioCtx = window._sharedAudioCtx;
+    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -645,73 +615,58 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
-    let audioDestStream = null;
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
-          window._sharedAudioCtx = new AudioContextClass();
-        }
-        const audioCtx = window._sharedAudioCtx;
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
+    let audioTrack = null;
 
-        if (!video._mediaElementSource) {
-          video._mediaElementSource = audioCtx.createMediaElementSource(video);
-        }
-        
-        const audioDest = audioCtx.createMediaStreamDestination();
-        video._mediaElementSource.disconnect();
-        video._mediaElementSource.connect(audioDest);
-        video._mediaElementSource.connect(audioCtx.destination);
-        audioDestStream = audioDest.stream;
-      }
-    } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
-    }
-
-    if (audioDestStream) {
-      const audioTracks = audioDestStream.getAudioTracks();
-      audioTracks.forEach((track) => canvasStream.addTrack(track));
-    } else {
+    if (!video._mediaElementSource) {
+      video.crossOrigin = "anonymous";
       try {
-        let videoAudioStream = null;
-        if (typeof video.captureStream === "function") {
-          videoAudioStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          videoAudioStream = video.mozCaptureStream();
-        }
-
-        if (videoAudioStream) {
-          const audioTracks = videoAudioStream.getAudioTracks();
-          audioTracks.forEach((track) => {
-            canvasStream.addTrack(track.clone ? track.clone() : track);
-          });
-        }
-      } catch (audioErr) {
-        console.log("Audio track capture fallback note:", audioErr);
-      }
+        video._mediaElementSource = audioCtx.createMediaElementSource(video);
+      } catch (e) {}
     }
 
+    if (video._mediaElementSource) {
+      const audioDest = audioCtx.createMediaStreamDestination();
+      try { video._mediaElementSource.disconnect(); } catch (e) {}
+      
+      video._mediaElementSource.connect(audioDest);
+      video._mediaElementSource.connect(audioCtx.destination);
+
+      const tracks = audioDest.stream.getAudioTracks();
+      if (tracks.length > 0) audioTrack = tracks[0];
+    }
+
+    if (!audioTrack && typeof video.captureStream === "function") {
+      try {
+        const vs = video.captureStream();
+        const vTracks = vs.getAudioTracks();
+        if (vTracks.length > 0) audioTrack = vTracks[0];
+      } catch (e) {}
+    }
+
+    if (audioTrack) {
+      canvasStream.addTrack(audioTrack);
+    }
+
+    // STRICT UNIVERSAL MIME TYPE PRIORITIZATION (MP4 for iPhone, WebM for Android)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const types = [
-          "video/mp4;codecs=h264,aac",
-          "video/mp4",
-          "video/webm;codecs=vp9,opus",
-          "video/webm;codecs=vp8,opus",
-          "video/webm"
+        const mp4Types = [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+          "video/mp4"
         ];
-        for (const type of types) {
+        for (const type of mp4Types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
       }
-      return "video/webm";
+      return "video/mp4";
     };
 
     const mimeType = getMimeType();
+    const isMp4 = mimeType.includes("mp4");
+    const ext = isMp4 ? "mp4" : "webm";
+    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
+
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
@@ -721,11 +676,17 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-        const blob = new Blob(chunks, { type: mimeType });
+        if (video._mediaElementSource) {
+          try {
+            video._mediaElementSource.disconnect();
+            video._mediaElementSource.connect(audioCtx.destination);
+          } catch (e) {}
+        }
+        
+        const blob = new Blob(chunks, { type: baseMimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: mimeType });
+        const file = new File([blob], fileName, { type: baseMimeType });
+        
         resolve({ blob, file, fileName });
       };
 
@@ -753,35 +714,85 @@ export default function Home() {
     });
   };
 
-  const handleDirectDownload = async () => {
+  const executeExport = async (mode) => {
     if (!activeCard) return;
-    setIsDownloading(true);
+    
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
+    window._sharedAudioCtx = audioCtx;
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+
+    const video = videoRef.current;
+    if (video) {
+      video.muted = false;
+      video.volume = 1.0;
+      try {
+        await video.play(); 
+      } catch (e) {
+        alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
+        return;
+      }
+    }
+
     setDownloadProgress(0);
+    if (mode === 'download') setIsDownloading(true);
+    else setIsSharing(true);
 
     try {
-      const { blob, fileName } = await generateImprintedFile();
-      const blobUrl = URL.createObjectURL(blob);
+      const { file, blob, fileName } = await generateImprintedFile();
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      if (mode === 'download') {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        const shareCaption = buildShareCaption(activeCard, lang);
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        }
+
+        setPreparedShareData({
+          file,
+          blob,
+          fileName,
+          shareCaption,
+          whatsappUrl
+        });
+        setShareModalOpen(true);
+      }
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
-      const link = document.createElement("a");
-      link.href = activeCard.url;
-      link.download = `GreetingAI_Card.mp4`;
-      link.click();
+      if (mode === 'download') {
+        const link = document.createElement("a");
+        link.href = activeCard.url;
+        link.download = `GreetingAI_Card.mp4`;
+        link.click();
+      }
     } finally {
       setIsDownloading(false);
+      setIsSharing(false);
       setDownloadProgress(0);
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines, no custom message line)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -800,45 +811,6 @@ export default function Home() {
     const line4 = dateText;
 
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
-  };
-
-  const handleShare = async () => {
-    if (!activeCard) return;
-    setIsSharing(true);
-    setDownloadProgress(0);
-
-    try {
-      const { file, blob, fileName } = await generateImprintedFile();
-      const shareCaption = buildShareCaption(activeCard, lang);
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
-      }
-
-      setPreparedShareData({
-        file,
-        blob,
-        fileName,
-        shareCaption,
-        whatsappUrl
-      });
-      setShareModalOpen(true);
-    } catch (err) {
-      console.log("Share sheet unhandled:", err);
-    } finally {
-      setIsSharing(false);
-      setDownloadProgress(0);
-    }
   };
 
   const handleGenerateCard = () => {
@@ -867,8 +839,6 @@ export default function Home() {
       setHistory((prev) => [generatedCard, ...prev.slice(0, 4)]);
       setCredits((prev) => Math.max(0, prev - 1));
       setIsGenerating(false);
-
-      setTimeout(() => handleDirectDownload(), 300);
     }, 1200);
   };
 
@@ -897,58 +867,6 @@ export default function Home() {
         }
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
-
-      {/* POLICY OVERLAY MODAL */}
-      {policyModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
-            <button 
-              onClick={() => setPolicyModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800 transition"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            
-            <div className="flex items-center space-x-3 text-indigo-400 border-b border-slate-800 pb-4">
-              <ShieldCheck className="h-8 w-8 shrink-0" />
-              <h3 className="text-xl font-extrabold text-white">{t.policyTitle}</h3>
-            </div>
-
-            <div className="space-y-5 text-sm text-slate-300 h-96 overflow-y-auto pr-2 scrollbar-thin">
-              <div>
-                <h4 className="font-bold text-amber-300 mb-1 flex items-center space-x-2">
-                  <span className="bg-amber-500/20 px-2 py-0.5 rounded text-amber-400">1</span>
-                  <span>{t.policyTrialTitle}</span>
-                </h4>
-                <p className="leading-relaxed">{t.policyTrialText}</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-emerald-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-400">2</span>
-                  <span>{t.policyPrivacyTitle}</span>
-                </h4>
-                <p className="leading-relaxed">{t.policyPrivacyText}</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-rose-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-rose-500/20 px-2 py-0.5 rounded text-rose-400">3</span>
-                  <span>{t.policyLegalTitle}</span>
-                </h4>
-                <p className="leading-relaxed">{t.policyLegalText}</p>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={() => setPolicyModalOpen(false)}
-                className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg"
-              >
-                {t.closeBtn}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* SHARE ACTION MODAL */}
       {shareModalOpen && preparedShareData && (
@@ -1034,17 +952,12 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
-            {/* Interactive Policy Button */}
-            <button
-              onClick={() => setPolicyModalOpen(true)}
-              className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
-              title={lang === "zh" ? "檢視安全與試用條款" : "View Free Trial & Security Policy"}
-            >
+            <div className="bg-slate-800 border border-slate-700 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2">
               <span className="text-slate-300 hidden sm:inline">{t.creditsLeft}:</span>
               <span className={`px-3 py-1 rounded-full text-base font-mono font-bold ${credits > 0 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"}`}>
                 {credits} / 5
               </span>
-            </button>
+            </div>
 
             <button
               onClick={() => {
@@ -1303,8 +1216,8 @@ export default function Home() {
                       onChange={(e) => setTextColor(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="#fde68a">Gold (尊爵金)</option>
-                      <option value="#ffffff">White (純白)</option>
+                      <option value="#ffd700">Classic Gold (尊爵金)</option>
+                      <option value="#ffffff">Pure White (純白)</option>
                       <option value="#f43f5e">Rose Pink (浪漫粉)</option>
                       <option value="#67e8f9">Cyan Blue (璀璨藍)</option>
                     </select>
@@ -1408,13 +1321,13 @@ export default function Home() {
                       />
                     )}
 
-                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                      <div className="text-center space-y-1 max-w-[90%] mx-auto drop-shadow-md">
+                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                      <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold italic truncate`}
                           >
@@ -1423,7 +1336,7 @@ export default function Home() {
                         )}
                         <p 
                           style={{ 
-                            color: textColor,
+                            color: textColor || "#ffd700",
                             fontFamily: activeCard.fontCss || selectedFont.cssVar
                           }} 
                           className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
@@ -1434,7 +1347,7 @@ export default function Home() {
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold truncate`}
                           >
@@ -1453,11 +1366,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
+            {/* DUAL ACTION BUTTONS */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
-                  onClick={handleDirectDownload}
+                  onClick={() => executeExport('download')}
                   disabled={isDownloading || isSharing}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
                 >
@@ -1475,7 +1388,7 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={handleShare}
+                  onClick={() => executeExport('share')}
                   disabled={isDownloading || isSharing}
                   className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
                 >
