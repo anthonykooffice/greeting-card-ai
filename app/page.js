@@ -1,7 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Universal iOS MP4 Container Prioritization.
-                Forces MP4 recording formats to eliminate iOS WebM sharing errors.
+   DESCRIPTION: GreetingAI Studio with Customer Policy Modal.
+                Added interactive "Free Trial Credits" button and bilingual 
+                Terms/Security policy overlay popup.
    ============================================================================ */
 
 "use client";
@@ -290,6 +291,14 @@ const TRANSLATIONS = {
     sessionExpired: "0/5 Free Trial Credits Expired",
     recentTitle: "TEMPORARY CANVAS MINI TV TRAYS (Imprinted Holdings)",
     disclaimer: "Legal Guardrail: Uploaded reference media are processed in browser memory and temporary runtime only. No local device folders are accessed.",
+    policyTitle: "GreetingAI Studio – Free Trial & Security Policy",
+    policyTrialTitle: "Free Trial Usage",
+    policyTrialText: "Welcome! During our start-up phase, you receive 5 free trial credits per session. When your credits run out, simply refresh your browser to reset your counter. Enjoy exploring and creating without limits!",
+    policyPrivacyTitle: "Privacy & Data Security",
+    policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
+    policyLegalTitle: "Legal Protection & Disclaimer",
+    policyLegalText: "GreetingAI Studio is provided \"as is\" to help you spread joy and celebrate festive moments. By using this tool, you agree to generate friendly and lawful content. We are not responsible for user-generated messages or how third-party platforms (such as WhatsApp, WeChat, or Facebook) manage and deliver the files you choose to share.",
+    closeBtn: "I Understand & Agree",
     categories: ORDERED_CATEGORIES,
     styles: [
       { key: "Photo", label: "4K Photorealistic", badge: "📷 4K Photo Style Active", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
@@ -320,6 +329,14 @@ const TRANSLATIONS = {
     sessionExpired: "5次免費試用額度已用完",
     recentTitle: "暫存迷你電視畫布 (已印製文字紀錄區)",
     disclaimer: "安全與法律聲明：您選擇上傳的參考媒體僅在瀏覽器內存與臨時 AI 雲端傳輸處理，本系統絕不會存取或洩漏您個人裝置中的檔案。",
+    policyTitle: "GreetingAI 賀卡工作室 – 免費試用與安全條款",
+    policyTrialTitle: "免費試用與使用",
+    policyTrialText: "歡迎！在我們的初創階段，您每次存取網頁將獲得 5 次免費試用額度。當額度用完後，只需重新整理瀏覽器頁面即可重置計數器。請盡情探索與創作，目前完全免費！",
+    policyPrivacyTitle: "隱私與資料安全",
+    policyPrivacyText: "您的隱私是我們的首要考量。您輸入的任何自訂文字、姓名或上傳的參考媒體，僅在您的瀏覽器暫存記憶體或臨時雲端環境中進行安全處理，專門用於生成您的賀卡。我們絕不會永久儲存您的個人媒體檔案，也絕不會存取您裝置中的私人本機資料夾。",
+    policyLegalTitle: "法律保護與免責聲明",
+    policyLegalText: "GreetingAI Studio 按「現狀」提供，僅供個人、娛樂及非商業用途之分享。使用者須對其創作及傳送的訊息與自訂媒體承擔全部責任。我們對外部第三方平台（如 WhatsApp 或微信的檔案限制）的傳送規則概不負責。請負責任地傳遞喜悅與祝福！",
+    closeBtn: "我瞭解並同意",
     categories: ORDERED_CATEGORIES,
     styles: [
       { key: "Photo", label: "4K 寫實相片 (Photo)", badge: "📷 4K 寫實風格已套用", cssFilter: "contrast(110%) brightness(105%) saturate(110%)" },
@@ -450,6 +467,7 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
   const initialStaged = {
     id: 1,
@@ -604,9 +622,22 @@ export default function Home() {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
+    window._sharedAudioCtx = audioCtx;
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+
     video.currentTime = 0;
-    const audioCtx = window._sharedAudioCtx;
-    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
+    const previousMuteState = video.muted;
+    
+    video.muted = false;
+    video.volume = 1.0;
+
+    if (video.paused) {
+      await video.play().catch(() => {});
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -616,50 +647,56 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
+    let mediaElementSource = video._mediaElementSource;
 
-    if (!video._mediaElementSource) {
-      video.crossOrigin = "anonymous";
-      try {
-        video._mediaElementSource = audioCtx.createMediaElementSource(video);
-      } catch (e) {}
-    }
+    try {
+      if (!mediaElementSource) {
+        video.crossOrigin = "anonymous";
+        mediaElementSource = audioCtx.createMediaElementSource(video);
+        video._mediaElementSource = mediaElementSource;
+      }
 
-    if (video._mediaElementSource) {
       const audioDest = audioCtx.createMediaStreamDestination();
-      try { video._mediaElementSource.disconnect(); } catch (e) {}
       
-      video._mediaElementSource.connect(audioDest);
-      video._mediaElementSource.connect(audioCtx.destination);
+      try { mediaElementSource.disconnect(); } catch (e) {}
 
-      const tracks = audioDest.stream.getAudioTracks();
-      if (tracks.length > 0) audioTrack = tracks[0];
-    }
+      mediaElementSource.connect(audioDest);
+      mediaElementSource.connect(audioCtx.destination);
 
-    if (!audioTrack && typeof video.captureStream === "function") {
-      try {
-        const vs = video.captureStream();
-        const vTracks = vs.getAudioTracks();
-        if (vTracks.length > 0) audioTrack = vTracks[0];
-      } catch (e) {}
+      if (audioDest.stream.getAudioTracks().length > 0) {
+        audioTrack = audioDest.stream.getAudioTracks()[0];
+        audioTrack.enabled = true;
+      }
+    } catch (e) {
+      console.warn("WebAudio MediaElementSource capture notice:", e);
+      if (typeof video.captureStream === "function") {
+        const vStream = video.captureStream();
+        if (vStream && vStream.getAudioTracks().length > 0) {
+          audioTrack = vStream.getAudioTracks()[0];
+          audioTrack.enabled = true;
+        }
+      }
     }
 
     if (audioTrack) {
       canvasStream.addTrack(audioTrack);
     }
 
-    // STRICT UNIVERSAL MIME TYPE PRIORITIZATION (MP4 for iPhone, WebM for Android)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const mp4Types = [
-          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-          "video/mp4"
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+          return "video/mp4";
+        }
+        const webmTypes = [
+          "video/webm;codecs=vp8,opus",
+          "video/webm;codecs=vp9,opus",
+          "video/webm"
         ];
-        for (const type of mp4Types) {
+        for (const type of webmTypes) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
-        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
       }
-      return "video/mp4";
+      return "video/webm";
     };
 
     const mimeType = getMimeType();
@@ -676,12 +713,7 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        if (video._mediaElementSource) {
-          try {
-            video._mediaElementSource.disconnect();
-            video._mediaElementSource.connect(audioCtx.destination);
-          } catch (e) {}
-        }
+        video.muted = previousMuteState;
         
         const blob = new Blob(chunks, { type: baseMimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
@@ -868,6 +900,58 @@ export default function Home() {
       `}</style>
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* POLICY OVERLAY MODAL */}
+      {policyModalOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <button 
+              onClick={() => setPolicyModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800 transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center space-x-3 text-indigo-400 border-b border-slate-800 pb-4">
+              <ShieldCheck className="h-8 w-8 shrink-0" />
+              <h3 className="text-xl font-extrabold text-white">{t.policyTitle}</h3>
+            </div>
+
+            <div className="space-y-5 text-sm text-slate-300 h-96 overflow-y-auto pr-2 scrollbar-thin">
+              <div>
+                <h4 className="font-bold text-amber-300 mb-1 flex items-center space-x-2">
+                  <span className="bg-amber-500/20 px-2 py-0.5 rounded text-amber-400">1</span>
+                  <span>{t.policyTrialTitle}</span>
+                </h4>
+                <p className="leading-relaxed">{t.policyTrialText}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-emerald-400 mb-1 flex items-center space-x-2">
+                  <span className="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-400">2</span>
+                  <span>{t.policyPrivacyTitle}</span>
+                </h4>
+                <p className="leading-relaxed">{t.policyPrivacyText}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-rose-400 mb-1 flex items-center space-x-2">
+                  <span className="bg-rose-500/20 px-2 py-0.5 rounded text-rose-400">3</span>
+                  <span>{t.policyLegalTitle}</span>
+                </h4>
+                <p className="leading-relaxed">{t.policyLegalText}</p>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setPolicyModalOpen(false)}
+                className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg"
+              >
+                {t.closeBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SHARE ACTION MODAL */}
       {shareModalOpen && preparedShareData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -952,12 +1036,17 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
-            <div className="bg-slate-800 border border-slate-700 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2">
+            {/* Interactive Policy Button */}
+            <button
+              onClick={() => setPolicyModalOpen(true)}
+              className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
+              title={lang === "zh" ? "檢視安全與試用條款" : "View Free Trial & Security Policy"}
+            >
               <span className="text-slate-300 hidden sm:inline">{t.creditsLeft}:</span>
               <span className={`px-3 py-1 rounded-full text-base font-mono font-bold ${credits > 0 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"}`}>
                 {credits} / 5
               </span>
-            </div>
+            </button>
 
             <button
               onClick={() => {
@@ -1249,7 +1338,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ACTION GENERATE BUTTON */}
+            {/* ACTION GENERATE BUTTON (Stages Card ONLY) */}
             <div className="pt-2">
               <button
                 onClick={handleGenerateCard}
