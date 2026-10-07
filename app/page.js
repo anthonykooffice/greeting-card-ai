@@ -1,7 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
    DESCRIPTION: GreetingAI Studio with Universal iOS MP4 Container Prioritization.
-                (Stable Version with Proven Audio Engine & Customer Policy Modal)
+                Forces MP4 recording formats to eliminate iOS WebM sharing errors.
+                (Restored to Proven Audio Engine + Customer Policy Modal Added)
    ============================================================================ */
 
 "use client";
@@ -31,7 +32,7 @@ import {
   FileVideo 
 } from "lucide-react";
 
-const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23fde68a") => 
+const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23ffd700") => 
   `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
 
 const ORDERED_CATEGORIES = [
@@ -840,12 +841,12 @@ export default function Home() {
     }
   };
 
-  const handleGenerateCard = async () => {
+  const handleGenerateCard = () => {
     if (credits <= 0) {
       alert(t.sessionExpired);
       return;
     }
-
+    
     setIsGenerating(true);
 
     setTimeout(() => {
@@ -1304,8 +1305,8 @@ export default function Home() {
                     >
                       <option value="#fde68a">Gold (尊爵金)</option>
                       <option value="#ffffff">White (純白)</option>
-                      <option value="#f43f5e">Rose (浪漫粉)</option>
-                      <option value="#67e8f9">Cyan (璀璨藍)</option>
+                      <option value="#f43f5e">Rose Pink (浪漫粉)</option>
+                      <option value="#67e8f9">Cyan Blue (璀璨藍)</option>
                     </select>
                   </div>
                 </div>
