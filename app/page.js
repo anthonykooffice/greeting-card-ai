@@ -1,8 +1,8 @@
 /* ============================================================================
    FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Universal iOS MP4 Container Prioritization.
-                Forces MP4 recording formats to eliminate iOS WebM sharing errors.
-                (Restored to Proven Audio Engine + Customer Policy Modal Added)
+   DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
+                Bypasses mobile DOM captureStream() bugs by explicitly fetching 
+                and decoding the audio track to guarantee sound on Android/iOS.
    ============================================================================ */
 
 "use client";
@@ -351,7 +351,6 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const w = canvas.width;
   const h = canvas.height;
 
-  // 1. Draw video/image frame with active style filter
   ctx.save();
   if (activeStyleObj && activeStyleObj.cssFilter) {
     ctx.filter = activeStyleObj.cssFilter;
@@ -359,18 +358,16 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   ctx.drawImage(video, 0, 0, w, h);
   ctx.restore();
 
-  // 2. Draw Bottom 28% Dark Gradient Overlay Box
-  const overlayH = h * 0.28;
+  const overlayH = h * 0.30;
   const overlayY = h - overlayH;
   const grad = ctx.createLinearGradient(0, overlayY, 0, h);
   grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.3, "rgba(0,0,0,0.75)");
+  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
   grad.addColorStop(1, "rgba(0,0,0,0.95)");
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, overlayY, w, overlayH);
 
-  // 3. Setup Canvas Text Styles
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -383,30 +380,29 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
 
   const maxTextWidth = w * 0.88;
   const centerX = w / 2;
-  const contentCenterY = overlayY + overlayH * 0.52;
+  const contentCenterY = overlayY + (overlayH * 0.50);
 
-  // Proportional font sizing
-  const baseFontSize = Math.round(w * 0.026);
-  const toFontSize = baseFontSize;
+  const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
+  const toFontSize = Math.round(baseFontSize * 0.95);
   const msgFontSize = baseFontSize;
-  const fromFontSize = baseFontSize;
+  const fromFontSize = Math.round(baseFontSize * 0.90);
 
-  // A. Draw "To: [Recipient Name]"
+  const activeTextColor = textColor || "#ffd700";
+
   if (card.to) {
     ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
   }
 
-  // B. Draw Greeting Message (Multi-line Word Wrap)
   ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = textColor || "#fde68a";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-  ctx.shadowBlur = 8;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillStyle = activeTextColor;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
 
   const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
   let lines = [];
@@ -425,7 +421,7 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   lines.push(currentLine);
   if (lines.length > 2) lines = lines.slice(0, 2);
 
-  const lineHeight = msgFontSize * 1.25;
+  const lineHeight = msgFontSize * 1.20;
   const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
   lines.forEach((line, idx) => {
@@ -433,13 +429,12 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
     ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
   });
 
-  // C. Draw "— [Sender Name]"
   if (card.from) {
     ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-    ctx.fillStyle = textColor || "#fde68a";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-    ctx.shadowBlur = 6;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.5, maxTextWidth);
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
   }
 };
 
@@ -457,8 +452,8 @@ export default function Home() {
   const [customText, setCustomText] = useState(FESTIVE_DATA["Happy Birthday"].ideas[0].en);
 
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
-  const [fontSize, setFontSize] = useState("text-base sm:text-lg");
-  const [textColor, setTextColor] = useState("#fde68a");
+  const [fontSize, setFontSize] = useState("text-xs sm:text-sm");
+  const [textColor, setTextColor] = useState("#ffd700");
 
   const [credits, setCredits] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -472,7 +467,6 @@ export default function Home() {
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
-  
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
 
   const initialStaged = {
@@ -624,15 +618,14 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Canvas Video & Full Soundtrack WebAudio Recording Engine
+  // Direct memory extraction of raw audio buffer to guarantee sound on mobile
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
     const previousMuteState = video.muted;
-    video.muted = false;
-    video.volume = 1.0;
+    video.muted = true; // Mute DOM video to prevent echo during manual buffer injection
 
     if (video.paused) {
       await video.play().catch(() => {});
@@ -645,73 +638,65 @@ export default function Home() {
 
     const canvasStream = canvas.captureStream(30);
 
-    // Capture Web Audio node to ensure audio soundtrack is included in MediaRecorder
-    let audioDestStream = null;
+    let audioTrack = null;
+    let sourceNode = null;
+    
+    // Explicitly fetch and decode the audio buffer directly from the source URL
     try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!window._sharedAudioCtx) {
-          window._sharedAudioCtx = new AudioContextClass();
-        }
-        const audioCtx = window._sharedAudioCtx;
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
+      const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      window._sharedAudioCtx = audioCtx;
+      if (audioCtx.state === "suspended") await audioCtx.resume();
 
-        if (!video._mediaElementSource) {
-          video._mediaElementSource = audioCtx.createMediaElementSource(video);
-        }
-        
-        const audioDest = audioCtx.createMediaStreamDestination();
-        video._mediaElementSource.disconnect();
-        video._mediaElementSource.connect(audioDest);
-        video._mediaElementSource.connect(audioCtx.destination);
-        audioDestStream = audioDest.stream;
+      const dest = audioCtx.createMediaStreamDestination();
+      const srcUrl = activeCard.media ? activeCard.media.url : activeCard.url;
+      
+      const response = await fetch(srcUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      
+      sourceNode = audioCtx.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(dest);
+      sourceNode.connect(audioCtx.destination); 
+      
+      if (dest.stream.getAudioTracks().length > 0) {
+        audioTrack = dest.stream.getAudioTracks()[0];
+        audioTrack.enabled = true;
       }
-    } catch (webAudioErr) {
-      console.warn("WebAudio capture fallback:", webAudioErr);
+    } catch (e) {
+      console.warn("Buffer fetch failed, falling back to captureStream:", e);
+      if (typeof video.captureStream === "function") {
+        const vs = video.captureStream();
+        if (vs.getAudioTracks().length > 0) {
+          audioTrack = vs.getAudioTracks()[0];
+          audioTrack.enabled = true;
+        }
+      }
     }
 
-    if (audioDestStream) {
-      const audioTracks = audioDestStream.getAudioTracks();
-      audioTracks.forEach((track) => canvasStream.addTrack(track));
-    } else {
-      try {
-        let videoAudioStream = null;
-        if (typeof video.captureStream === "function") {
-          videoAudioStream = video.captureStream();
-        } else if (typeof video.mozCaptureStream === "function") {
-          videoAudioStream = video.mozCaptureStream();
-        }
-
-        if (videoAudioStream) {
-          const audioTracks = videoAudioStream.getAudioTracks();
-          audioTracks.forEach((track) => {
-            canvasStream.addTrack(track.clone ? track.clone() : track);
-          });
-        }
-      } catch (audioErr) {
-        console.log("Audio track capture fallback note:", audioErr);
-      }
+    if (audioTrack) {
+      canvasStream.addTrack(audioTrack);
     }
 
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const types = [
-          "video/mp4;codecs=h264,aac",
-          "video/mp4",
-          "video/webm;codecs=vp9,opus",
-          "video/webm;codecs=vp8,opus",
-          "video/webm"
+        const mp4Types = [
+          "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+          "video/mp4"
         ];
-        for (const type of types) {
+        for (const type of mp4Types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
       }
-      return "video/webm";
+      return "video/mp4";
     };
 
     const mimeType = getMimeType();
+    const isMp4 = mimeType.includes("mp4");
+    const ext = isMp4 ? "mp4" : "webm";
+    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
+
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
@@ -722,14 +707,21 @@ export default function Home() {
 
       recorder.onstop = () => {
         video.muted = previousMuteState;
-        const ext = mimeType.includes("mp4") ? "mp4" : "webm";
-        const blob = new Blob(chunks, { type: mimeType });
+        if (sourceNode) {
+          try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
+        }
+        
+        const blob = new Blob(chunks, { type: baseMimeType });
         const fileName = `GreetingAI_${activeCard.category.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
-        const file = new File([blob], fileName, { type: mimeType });
+        const file = new File([blob], fileName, { type: baseMimeType });
+        
         resolve({ blob, file, fileName });
       };
 
       recorder.start();
+      if (sourceNode) {
+        try { sourceNode.start(0); } catch (e) {}
+      }
 
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
@@ -781,7 +773,6 @@ export default function Home() {
     }
   };
 
-  // Structured multi-line share caption (Strictly 4 lines, no custom message line)
   const buildShareCaption = (card, lang) => {
     const dateStr = new Date().toLocaleDateString(lang === "zh" ? "zh-TW" : "en-US", {
       year: "numeric",
@@ -867,8 +858,6 @@ export default function Home() {
       setHistory((prev) => [generatedCard, ...prev.slice(0, 4)]);
       setCredits((prev) => Math.max(0, prev - 1));
       setIsGenerating(false);
-
-      setTimeout(() => handleDirectDownload(), 300);
     }, 1200);
   };
 
@@ -1303,8 +1292,8 @@ export default function Home() {
                       onChange={(e) => setTextColor(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:border-amber-400"
                     >
-                      <option value="#fde68a">Gold (尊爵金)</option>
-                      <option value="#ffffff">White (純白)</option>
+                      <option value="#ffd700">Classic Gold (尊爵金)</option>
+                      <option value="#ffffff">Pure White (純白)</option>
                       <option value="#f43f5e">Rose Pink (浪漫粉)</option>
                       <option value="#67e8f9">Cyan Blue (璀璨藍)</option>
                     </select>
@@ -1408,13 +1397,13 @@ export default function Home() {
                       />
                     )}
 
-                    <div className="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-black/95 via-black/75 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                      <div className="text-center space-y-1 max-w-[90%] mx-auto drop-shadow-md">
+                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                      <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold italic truncate`}
                           >
@@ -1423,7 +1412,7 @@ export default function Home() {
                         )}
                         <p 
                           style={{ 
-                            color: textColor,
+                            color: textColor || "#ffd700",
                             fontFamily: activeCard.fontCss || selectedFont.cssVar
                           }} 
                           className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
@@ -1434,7 +1423,7 @@ export default function Home() {
                           <p 
                             style={{ 
                               fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor
+                              color: textColor || "#ffd700"
                             }}
                             className={`${fontSize} font-bold truncate`}
                           >
