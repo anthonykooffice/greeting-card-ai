@@ -1,10 +1,9 @@
-
 /* ============================================================================
    FILE PATH: app/page.js
    DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
-                Includes clickable Inline Security Policy in Hero Description.
+                Includes clickable Inline Security Policy & Support Contact.
    ============================================================================ */
 
 "use client";
@@ -302,6 +301,9 @@ const TRANSLATIONS = {
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
     policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
+    contactTitle: "Questions & Support",
+    contactText: "Have feedback or need help? Reach out to our support team at ",
+    footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
     closeBtn: "I Understand & Agree",
     categories: ORDERED_CATEGORIES,
     styles: [
@@ -342,6 +344,9 @@ const TRANSLATIONS = {
     policyPrivacyText: "您的隱私是我們的首要考量。您輸入的任何自訂文字、姓名或上傳的參考媒體，僅在您的瀏覽器暫存記憶體或臨時雲端環境中進行安全處理，專門用於生成您的賀卡。我們絕不會永久儲存您的個人媒體檔案，也絕不會存取您裝置中的私人本機資料夾。",
     policyLegalTitle: "法律保護與免責聲明",
     policyLegalText: "GreetingAI Studio 按「現狀」提供，僅供個人、娛樂及非商業用途之分享。使用者須對其創作及傳送的訊息與自訂媒體承擔全部責任。我們對外部第三方平台（如 WhatsApp 或微信的檔案限制）的傳送規則概不負責。請負責任地傳遞喜悅與祝福！",
+    contactTitle: "聯絡我們與技術支援",
+    contactText: "若有任何問題或寶貴意見，歡迎聯絡我們的支援團隊：",
+    footerText: "© 2026 GreetingAI Studio. 保留所有權利。 | 技術支援：",
     closeBtn: "我瞭解並同意",
     categories: ORDERED_CATEGORIES,
     styles: [
@@ -640,38 +645,45 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
+    let sourceNode = null;
+    
+    // Explicitly fetch and decode the audio buffer directly from the source URL
+    try {
+      const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      window._sharedAudioCtx = audioCtx;
+      if (audioCtx.state === "suspended") await audioCtx.resume();
 
-    if (!video._mediaElementSource) {
-      video.crossOrigin = "anonymous";
-      try {
-        video._mediaElementSource = audioCtx.createMediaElementSource(video);
-      } catch (e) {}
-    }
-
-    if (video._mediaElementSource) {
-      const audioDest = audioCtx.createMediaStreamDestination();
-      try { video._mediaElementSource.disconnect(); } catch (e) {}
+      const dest = audioCtx.createMediaStreamDestination();
+      const srcUrl = activeCard.media ? activeCard.media.url : activeCard.url;
       
-      video._mediaElementSource.connect(audioDest);
-      video._mediaElementSource.connect(audioCtx.destination);
-
-      const tracks = audioDest.stream.getAudioTracks();
-      if (tracks.length > 0) audioTrack = tracks[0];
-    }
-
-    if (!audioTrack && typeof video.captureStream === "function") {
-      try {
+      const response = await fetch(srcUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      
+      sourceNode = audioCtx.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(dest);
+      sourceNode.connect(audioCtx.destination); 
+      
+      if (dest.stream.getAudioTracks().length > 0) {
+        audioTrack = dest.stream.getAudioTracks()[0];
+        audioTrack.enabled = true;
+      }
+    } catch (e) {
+      console.warn("Buffer fetch failed, falling back to captureStream:", e);
+      if (typeof video.captureStream === "function") {
         const vs = video.captureStream();
-        const vTracks = vs.getAudioTracks();
-        if (vTracks.length > 0) audioTrack = vTracks[0];
-      } catch (e) {}
+        if (vs.getAudioTracks().length > 0) {
+          audioTrack = vs.getAudioTracks()[0];
+          audioTrack.enabled = true;
+        }
+      }
     }
 
     if (audioTrack) {
       canvasStream.addTrack(audioTrack);
     }
 
-    // STRICT UNIVERSAL MIME TYPE PRIORITIZATION (MP4 for iPhone, WebM for Android)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const mp4Types = [
@@ -700,11 +712,8 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        if (video._mediaElementSource) {
-          try {
-            video._mediaElementSource.disconnect();
-            video._mediaElementSource.connect(audioCtx.destination);
-          } catch (e) {}
+        if (sourceNode) {
+          try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
         }
         
         const blob = new Blob(chunks, { type: baseMimeType });
@@ -715,6 +724,9 @@ export default function Home() {
       };
 
       recorder.start();
+      if (sourceNode) {
+        try { sourceNode.start(0); } catch (e) {}
+      }
 
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
@@ -738,81 +750,30 @@ export default function Home() {
     });
   };
 
-  const executeExport = async (mode) => {
+  const handleDirectDownload = async () => {
     if (!activeCard) return;
-    
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
-    window._sharedAudioCtx = audioCtx;
-    if (audioCtx.state === "suspended") {
-      await audioCtx.resume();
-    }
-
-    const video = videoRef.current;
-    if (video) {
-      video.muted = false;
-      video.volume = 1.0;
-      try {
-        await video.play(); 
-      } catch (e) {
-        alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
-        return;
-      }
-    }
-
+    setIsDownloading(true);
     setDownloadProgress(0);
-    if (mode === 'download') setIsDownloading(true);
-    else setIsSharing(true);
 
     try {
-      const { file, blob, fileName } = await generateImprintedFile();
+      const { blob, fileName } = await generateImprintedFile();
+      const blobUrl = URL.createObjectURL(blob);
 
-      if (mode === 'download') {
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      } else {
-        const shareCaption = buildShareCaption(activeCard, lang);
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(shareCaption).catch(() => {});
-        }
-
-        setPreparedShareData({
-          file,
-          blob,
-          fileName,
-          shareCaption,
-          whatsappUrl
-        });
-        setShareModalOpen(true);
-      }
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
-      if (mode === 'download') {
-        const link = document.createElement("a");
-        link.href = activeCard.url;
-        link.download = `GreetingAI_Card.mp4`;
-        link.click();
-      }
+      const link = document.createElement("a");
+      link.href = activeCard.url;
+      link.download = `GreetingAI_Card.mp4`;
+      link.click();
     } finally {
       setIsDownloading(false);
-      setIsSharing(false);
       setDownloadProgress(0);
     }
   };
@@ -835,6 +796,54 @@ export default function Home() {
     const line4 = dateText;
 
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
+  };
+
+  // Restored Native Web Share validation logic
+  const handleShare = async () => {
+    if (!activeCard) return;
+    
+    const canShareFiles = typeof navigator !== "undefined" && navigator.canShare;
+    
+    if (!canShareFiles) {
+        alert(lang === "zh" ? "您的裝置或瀏覽器不支援直接分享檔案。請先點擊「下載影片」，然後手動分享。" : "Your device or browser does not support direct file sharing. Please tap 'Download Imprinted Video Card' first, then share it manually.");
+        return;
+    }
+
+    setIsSharing(true);
+    setDownloadProgress(0);
+
+    try {
+      const { file, blob, fileName } = await generateImprintedFile();
+      const shareCaption = buildShareCaption(activeCard, lang);
+      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareCaption).catch(() => {});
+      }
+
+      setPreparedShareData({
+        file,
+        blob,
+        fileName,
+        shareCaption,
+        whatsappUrl
+      });
+      setShareModalOpen(true);
+    } catch (err) {
+      console.log("Share sheet unhandled:", err);
+    } finally {
+      setIsSharing(false);
+      setDownloadProgress(0);
+    }
   };
 
   const handleGenerateCard = () => {
@@ -929,6 +938,16 @@ export default function Home() {
                   <span>{t.policyLegalTitle}</span>
                 </h4>
                 <p className="leading-relaxed">{t.policyLegalText}</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-indigo-400 mb-1 flex items-center space-x-2">
+                  <span className="bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">4</span>
+                  <span>{t.contactTitle}</span>
+                </h4>
+                <p className="leading-relaxed">
+                  {t.contactText} 
+                  <a href="mailto:anthonyko@ai-bot-mart.org" className="text-indigo-400 hover:text-indigo-300 transition hover:underline">anthonyko@ai-bot-mart.org</a>
+                </p>
               </div>
             </div>
 
@@ -1028,7 +1047,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
-            {/* Interactive Policy Button */}
             <button
               onClick={() => setPolicyModalOpen(true)}
               className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
@@ -1066,6 +1084,7 @@ export default function Home() {
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
               {t.heroTitle}
             </h1>
+            
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
               {t.heroDescPart1}
               <button 
@@ -1456,11 +1475,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS */}
+            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
-                  onClick={() => executeExport('download')}
+                  onClick={handleDirectDownload}
                   disabled={isDownloading || isSharing}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
                 >
@@ -1478,7 +1497,7 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => executeExport('share')}
+                  onClick={handleShare}
                   disabled={isDownloading || isSharing}
                   className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
                 >
@@ -1551,6 +1570,16 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {/* GLOBAL FOOTER */}
+      <footer className="max-w-7xl mx-auto px-4 sm:px-6 border-t border-slate-800/60 pt-6 pb-6 text-center text-sm text-slate-500">
+        <p>
+          {t.footerText} 
+          <a href="mailto:anthonyko@ai-bot-mart.org" className="text-indigo-400 hover:text-indigo-300 transition ml-1 hover:underline">
+            anthonyko@ai-bot-mart.org
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
