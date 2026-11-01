@@ -52,7 +52,7 @@ const FONT_OPTIONS = [
   { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif", family: "'Playfair Display', serif" },
   { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive", family: "'Great Vibes', cursive" },
   { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive", family: "'Dancing Script', cursive" },
-  { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
+  { id: "display", label: "Luxury Display (尊貴奢华)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
   { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif", family: "'Montserrat', sans-serif" }
 ];
 
@@ -301,7 +301,7 @@ const TRANSLATIONS = {
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
     policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
-    contactTitle: "4. Questions & Support",
+    contactTitle: "Questions & Support",
     contactText: "Have feedback or need help? Reach out to our support team at ",
     footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
     closeBtn: "I Understand & Agree",
@@ -344,7 +344,7 @@ const TRANSLATIONS = {
     policyPrivacyText: "您的隱私是我們的首要考量。您輸入的任何自訂文字、姓名或上傳的參考媒體，僅在您的瀏覽器暫存記憶體或臨時雲端環境中進行安全處理，專門用於生成您的賀卡。我們絕不會永久儲存您的個人媒體檔案，也絕不會存取您裝置中的私人本機資料夾。",
     policyLegalTitle: "法律保護與免責聲明",
     policyLegalText: "GreetingAI Studio 按「現狀」提供，僅供個人、娛樂及非商業用途之分享。使用者須對其創作及傳送的訊息與自訂媒體承擔全部責任。我們對外部第三方平台（如 WhatsApp 或微信的檔案限制）的傳送規則概不負責。請負責任地傳遞喜悅與祝福！",
-    contactTitle: "4. 聯絡我們與技術支援",
+    contactTitle: "聯絡我們與技術支援",
     contactText: "若有任何問題或寶貴意見，歡迎聯絡我們的支援團隊：",
     footerText: "© 2026 GreetingAI Studio. 保留所有權利。 | 技術支援：",
     closeBtn: "我瞭解並同意",
@@ -634,12 +634,8 @@ export default function Home() {
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
-    const previousMuteState = video.muted;
-    video.muted = true; // Mute DOM video to prevent echo during manual buffer injection
-
-    if (video.paused) {
-      await video.play().catch(() => {});
-    }
+    const audioCtx = window._sharedAudioCtx;
+    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -651,7 +647,6 @@ export default function Home() {
     let audioTrack = null;
     let sourceNode = null;
     
-    // Explicitly fetch and decode the audio buffer directly from the source URL
     try {
       const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       window._sharedAudioCtx = audioCtx;
@@ -716,7 +711,6 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
         if (sourceNode) {
           try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
         }
