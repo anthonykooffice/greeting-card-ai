@@ -3,7 +3,6 @@
    DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
-                Includes clickable Inline Security Policy & Support Contact.
    ============================================================================ */
 
 "use client";
@@ -273,9 +272,7 @@ const TRANSLATIONS = {
   en: {
     title: "GreetingAI Studio",
     heroTitle: "Craft AI Magic in Every Card",
-    heroDescPart1: "Transform festive moments into personalized cards & video greetings. Tap an event, pick a style, enter custom names and greetings, and stage your card onto the Canvas. Your privacy and data security are our top priorities—please review our ",
-    heroDescLink: "🛡️ Free Trial & Security Policy",
-    heroDescPart2: " before creating your card.",
+    heroDesc: "Transform festive moments into personalized cards & video greetings. Tap an event, pick a style, enter custom names and greetings, and stage your card onto the Canvas.",
     categoryTitle: "1. EVENT SELECTION (Presets per Category)",
     styleTitle: "2. VISUAL STYLE SELECTION & AI ENHANCEMENTS",
     msgTitle: "3. PERSONALIZATION & GUARDED INPUTS",
@@ -301,9 +298,6 @@ const TRANSLATIONS = {
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
     policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
-    contactTitle: "Questions & Support",
-    contactText: "Have feedback or need help? Reach out to our support team at ",
-    footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
     closeBtn: "I Understand & Agree",
     categories: ORDERED_CATEGORIES,
     styles: [
@@ -316,9 +310,7 @@ const TRANSLATIONS = {
   zh: {
     title: "GreetingAI 賀卡工作室",
     heroTitle: "用 AI 為每一張賀卡注入魔力",
-    heroDescPart1: "將節日時刻轉化為個性化賀卡與動態影片。點擊主題、選擇視覺風格、填入收件人與自訂祝福語，並即時將印製賀卡暫存至畫布。您的隱私與資料安全是我們的首要考量——在製作賀卡前，請點擊閱讀我們的 ",
-    heroDescLink: "🛡️ 免費試用與安全條款",
-    heroDescPart2: "。",
+    heroDesc: "將節日時刻轉化為個性化賀卡與動態影片。點擊主題、選擇視覺風格、填入收件人與自訂祝福語，並即時將印製賀卡暫存至畫布。",
     categoryTitle: "1. 選擇賀卡主題 (每類含預設設計)",
     styleTitle: "2. 視覺風格選擇與 AI 動態增強",
     msgTitle: "3. 個性化內容與安全保護輸入",
@@ -344,9 +336,6 @@ const TRANSLATIONS = {
     policyPrivacyText: "您的隱私是我們的首要考量。您輸入的任何自訂文字、姓名或上傳的參考媒體，僅在您的瀏覽器暫存記憶體或臨時雲端環境中進行安全處理，專門用於生成您的賀卡。我們絕不會永久儲存您的個人媒體檔案，也絕不會存取您裝置中的私人本機資料夾。",
     policyLegalTitle: "法律保護與免責聲明",
     policyLegalText: "GreetingAI Studio 按「現狀」提供，僅供個人、娛樂及非商業用途之分享。使用者須對其創作及傳送的訊息與自訂媒體承擔全部責任。我們對外部第三方平台（如 WhatsApp 或微信的檔案限制）的傳送規則概不負責。請負責任地傳遞喜悅與祝福！",
-    contactTitle: "聯絡我們與技術支援",
-    contactText: "若有任何問題或寶貴意見，歡迎聯絡我們的支援團隊：",
-    footerText: "© 2026 GreetingAI Studio. 保留所有權利。 | 技術支援：",
     closeBtn: "我瞭解並同意",
     categories: ORDERED_CATEGORIES,
     styles: [
@@ -629,13 +618,18 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
+  // Direct memory extraction of raw audio buffer to guarantee sound on mobile
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
-    const audioCtx = window._sharedAudioCtx;
-    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
+    const previousMuteState = video.muted;
+    video.muted = true; // Mute DOM video to prevent echo during manual buffer injection
+
+    if (video.paused) {
+      await video.play().catch(() => {});
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -712,6 +706,7 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
+        video.muted = previousMuteState;
         if (sourceNode) {
           try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
         }
@@ -798,17 +793,8 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
-  // Restored Native Web Share validation logic
   const handleShare = async () => {
     if (!activeCard) return;
-    
-    const canShareFiles = typeof navigator !== "undefined" && navigator.canShare;
-    
-    if (!canShareFiles) {
-        alert(lang === "zh" ? "您的裝置或瀏覽器不支援直接分享檔案。請先點擊「下載影片」，然後手動分享。" : "Your device or browser does not support direct file sharing. Please tap 'Download Imprinted Video Card' first, then share it manually.");
-        return;
-    }
-
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -939,16 +925,6 @@ export default function Home() {
                 </h4>
                 <p className="leading-relaxed">{t.policyLegalText}</p>
               </div>
-              <div>
-                <h4 className="font-bold text-indigo-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">4</span>
-                  <span>{t.contactTitle}</span>
-                </h4>
-                <p className="leading-relaxed">
-                  {t.contactText} 
-                  <a href="mailto:anthonyko@ai-bot-mart.org" className="text-indigo-400 hover:text-indigo-300 transition hover:underline">anthonyko@ai-bot-mart.org</a>
-                </p>
-              </div>
             </div>
 
             <div className="pt-2">
@@ -1047,6 +1023,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
+            {/* Interactive Policy Button */}
             <button
               onClick={() => setPolicyModalOpen(true)}
               className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
@@ -1084,17 +1061,7 @@ export default function Home() {
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
               {t.heroTitle}
             </h1>
-            
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
-              {t.heroDescPart1}
-              <button 
-                onClick={() => setPolicyModalOpen(true)}
-                className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors underline decoration-emerald-400/30 underline-offset-4"
-              >
-                [ {t.heroDescLink} ]
-              </button>
-              {t.heroDescPart2}
-            </p>
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">{t.heroDesc}</p>
           </div>
 
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
@@ -1570,16 +1537,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      {/* GLOBAL FOOTER */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 border-t border-slate-800/60 pt-6 pb-6 text-center text-sm text-slate-500">
-        <p>
-          {t.footerText} 
-          <a href="mailto:anthonyko@ai-bot-mart.org" className="text-indigo-400 hover:text-indigo-300 transition ml-1 hover:underline">
-            anthonyko@ai-bot-mart.org
-          </a>
-        </p>
-      </footer>
     </div>
   );
 }
