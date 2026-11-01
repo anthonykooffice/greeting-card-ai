@@ -3,8 +3,7 @@
    DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
-                Includes clickable Inline Security Policy in Hero Description.
-                Features Robust Mobile Web Share API Fallbacks.
+                Includes clickable Inline Security Policy & Support Contact.
    ============================================================================ */
 
 "use client";
@@ -648,6 +647,7 @@ export default function Home() {
     let audioTrack = null;
     let sourceNode = null;
     
+    // Explicitly fetch and decode the audio buffer directly from the source URL
     try {
       const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       window._sharedAudioCtx = audioCtx;
@@ -798,16 +798,13 @@ export default function Home() {
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
   };
 
+  // Restored Native Web Share validation logic
   const handleShare = async () => {
     if (!activeCard) return;
     
-    // Check if the current environment supports native file sharing
-    // Desktop browsers and some in-app browsers often lack this capability
     const canShareFiles = typeof navigator !== "undefined" && navigator.canShare;
     
     if (!canShareFiles) {
-        // If native share is impossible on this device, don't build the video
-        // Immediately show an error instructing the user to download first
         alert(lang === "zh" ? "您的裝置或瀏覽器不支援直接分享檔案。請先點擊「下載影片」，然後手動分享。" : "Your device or browser does not support direct file sharing. Please tap 'Download Imprinted Video Card' first, then share it manually.");
         return;
     }
@@ -1050,7 +1047,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
-            {/* Interactive Policy Button */}
             <button
               onClick={() => setPolicyModalOpen(true)}
               className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
@@ -1089,7 +1085,6 @@ export default function Home() {
               {t.heroTitle}
             </h1>
             
-            {/* UPDATE: Revised Interactive Introduction Paragraph */}
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
               {t.heroDescPart1}
               <button 
@@ -1100,7 +1095,6 @@ export default function Home() {
               </button>
               {t.heroDescPart2}
             </p>
-
           </div>
 
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
