@@ -1,8 +1,10 @@
+
 /* ============================================================================
    FILE PATH: app/page.js
    DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
+                Includes clickable Inline Security Policy in Hero Description.
    ============================================================================ */
 
 "use client";
@@ -272,7 +274,9 @@ const TRANSLATIONS = {
   en: {
     title: "GreetingAI Studio",
     heroTitle: "Craft AI Magic in Every Card",
-    heroDesc: "Transform festive moments into personalized cards & video greetings. Tap an event, pick a style, enter custom names and greetings, and stage your card onto the Canvas.",
+    heroDescPart1: "Transform festive moments into personalized cards & video greetings. Tap an event, pick a style, enter custom names and greetings, and stage your card onto the Canvas. Your privacy and data security are our top priorities—please review our ",
+    heroDescLink: "🛡️ Free Trial & Security Policy",
+    heroDescPart2: " before creating your card.",
     categoryTitle: "1. EVENT SELECTION (Presets per Category)",
     styleTitle: "2. VISUAL STYLE SELECTION & AI ENHANCEMENTS",
     msgTitle: "3. PERSONALIZATION & GUARDED INPUTS",
@@ -310,7 +314,9 @@ const TRANSLATIONS = {
   zh: {
     title: "GreetingAI 賀卡工作室",
     heroTitle: "用 AI 為每一張賀卡注入魔力",
-    heroDesc: "將節日時刻轉化為個性化賀卡與動態影片。點擊主題、選擇視覺風格、填入收件人與自訂祝福語，並即時將印製賀卡暫存至畫布。",
+    heroDescPart1: "將節日時刻轉化為個性化賀卡與動態影片。點擊主題、選擇視覺風格、填入收件人與自訂祝福語，並即時將印製賀卡暫存至畫布。您的隱私與資料安全是我們的首要考量——在製作賀卡前，請點擊閱讀我們的 ",
+    heroDescLink: "🛡️ 免費試用與安全條款",
+    heroDescPart2: "。",
     categoryTitle: "1. 選擇賀卡主題 (每類含預設設計)",
     styleTitle: "2. 視覺風格選擇與 AI 動態增強",
     msgTitle: "3. 個性化內容與安全保護輸入",
@@ -618,18 +624,13 @@ export default function Home() {
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
   };
 
-  // Direct memory extraction of raw audio buffer to guarantee sound on mobile
   const generateImprintedFile = async () => {
     const video = videoRef.current;
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
-    const previousMuteState = video.muted;
-    video.muted = true; // Mute DOM video to prevent echo during manual buffer injection
-
-    if (video.paused) {
-      await video.play().catch(() => {});
-    }
+    const audioCtx = window._sharedAudioCtx;
+    if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 800;
@@ -639,45 +640,38 @@ export default function Home() {
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
-    let sourceNode = null;
-    
-    // Explicitly fetch and decode the audio buffer directly from the source URL
-    try {
-      const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      window._sharedAudioCtx = audioCtx;
-      if (audioCtx.state === "suspended") await audioCtx.resume();
 
-      const dest = audioCtx.createMediaStreamDestination();
-      const srcUrl = activeCard.media ? activeCard.media.url : activeCard.url;
+    if (!video._mediaElementSource) {
+      video.crossOrigin = "anonymous";
+      try {
+        video._mediaElementSource = audioCtx.createMediaElementSource(video);
+      } catch (e) {}
+    }
+
+    if (video._mediaElementSource) {
+      const audioDest = audioCtx.createMediaStreamDestination();
+      try { video._mediaElementSource.disconnect(); } catch (e) {}
       
-      const response = await fetch(srcUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      
-      sourceNode = audioCtx.createBufferSource();
-      sourceNode.buffer = audioBuffer;
-      sourceNode.connect(dest);
-      sourceNode.connect(audioCtx.destination); 
-      
-      if (dest.stream.getAudioTracks().length > 0) {
-        audioTrack = dest.stream.getAudioTracks()[0];
-        audioTrack.enabled = true;
-      }
-    } catch (e) {
-      console.warn("Buffer fetch failed, falling back to captureStream:", e);
-      if (typeof video.captureStream === "function") {
+      video._mediaElementSource.connect(audioDest);
+      video._mediaElementSource.connect(audioCtx.destination);
+
+      const tracks = audioDest.stream.getAudioTracks();
+      if (tracks.length > 0) audioTrack = tracks[0];
+    }
+
+    if (!audioTrack && typeof video.captureStream === "function") {
+      try {
         const vs = video.captureStream();
-        if (vs.getAudioTracks().length > 0) {
-          audioTrack = vs.getAudioTracks()[0];
-          audioTrack.enabled = true;
-        }
-      }
+        const vTracks = vs.getAudioTracks();
+        if (vTracks.length > 0) audioTrack = vTracks[0];
+      } catch (e) {}
     }
 
     if (audioTrack) {
       canvasStream.addTrack(audioTrack);
     }
 
+    // STRICT UNIVERSAL MIME TYPE PRIORITIZATION (MP4 for iPhone, WebM for Android)
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const mp4Types = [
@@ -706,9 +700,11 @@ export default function Home() {
       };
 
       recorder.onstop = () => {
-        video.muted = previousMuteState;
-        if (sourceNode) {
-          try { sourceNode.stop(); sourceNode.disconnect(); } catch (e) {}
+        if (video._mediaElementSource) {
+          try {
+            video._mediaElementSource.disconnect();
+            video._mediaElementSource.connect(audioCtx.destination);
+          } catch (e) {}
         }
         
         const blob = new Blob(chunks, { type: baseMimeType });
@@ -719,9 +715,6 @@ export default function Home() {
       };
 
       recorder.start();
-      if (sourceNode) {
-        try { sourceNode.start(0); } catch (e) {}
-      }
 
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
@@ -745,30 +738,81 @@ export default function Home() {
     });
   };
 
-  const handleDirectDownload = async () => {
+  const executeExport = async (mode) => {
     if (!activeCard) return;
-    setIsDownloading(true);
+    
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = window._sharedAudioCtx || new AudioContextClass();
+    window._sharedAudioCtx = audioCtx;
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+
+    const video = videoRef.current;
+    if (video) {
+      video.muted = false;
+      video.volume = 1.0;
+      try {
+        await video.play(); 
+      } catch (e) {
+        alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
+        return;
+      }
+    }
+
     setDownloadProgress(0);
+    if (mode === 'download') setIsDownloading(true);
+    else setIsSharing(true);
 
     try {
-      const { blob, fileName } = await generateImprintedFile();
-      const blobUrl = URL.createObjectURL(blob);
+      const { file, blob, fileName } = await generateImprintedFile();
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
+      if (mode === 'download') {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        const shareCaption = buildShareCaption(activeCard, lang);
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
+
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+        }
+
+        setPreparedShareData({
+          file,
+          blob,
+          fileName,
+          shareCaption,
+          whatsappUrl
+        });
+        setShareModalOpen(true);
+      }
     } catch (err) {
       console.log("Canvas fallback trigger:", err);
-      const link = document.createElement("a");
-      link.href = activeCard.url;
-      link.download = `GreetingAI_Card.mp4`;
-      link.click();
+      if (mode === 'download') {
+        const link = document.createElement("a");
+        link.href = activeCard.url;
+        link.download = `GreetingAI_Card.mp4`;
+        link.click();
+      }
     } finally {
       setIsDownloading(false);
+      setIsSharing(false);
       setDownloadProgress(0);
     }
   };
@@ -791,45 +835,6 @@ export default function Home() {
     const line4 = dateText;
 
     return `${line1}\n${line2}\n${line3}\n${line4}`.trim();
-  };
-
-  const handleShare = async () => {
-    if (!activeCard) return;
-    setIsSharing(true);
-    setDownloadProgress(0);
-
-    try {
-      const { file, blob, fileName } = await generateImprintedFile();
-      const shareCaption = buildShareCaption(activeCard, lang);
-      const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareCaption)}`;
-
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareCaption).catch(() => {});
-      }
-
-      setPreparedShareData({
-        file,
-        blob,
-        fileName,
-        shareCaption,
-        whatsappUrl
-      });
-      setShareModalOpen(true);
-    } catch (err) {
-      console.log("Share sheet unhandled:", err);
-    } finally {
-      setIsSharing(false);
-      setDownloadProgress(0);
-    }
   };
 
   const handleGenerateCard = () => {
@@ -1061,7 +1066,16 @@ export default function Home() {
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
               {t.heroTitle}
             </h1>
-            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">{t.heroDesc}</p>
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+              {t.heroDescPart1}
+              <button 
+                onClick={() => setPolicyModalOpen(true)}
+                className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors underline decoration-emerald-400/30 underline-offset-4"
+              >
+                [ {t.heroDescLink} ]
+              </button>
+              {t.heroDescPart2}
+            </p>
           </div>
 
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
@@ -1442,11 +1456,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
+            {/* DUAL ACTION BUTTONS */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
-                  onClick={handleDirectDownload}
+                  onClick={() => executeExport('download')}
                   disabled={isDownloading || isSharing}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
                 >
@@ -1464,7 +1478,7 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={handleShare}
+                  onClick={() => executeExport('share')}
                   disabled={isDownloading || isSharing}
                   className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
                 >
