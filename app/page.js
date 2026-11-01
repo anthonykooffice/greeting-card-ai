@@ -4,6 +4,7 @@
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
                 Includes clickable Inline Security Policy in Hero Description.
+                Features enlarged Policy Modal and non-blocking desktop sharing.
    ============================================================================ */
 
 "use client";
@@ -121,7 +122,7 @@ const FESTIVE_DATA = {
     ],
     ideas: [
       { en: "You hold the key to my heart today, tomorrow, and forever. Happy Valentine's Day!", zh: "你掌握著我心門的鑰匙，直到永遠。情人節快樂！" },
-      { en: "Every love story is beautiful, but ours is my absolute favorite.", zh: "每個愛情故事都很美，但我們的故事是我最愛的。" },
+      { en: "Every love story is beautiful, but ours is my absolute favorite.", zh: "每個愛情故事都很美，但集的我們故事是我最愛的。" },
       { en: "Life is sweeter, brighter, and better with you by my side. I love you!", zh: "有你在身旁，生活變得更加甜美絢麗。我愛你！" },
       { en: "To the love of my life—thank you for bringing so much happiness to my world.", zh: "致我的摯愛：感謝你為我的世界帶來如此多的幸福。" },
       { en: "Happy Valentine's Day to the person who still gives me butterflies!", zh: "祝那位依然讓我心動不已的人情人節快樂！" }
@@ -647,6 +648,7 @@ export default function Home() {
     let audioTrack = null;
     let sourceNode = null;
     
+    // Explicitly fetch and decode the audio buffer directly from the source URL
     try {
       const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       window._sharedAudioCtx = audioCtx;
@@ -683,16 +685,19 @@ export default function Home() {
       canvasStream.addTrack(audioTrack);
     }
 
+    // Expanded MimeType fallback to prevent Desktop infinite loops
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
-        const mp4Types = [
+        const types = [
           "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-          "video/mp4"
+          "video/mp4",
+          "video/webm;codecs=vp8,opus",
+          "video/webm;codecs=vp9,opus",
+          "video/webm"
         ];
-        for (const type of mp4Types) {
+        for (const type of types) {
           if (MediaRecorder.isTypeSupported(type)) return type;
         }
-        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
       }
       return "video/mp4";
     };
@@ -700,12 +705,12 @@ export default function Home() {
     const mimeType = getMimeType();
     const isMp4 = mimeType.includes("mp4");
     const ext = isMp4 ? "mp4" : "webm";
-    const baseMimeType = isMp4 ? "video/mp4" : "video/webm";
+    const baseMimeType = mimeType.split(';')[0]; 
 
     const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
     const chunks = [];
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunks.push(e.data);
       };
@@ -722,7 +727,14 @@ export default function Home() {
         resolve({ blob, file, fileName });
       };
 
-      recorder.start();
+      recorder.onerror = (e) => reject(e);
+
+      try {
+        recorder.start();
+      } catch (err) {
+        reject(err);
+      }
+
       if (sourceNode) {
         try { sourceNode.start(0); } catch (e) {}
       }
@@ -738,7 +750,7 @@ export default function Home() {
         setDownloadProgress(Math.min(99, Math.round((elapsed / recDuration) * 100)));
 
         if (elapsed >= recDuration) {
-          recorder.stop();
+          if (recorder.state !== "inactive") recorder.stop();
         } else {
           drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
           requestAnimationFrame(loop);
@@ -749,6 +761,7 @@ export default function Home() {
     });
   };
 
+  // Completely restored exact native executeExport logic
   const executeExport = async (mode) => {
     if (!activeCard) return;
     
@@ -800,8 +813,9 @@ export default function Home() {
         document.body.removeChild(link);
         URL.revokeObjectURL(blobUrl);
 
+        // Fixed non-blocking clipboard access
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(shareCaption).catch(() => {});
+          navigator.clipboard.writeText(shareCaption).catch(() => {});
         }
 
         setPreparedShareData({
@@ -906,7 +920,7 @@ export default function Home() {
       {/* POLICY OVERLAY MODAL */}
       {policyModalOpen && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative">
+          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 sm:p-10 space-y-8 shadow-2xl relative">
             <button 
               onClick={() => setPolicyModalOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800 transition"
@@ -916,34 +930,34 @@ export default function Home() {
             
             <div className="flex items-center space-x-3 text-indigo-400 border-b border-slate-800 pb-4">
               <ShieldCheck className="h-8 w-8 shrink-0" />
-              <h3 className="text-xl font-extrabold text-white">{t.policyTitle}</h3>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-white">{t.policyTitle}</h3>
             </div>
 
-            <div className="space-y-5 text-sm text-slate-300 h-96 overflow-y-auto pr-2 scrollbar-thin">
+            <div className="space-y-6 text-base sm:text-lg text-slate-300 max-h-[60vh] overflow-y-auto pr-4 scrollbar-thin">
               <div>
-                <h4 className="font-bold text-amber-300 mb-1 flex items-center space-x-2">
-                  <span className="bg-amber-500/20 px-2 py-0.5 rounded text-amber-400">1</span>
+                <h4 className="font-bold text-amber-300 mb-2 flex items-center space-x-2 text-lg sm:text-xl">
+                  <span className="bg-amber-500/20 px-2.5 py-0.5 rounded text-amber-400">1</span>
                   <span>{t.policyTrialTitle}</span>
                 </h4>
                 <p className="leading-relaxed">{t.policyTrialText}</p>
               </div>
               <div>
-                <h4 className="font-bold text-emerald-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-400">2</span>
+                <h4 className="font-bold text-emerald-400 mb-2 flex items-center space-x-2 text-lg sm:text-xl">
+                  <span className="bg-emerald-500/20 px-2.5 py-0.5 rounded text-emerald-400">2</span>
                   <span>{t.policyPrivacyTitle}</span>
                 </h4>
                 <p className="leading-relaxed">{t.policyPrivacyText}</p>
               </div>
               <div>
-                <h4 className="font-bold text-rose-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-rose-500/20 px-2 py-0.5 rounded text-rose-400">3</span>
+                <h4 className="font-bold text-rose-400 mb-2 flex items-center space-x-2 text-lg sm:text-xl">
+                  <span className="bg-rose-500/20 px-2.5 py-0.5 rounded text-rose-400">3</span>
                   <span>{t.policyLegalTitle}</span>
                 </h4>
                 <p className="leading-relaxed">{t.policyLegalText}</p>
               </div>
               <div>
-                <h4 className="font-bold text-indigo-400 mb-1 flex items-center space-x-2">
-                  <span className="bg-indigo-500/20 px-2 py-0.5 rounded text-indigo-400">4</span>
+                <h4 className="font-bold text-indigo-400 mb-2 flex items-center space-x-2 text-lg sm:text-xl">
+                  <span className="bg-indigo-500/20 px-2.5 py-0.5 rounded text-indigo-400">4</span>
                   <span>{t.contactTitle}</span>
                 </h4>
                 <p className="leading-relaxed">
@@ -956,7 +970,7 @@ export default function Home() {
             <div className="pt-2">
               <button
                 onClick={() => setPolicyModalOpen(false)}
-                className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg"
+                className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-4 px-4 rounded-xl transition shadow-lg text-lg"
               >
                 {t.closeBtn}
               </button>
@@ -1088,7 +1102,6 @@ export default function Home() {
               {t.heroTitle}
             </h1>
             
-            {/* UPDATE: Revised Interactive Introduction Paragraph */}
             <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
               {t.heroDescPart1}
               <button 
@@ -1099,7 +1112,6 @@ export default function Home() {
               </button>
               {t.heroDescPart2}
             </p>
-
           </div>
 
           <div className="lg:col-span-7 bg-black rounded-2xl border border-slate-800 overflow-hidden relative aspect-video flex items-center justify-center shadow-2xl">
