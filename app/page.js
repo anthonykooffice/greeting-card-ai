@@ -3,7 +3,8 @@
    DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
                 Bypasses mobile DOM captureStream() bugs by explicitly fetching 
                 and decoding the audio track to guarantee sound on Android/iOS.
-                Includes clickable Inline Security Policy & Support Contact.
+                Includes clickable Inline Security Policy in Hero Description.
+                Features Robust Mobile Web Share API Fallbacks.
    ============================================================================ */
 
 "use client";
@@ -52,7 +53,7 @@ const FONT_OPTIONS = [
   { id: "serif", label: "Classic Serif (典雅報刊)", cssVar: "var(--font-serif), serif", family: "'Playfair Display', serif" },
   { id: "script", label: "Cursive Script (浪漫情書)", cssVar: "var(--font-script), cursive", family: "'Great Vibes', cursive" },
   { id: "hand", label: "Playful Brush (歡樂手寫)", cssVar: "var(--font-hand), cursive", family: "'Dancing Script', cursive" },
-  { id: "display", label: "Luxury Display (尊貴奢华)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
+  { id: "display", label: "Luxury Display (尊貴奢華)", cssVar: "var(--font-display), serif", family: "'Cinzel Decorative', serif" },
   { id: "sans", label: "Modern Sans (現代清晰)", cssVar: "var(--font-sans), sans-serif", family: "'Montserrat', sans-serif" }
 ];
 
@@ -799,6 +800,18 @@ export default function Home() {
 
   const handleShare = async () => {
     if (!activeCard) return;
+    
+    // Check if the current environment supports native file sharing
+    // Desktop browsers and some in-app browsers often lack this capability
+    const canShareFiles = typeof navigator !== "undefined" && navigator.canShare;
+    
+    if (!canShareFiles) {
+        // If native share is impossible on this device, don't build the video
+        // Immediately show an error instructing the user to download first
+        alert(lang === "zh" ? "您的裝置或瀏覽器不支援直接分享檔案。請先點擊「下載影片」，然後手動分享。" : "Your device or browser does not support direct file sharing. Please tap 'Download Imprinted Video Card' first, then share it manually.");
+        return;
+    }
+
     setIsSharing(true);
     setDownloadProgress(0);
 
@@ -1468,7 +1481,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* DUAL ACTION BUTTONS */}
+            {/* DUAL ACTION BUTTONS (IMPRINTED FILE EXPORTS) */}
             {activeCard && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
