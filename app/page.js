@@ -340,7 +340,7 @@ const TRANSLATIONS = {
     policyPrivacyTitle: "Privacy & Data Security",
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
-    policyLegalText: "GreetingAI Studio is provided "as is" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
+    policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
     contactTitle: "Questions & Support",
     contactText: "Have feedback or need help? Reach out to our support team at ",
     footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
