@@ -1,12 +1,3 @@
-/* ============================================================================
-   FILE PATH: app/page.js
-   DESCRIPTION: GreetingAI Studio with Direct Audio Buffer Extraction.
-                Bypasses mobile DOM captureStream() bugs by explicitly fetching 
-                and decoding the audio track to guarantee sound on Android/iOS.
-                Includes clickable Inline Security Policy in Hero Description.
-                Features enlarged Policy Modal and non-blocking desktop sharing.
-   ============================================================================ */
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -21,7 +12,7 @@ import {
   ShieldCheck, 
   Layers, 
   Smartphone, 
-  Wand2, 
+  Wath2, 
   Check, 
   Film, 
   X, 
@@ -33,6 +24,7 @@ import {
   CheckCircle2, 
   FileVideo 
 } from "lucide-react";
+import { Wand2 } from 'lucide-react'; // Fix for Wath2 typo
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23ffd700") => 
   `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
@@ -63,6 +55,52 @@ const FESTIVE_DATA = {
     heroImage: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4",
     heroFallback: createPlaceholder("Happy Birthday Celebration", "%233b82f6"),
     themeColor: "from-amber-500/40 via-purple-600/30 to-pink-500/40",
+    
+    // --- NEW V2 PIP ENGINE DATA ---
+    v2PipTemplates: [
+      { 
+        id: "v2_fairy_girl", 
+        title: "Fairy Girl & Floral Mirror", 
+        zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Happy-Birthday/Video1_Fairy_Girl.mp4",
+        fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 100, y: 350, width: 880, height: 1100 }
+      },
+      { 
+        id: "v2_helicopter_heart", 
+        title: "Helicopter Delivery & Heart", 
+        zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
+        fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
+        pipConfig: { revealTime: 8.5, shape: "heart", x: 150, y: 350, width: 780, height: 780 }
+      },
+      { 
+        id: "v2_night_castle", 
+        title: "Fantasy Castle & Oval Mirror", 
+        zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
+        fallback: createPlaceholder("Night Castle", "%237c3aed"),
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 50, y: 350, width: 600, height: 800 }
+      },
+      { 
+        id: "v2_butterfly_color", 
+        title: "Crystal Cake & Golden Frame", 
+        zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
+        fallback: createPlaceholder("Crystal Cake", "%23d97706"),
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 50, y: 250, width: 600, height: 800 }
+      },
+      { 
+        id: "v2_butterfly_glass", 
+        title: "Pop-Up Card & Fireworks", 
+        zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
+        fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 150, y: 400, width: 780, height: 950 }
+      }
+    ],
+    // ------------------------------
+    
     relationshipPresets: {
       couples: [
         { id: "b1_1", title: "Romantic Candlelight & Champagne", zhTitle: "浪漫燭光與香檳 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4", fallback: createPlaceholder("Candlelight Champagne", "%23d97706") },
@@ -122,7 +160,7 @@ const FESTIVE_DATA = {
     ],
     ideas: [
       { en: "You hold the key to my heart today, tomorrow, and forever. Happy Valentine's Day!", zh: "你掌握著我心門的鑰匙，直到永遠。情人節快樂！" },
-      { en: "Every love story is beautiful, but ours is my absolute favorite.", zh: "每個愛情故事都很美，但集的我們故事是我最愛的。" },
+      { en: "Every love story is beautiful, but ours is my absolute favorite.", zh: "每個愛情故事都很美，但集我們的故事是我最愛的。" },
       { en: "Life is sweeter, brighter, and better with you by my side. I love you!", zh: "有你在身旁，生活變得更加甜美絢麗。我愛你！" },
       { en: "To the love of my life—thank you for bringing so much happiness to my world.", zh: "致我的摯愛：感謝你為我的世界帶來如此多的幸福。" },
       { en: "Happy Valentine's Day to the person who still gives me butterflies!", zh: "祝那位依然讓我心動不已的人情人節快樂！" }
@@ -359,94 +397,147 @@ const TRANSLATIONS = {
   }
 };
 
-const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj) => {
+const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, activeStyleObj, userMediaRef) => {
   const w = canvas.width;
   const h = canvas.height;
 
-  ctx.save();
-  if (activeStyleObj && activeStyleObj.cssFilter) {
-    ctx.filter = activeStyleObj.cssFilter;
-  }
-  ctx.drawImage(video, 0, 0, w, h);
-  ctx.restore();
+  // --- V2 PIP LOGIC INJECTION ---
+  // If the active card is a V2 template with pipConfig, use the Universal PiP Engine
+  if (card.pipConfig) {
+    ctx.save();
+    
+    // 1. Draw the AI Template Background
+    ctx.drawImage(video, 0, 0, w, h);
 
-  const overlayH = h * 0.30;
-  const overlayY = h - overlayH;
-  const grad = ctx.createLinearGradient(0, overlayY, 0, h);
-  grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
-  grad.addColorStop(1, "rgba(0,0,0,0.95)");
+    // 2. Draw User Media if reveal time is reached and media exists
+    if (userMediaRef && userMediaRef.current && video.currentTime >= card.pipConfig.revealTime) {
+      const pip = card.pipConfig;
+      const userMedia = userMediaRef.current;
+      
+      // Ensure media is ready to draw
+      const isVideoReady = userMedia.tagName === 'VIDEO' && userMedia.readyState >= 2;
+      const isImageReady = userMedia.tagName === 'IMG' && userMedia.complete;
 
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, overlayY, w, overlayH);
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  let fontFamily = "serif";
-  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
-  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
-  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
-  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
-
-  const maxTextWidth = w * 0.88;
-  const centerX = w / 2;
-  const contentCenterY = overlayY + (overlayH * 0.50);
-
-  const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
-  const toFontSize = Math.round(baseFontSize * 0.95);
-  const msgFontSize = baseFontSize;
-  const fromFontSize = Math.round(baseFontSize * 0.90);
-
-  const activeTextColor = textColor || "#ffd700";
-
-  if (card.to) {
-    ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-    ctx.fillStyle = activeTextColor;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-    ctx.shadowBlur = 5;
-    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
-  }
-
-  ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
-  ctx.fillStyle = activeTextColor;
-  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-  ctx.shadowBlur = 6;
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-
-  const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
-  let lines = [];
-  let currentLine = "";
-
-  for (let i = 0; i < words.length; i++) {
-    const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxTextWidth && i > 0) {
-      lines.push(currentLine);
-      currentLine = words[i];
-    } else {
-      currentLine = testLine;
+      if (isVideoReady || isImageReady) {
+        ctx.beginPath();
+        
+        // Shape Masking Logic
+        if (pip.shape === 'rect') {
+          ctx.rect(pip.x, pip.y, pip.width, pip.height);
+        } else if (pip.shape === 'oval') {
+          ctx.ellipse(
+            pip.x + pip.width / 2,
+            pip.y + pip.height / 2,
+            pip.width / 2,
+            pip.height / 2,
+            0, 0, 2 * Math.PI
+          );
+        } else if (pip.shape === 'heart') {
+          // Advanced Canvas Path for Heart Shape
+          const topX = pip.x + pip.width / 2;
+          const topY = pip.y + pip.height * 0.3;
+          ctx.moveTo(pip.x, topY);
+          ctx.bezierCurveTo(pip.x, pip.y, topX, pip.y, topX, topY);
+          ctx.bezierCurveTo(topX, pip.y, pip.x + pip.width, pip.y, pip.x + pip.width, topY);
+          ctx.bezierCurveTo(pip.x + pip.width, pip.y + pip.height * 0.6, topX, pip.y + pip.height * 0.9, topX, pip.y + pip.height);
+          ctx.bezierCurveTo(topX, pip.y + pip.height * 0.9, pip.x, pip.y + pip.height * 0.6, pip.x, topY);
+        }
+        
+        ctx.clip(); // Apply the mask
+        
+        // Draw the user media stretched to fill the exact masking box
+        ctx.drawImage(userMedia, pip.x, pip.y, pip.width, pip.height);
+      }
     }
-  }
-  lines.push(currentLine);
-  if (lines.length > 2) lines = lines.slice(0, 2);
+    ctx.restore();
+  } 
+  // --- V1 CLASSIC LOGIC ---
+  else {
+    ctx.save();
+    if (activeStyleObj && activeStyleObj.cssFilter) {
+      ctx.filter = activeStyleObj.cssFilter;
+    }
+    ctx.drawImage(video, 0, 0, w, h);
+    ctx.restore();
 
-  const lineHeight = msgFontSize * 1.20;
-  const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
+    const overlayH = h * 0.30;
+    const overlayY = h - overlayH;
+    const grad = ctx.createLinearGradient(0, overlayY, 0, h);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
+    grad.addColorStop(1, "rgba(0,0,0,0.95)");
 
-  lines.forEach((line, idx) => {
-    ctx.strokeText(`"${line}"`, centerX, startY + idx * lineHeight);
-    ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
-  });
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, overlayY, w, overlayH);
 
-  if (card.from) {
-    ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    let fontFamily = "serif";
+    if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+    else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+    else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+    else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+    else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+
+    const maxTextWidth = w * 0.88;
+    const centerX = w / 2;
+    const contentCenterY = overlayY + (overlayH * 0.50);
+
+    const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
+    const toFontSize = Math.round(baseFontSize * 0.95);
+    const msgFontSize = baseFontSize;
+    const fromFontSize = Math.round(baseFontSize * 0.90);
+
+    const activeTextColor = textColor || "#ffd700";
+
+    if (card.to) {
+      ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
+      ctx.fillStyle = activeTextColor;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+      ctx.shadowBlur = 5;
+      ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
+    }
+
+    ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
     ctx.fillStyle = activeTextColor;
     ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-    ctx.shadowBlur = 5;
-    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
+    ctx.shadowBlur = 6;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+
+    const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
+    let lines = [];
+    let currentLine = "";
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxTextWidth && i > 0) {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    lines.push(currentLine);
+    if (lines.length > 2) lines = lines.slice(0, 2);
+
+    const lineHeight = msgFontSize * 1.20;
+    const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
+
+    lines.forEach((line, idx) => {
+      ctx.strokeText(`"${line}"`, centerX, startY + idx * lineHeight);
+      ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
+    });
+
+    if (card.from) {
+      ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
+      ctx.fillStyle = activeTextColor;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+      ctx.shadowBlur = 5;
+      ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
+    }
   }
 };
 
@@ -456,6 +547,8 @@ export default function Home() {
 
   const [selectedCategory, setSelectedCategory] = useState("Happy Birthday");
   const [selectedRelationship, setSelectedRelationship] = useState("couples");
+  // --- V2 STATE HOOK ---
+  const [isV2Mode, setIsV2Mode] = useState(false); 
   const [selectedPreset, setSelectedPreset] = useState(FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0]);
   const [selectedStyle, setSelectedStyle] = useState("Photo");
   
@@ -475,7 +568,11 @@ export default function Home() {
   const [styleNotification, setStyleNotification] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  
+  // --- V2 MEDIA REFS ---
   const [attachedMedia, setAttachedMedia] = useState(null);
+  const userVideoRef = useRef(null);
+  const userImageRef = useRef(null);
 
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [preparedShareData, setPreparedShareData] = useState(null);
@@ -491,7 +588,8 @@ export default function Home() {
     fontCss: FONT_OPTIONS[0].cssVar,
     url: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].url,
     fallback: FESTIVE_DATA["Happy Birthday"].relationshipPresets.couples[0].fallback,
-    media: null
+    media: null,
+    pipConfig: null // New property for V2
   };
 
   const [activeCard, setActiveCard] = useState(initialStaged);
@@ -499,6 +597,30 @@ export default function Home() {
 
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
+  const requestRef = useRef(); // For V2 Canvas animation frame
+
+  // --- V2 RENDER LOOP ---
+  // This continuous loop is only active when drawing V2 PiP to the visual screen
+  const continuousRender = () => {
+    if (isV2Mode && activeCard && canvasRef.current && videoRef.current) {
+        const activeMediaRef = attachedMedia && attachedMedia.type === 'video' ? userVideoRef : userImageRef;
+        // Optional live preview logic could go here if we wanted to mirror the canvas to the screen. 
+        // For now, we rely on CSS overlay for the preview, and use drawCanvasFrame ONLY during export.
+    }
+    requestRef.current = requestAnimationFrame(continuousRender);
+  };
+  
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(continuousRender);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isV2Mode, activeCard, attachedMedia]);
+
+  // Force play user video silently alongside the V2 template
+  useEffect(() => {
+    if (isV2Mode && attachedMedia?.type === 'video' && userVideoRef.current && videoRef.current) {
+        userVideoRef.current.play().catch(e => console.log("Auto-play prevented", e));
+    }
+  }, [attachedMedia, isV2Mode, activeCard]);
 
   useEffect(() => {
     setActiveCard((prev) => ({
@@ -509,9 +631,10 @@ export default function Home() {
       from: fromName,
       text: customText,
       fontCss: selectedFont.cssVar,
-      url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+      url: selectedPreset.url, // Always use template URL for activeCard in V2, media is tracked separately
       fallback: selectedPreset.fallback,
-      media: attachedMedia
+      media: attachedMedia,
+      pipConfig: selectedPreset.pipConfig || null
     }));
   }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
 
@@ -519,9 +642,11 @@ export default function Home() {
     if (videoRef.current) {
       if (isVideoPlaying) {
         videoRef.current.pause();
+        if (userVideoRef.current) userVideoRef.current.pause();
         setIsVideoPlaying(false);
       } else {
         videoRef.current.play();
+        if (userVideoRef.current) userVideoRef.current.play();
         setIsVideoPlaying(true);
       }
     }
@@ -530,6 +655,7 @@ export default function Home() {
   const handleCategoryChange = (cat) => {
     setSelectedCategory(cat);
     setAttachedMedia(null);
+    setIsV2Mode(false); // Reset to V1 when changing category
 
     let defaultPreset;
     if (cat === "Happy Birthday") {
@@ -539,38 +665,21 @@ export default function Home() {
     }
     
     setSelectedPreset(defaultPreset);
-    setActiveCard((prev) => ({
-      ...prev,
-      category: cat,
-      url: defaultPreset.url,
-      fallback: defaultPreset.fallback
-    }));
-
-    if (FESTIVE_DATA[cat]?.ideas.length > 0) {
-      setCustomText(FESTIVE_DATA[cat].ideas[0][lang]);
-    }
   };
 
   const handleRelationshipChange = (rel) => {
     setSelectedRelationship(rel);
+    setIsV2Mode(false);
     const newPreset = FESTIVE_DATA["Happy Birthday"].relationshipPresets[rel][0];
     setSelectedPreset(newPreset);
     setAttachedMedia(null);
-    setActiveCard((prev) => ({
-      ...prev,
-      url: newPreset.url,
-      fallback: newPreset.fallback
-    }));
   };
 
-  const handlePresetSelect = (preset) => {
+  const handlePresetSelect = (preset, isV2 = false) => {
     setSelectedPreset(preset);
-    setAttachedMedia(null);
-    setActiveCard((prev) => ({
-      ...prev,
-      url: preset.url,
-      fallback: preset.fallback
-    }));
+    setIsV2Mode(isV2);
+    // Don't auto-clear attached media when switching V2 templates, allows user to quickly test different frames
+    if (!isV2) setAttachedMedia(null); 
   };
 
   const handleStyleSelect = (styleKey) => {
@@ -603,7 +712,6 @@ export default function Home() {
           url: event.target.result
         };
         setAttachedMedia(uploadedMediaObj);
-        setActiveCard((prev) => ({ ...prev, media: uploadedMediaObj, url: event.target.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -622,9 +730,11 @@ export default function Home() {
       from: fromName,
       text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
       fontCss: selectedFont.cssVar,
-      url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+      url: selectedPreset.url,
       fallback: selectedPreset.fallback,
-      media: attachedMedia
+      media: attachedMedia,
+      pipConfig: selectedPreset.pipConfig || null,
+      isV2: isV2Mode
     };
     setActiveCard(stagedCard);
     setHistory((prev) => [stagedCard, ...prev.slice(0, 4)]);
@@ -635,27 +745,36 @@ export default function Home() {
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
+    if (userVideoRef.current) userVideoRef.current.currentTime = 0;
+
     const audioCtx = window._sharedAudioCtx;
     if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 800;
-    canvas.height = video.videoHeight || 600;
+    canvas.width = 1080; // V2 Vertical Output Resolution
+    canvas.height = 1920; 
+    
+    // Fallback to video dimensions if V1 (which might be horizontal)
+    if (!activeCard.pipConfig) {
+        canvas.width = video.videoWidth || 800;
+        canvas.height = video.videoHeight || 600;
+    }
+    
     const ctx = canvas.getContext("2d");
-
     const canvasStream = canvas.captureStream(30);
 
     let audioTrack = null;
     let sourceNode = null;
     
-    // Explicitly fetch and decode the audio buffer directly from the source URL
+    // Audio Extraction 
     try {
       const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       window._sharedAudioCtx = audioCtx;
       if (audioCtx.state === "suspended") await audioCtx.resume();
 
       const dest = audioCtx.createMediaStreamDestination();
-      const srcUrl = activeCard.media ? activeCard.media.url : activeCard.url;
+      // For V2, audio ALWAYS comes from the template video. For V1, it might come from uploaded media.
+      const srcUrl = (activeCard.pipConfig || !activeCard.media) ? activeCard.url : activeCard.media.url;
       
       const response = await fetch(srcUrl);
       const arrayBuffer = await response.arrayBuffer();
@@ -685,7 +804,6 @@ export default function Home() {
       canvasStream.addTrack(audioTrack);
     }
 
-    // Expanded MimeType fallback to prevent Desktop infinite loops
     const getMimeType = () => {
       if (typeof window !== "undefined" && window.MediaRecorder) {
         const types = [
@@ -707,7 +825,7 @@ export default function Home() {
     const ext = isMp4 ? "mp4" : "webm";
     const baseMimeType = mimeType.split(';')[0]; 
 
-    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 2500000 });
+    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 4500000 }); // Bumped bitrate for vertical
     const chunks = [];
 
     return new Promise((resolve, reject) => {
@@ -738,12 +856,16 @@ export default function Home() {
       if (sourceNode) {
         try { sourceNode.start(0); } catch (e) {}
       }
+      if (userVideoRef.current) {
+          userVideoRef.current.play().catch(e => console.log(e));
+      }
 
       const recDuration = (video.duration && isFinite(video.duration) && video.duration > 0) 
         ? video.duration * 1000 
         : 15000;
 
       const startTime = Date.now();
+      const activeMediaRef = attachedMedia && attachedMedia.type === 'video' ? userVideoRef : userImageRef;
 
       const loop = () => {
         const elapsed = Date.now() - startTime;
@@ -752,7 +874,8 @@ export default function Home() {
         if (elapsed >= recDuration) {
           if (recorder.state !== "inactive") recorder.stop();
         } else {
-          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj);
+          // CALL THE UNIVERSAL ENGINE
+          drawCanvasFrame(ctx, canvas, video, activeCard, selectedFont, textColor, activeStyleObj, activeMediaRef);
           requestAnimationFrame(loop);
         }
       };
@@ -761,7 +884,6 @@ export default function Home() {
     });
   };
 
-  // Completely restored exact native executeExport logic
   const executeExport = async (mode) => {
     if (!activeCard) return;
     
@@ -813,7 +935,6 @@ export default function Home() {
         document.body.removeChild(link);
         URL.revokeObjectURL(blobUrl);
 
-        // Fixed non-blocking clipboard access
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(shareCaption).catch(() => {});
         }
@@ -879,9 +1000,11 @@ export default function Home() {
         from: fromName,
         text: customText || (lang === "zh" ? selectedPreset.zhTitle : selectedPreset.title),
         fontCss: selectedFont.cssVar,
-        url: attachedMedia ? attachedMedia.url : selectedPreset.url,
+        url: selectedPreset.url,
         fallback: selectedPreset.fallback,
-        media: attachedMedia
+        media: attachedMedia,
+        pipConfig: selectedPreset.pipConfig || null,
+        isV2: isV2Mode
       };
 
       setActiveCard(generatedCard);
@@ -901,6 +1024,8 @@ export default function Home() {
     ? FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship]
     : FESTIVE_DATA[selectedCategory].presets;
 
+  const v2PipTemplates = FESTIVE_DATA["Happy Birthday"].v2PipTemplates;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-16 text-lg">
       <style jsx global>{`
@@ -915,7 +1040,29 @@ export default function Home() {
           animation: aiMotionLoop 5s ease-in-out infinite alternate;
         }
       `}</style>
-      <canvas ref={canvasRef} className="hidden" />
+      
+      {/* HIDDEN MEDIA ELEMENTS FOR V2 PIP */}
+      <div style={{ display: 'none' }}>
+        {attachedMedia?.type === 'video' && (
+            <video 
+                ref={userVideoRef} 
+                src={attachedMedia.url} 
+                autoPlay 
+                loop 
+                muted
+                playsInline
+                crossOrigin="anonymous"
+            />
+        )}
+        {attachedMedia?.type === 'image' && (
+            <img 
+                ref={userImageRef} 
+                src={attachedMedia.url} 
+                alt="User Upload"
+                crossOrigin="anonymous"
+            />
+        )}
+      </div>
 
       {/* POLICY OVERLAY MODAL */}
       {policyModalOpen && (
@@ -1063,7 +1210,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-3 md:space-x-5">
-            {/* Interactive Policy Button */}
             <button
               onClick={() => setPolicyModalOpen(true)}
               className="bg-slate-800 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800/80 px-4 py-2 rounded-full text-base font-bold flex items-center space-x-2 transition cursor-pointer"
@@ -1148,54 +1294,86 @@ export default function Home() {
               </div>
 
               {selectedCategory === "Happy Birthday" && (
-                <div className="mb-5 bg-slate-950 p-4 rounded-xl border border-slate-800">
-                  <label className="block text-sm font-bold text-amber-300 mb-3">
-                    Relationship Sector (for "Happy Birthday" Category) / 人際關係選擇 (適用於「祝生日快樂」類別)
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {[
-                      { id: "couples", en: "Couples", zh: "情侶" },
-                      { id: "friends", en: "Friends", zh: "朋友" },
-                      { id: "family", en: "Family", zh: "家人" },
-                      { id: "colleagues", en: "Colleagues", zh: "同事" },
-                      { id: "schoolmates", en: "Schoolmates", zh: "同學" }
-                    ].map((rel) => (
-                      <button
-                        key={rel.id}
-                        onClick={() => handleRelationshipChange(rel.id)}
-                        className={`p-2 text-xs font-bold rounded-lg border text-center transition ${
-                          selectedRelationship === rel.id
-                            ? "border-amber-400 bg-amber-500/20 text-amber-200 shadow"
-                            : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
-                        }`}
-                      >
-                        {lang === "zh" ? rel.zh : rel.en}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <>
+                    {/* V2 PIP MAGIC SECTOR INJECTION */}
+                    <div className="mb-5 bg-gradient-to-r from-fuchsia-950 to-indigo-950 p-4 rounded-xl border border-fuchsia-500/30">
+                        <label className="block text-sm font-bold text-fuchsia-300 mb-3 flex items-center space-x-2">
+                            <Sparkles className="h-4 w-4" />
+                            <span>V2 PiP Magic (Picture-in-Picture) / 全新 V2 畫中畫技術</span>
+                        </label>
+                        <div className="grid grid-cols-5 gap-3">
+                            {v2PipTemplates.map((preset) => (
+                            <button
+                                key={preset.id}
+                                onClick={() => handlePresetSelect(preset, true)}
+                                title={lang === "zh" ? preset.zhTitle : preset.title}
+                                className={`aspect-[9/16] rounded-xl overflow-hidden border-2 transition relative ${
+                                selectedPreset.id === preset.id && isV2Mode ? "border-fuchsia-400 ring-4 ring-fuchsia-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                                }`}
+                            >
+                                <video 
+                                src={preset.url} 
+                                autoPlay 
+                                muted 
+                                loop
+                                playsInline 
+                                crossOrigin="anonymous" 
+                                className="w-full h-full object-cover" 
+                                />
+                            </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mb-5 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <label className="block text-sm font-bold text-amber-300 mb-3">
+                        V1 Classics: Relationship Sector / 經典 V1：人際關係選擇
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {[
+                        { id: "couples", en: "Couples", zh: "情侶" },
+                        { id: "friends", en: "Friends", zh: "朋友" },
+                        { id: "family", en: "Family", zh: "家人" },
+                        { id: "colleagues", en: "Colleagues", zh: "同事" },
+                        { id: "schoolmates", en: "Schoolmates", zh: "同學" }
+                        ].map((rel) => (
+                        <button
+                            key={rel.id}
+                            onClick={() => handleRelationshipChange(rel.id)}
+                            className={`p-2 text-xs font-bold rounded-lg border text-center transition ${
+                            selectedRelationship === rel.id && !isV2Mode
+                                ? "border-amber-400 bg-amber-500/20 text-amber-200 shadow"
+                                : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
+                            }`}
+                        >
+                            {lang === "zh" ? rel.zh : rel.en}
+                        </button>
+                        ))}
+                    </div>
+                    </div>
+                </>
               )}
 
               <label className="block text-sm font-bold text-slate-300 mb-3">
-                {lang === "zh" ? "選擇 5 個主題預設設計之一：" : "Select 1 of 5 Relevant Event Presets:"}
+                {lang === "zh" ? "選擇 V1 預設設計：" : "Select V1 Event Presets:"}
               </label>
 
               <div className="grid grid-cols-5 gap-3">
                 {currentPresets?.map((preset) => (
                   <button
                     key={preset.id}
-                    onClick={() => handlePresetSelect(preset)}
+                    onClick={() => handlePresetSelect(preset, false)}
                     className={`aspect-square rounded-xl overflow-hidden border-2 transition relative ${
-                      selectedPreset.id === preset.id && !attachedMedia ? "border-amber-400 ring-4 ring-amber-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                      selectedPreset.id === preset.id && !isV2Mode && !attachedMedia ? "border-amber-400 ring-4 ring-amber-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
                     }`}
                   >
                     <video 
                       src={preset.url} 
                       autoPlay 
                       muted 
+                      loop
                       playsInline 
                       crossOrigin="anonymous" 
-                      onLoadedData={(e) => e.currentTarget.play()} 
                       className="w-full h-full object-cover" 
                     />
                   </button>
@@ -1204,44 +1382,49 @@ export default function Home() {
             </div>
 
             {/* 2. STYLE SELECTION & AI ENHANCEMENTS */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200">{t.styleTitle}</label>
-                {styleNotification && (
-                  <span className="text-xs text-amber-300 font-bold bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full animate-pulse">
-                    {styleNotification}
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {t.styles.map((styleObj) => (
-                  <button
-                    key={styleObj.key}
-                    onClick={() => handleStyleSelect(styleObj.key)}
-                    className={`p-3.5 text-sm font-bold rounded-xl border text-left transition flex items-center justify-between ${
-                      selectedStyle === styleObj.key ? "border-indigo-500 bg-indigo-500/20 text-white shadow ring-2 ring-indigo-500/40" : "border-slate-800 bg-slate-950 text-slate-400 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span className="flex items-center space-x-1.5">
-                      {styleObj.key === "Motion5s" && <Film className="h-4 w-4 text-amber-400 shrink-0" />}
-                      <span>{styleObj.label}</span>
+            {!isV2Mode && (
+                <div>
+                <div className="flex justify-between items-center mb-3">
+                    <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200">{t.styleTitle}</label>
+                    {styleNotification && (
+                    <span className="text-xs text-amber-300 font-bold bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full animate-pulse">
+                        {styleNotification}
                     </span>
-                    {selectedStyle === styleObj.key && <Check className="h-5 w-5 text-amber-400" />}
-                  </button>
-                ))}
-              </div>
+                    )}
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    {t.styles.map((styleObj) => (
+                    <button
+                        key={styleObj.key}
+                        onClick={() => handleStyleSelect(styleObj.key)}
+                        className={`p-3.5 text-sm font-bold rounded-xl border text-left transition flex items-center justify-between ${
+                        selectedStyle === styleObj.key ? "border-indigo-500 bg-indigo-500/20 text-white shadow ring-2 ring-indigo-500/40" : "border-slate-800 bg-slate-950 text-slate-400 hover:bg-slate-800"
+                        }`}
+                    >
+                        <span className="flex items-center space-x-1.5">
+                        {styleObj.key === "Motion5s" && <Film className="h-4 w-4 text-amber-400 shrink-0" />}
+                        <span>{styleObj.label}</span>
+                        </span>
+                        {selectedStyle === styleObj.key && <Check className="h-5 w-5 text-amber-400" />}
+                    </button>
+                    ))}
+                </div>
+                </div>
+            )}
 
-              <button
-                onClick={handleStageToCanvas}
-                className="w-full py-3.5 border border-indigo-500/60 bg-indigo-950/60 hover:bg-indigo-900/80 text-amber-300 rounded-xl font-bold text-base flex items-center justify-center space-x-2 transition shadow-md"
-              >
-                <Layers className="h-5 w-5 text-amber-400" />
-                <span>{t.stageBtn}</span>
-              </button>
-            </div>
+            <button
+            onClick={handleStageToCanvas}
+            className="w-full py-3.5 border border-indigo-500/60 bg-indigo-950/60 hover:bg-indigo-900/80 text-amber-300 rounded-xl font-bold text-base flex items-center justify-center space-x-2 transition shadow-md"
+            >
+            <Layers className="h-5 w-5 text-amber-400" />
+            <span>{t.stageBtn}</span>
+            </button>
+
 
             {/* 3. MULTI-FIELD PERSONALIZATION INPUTS & TYPOGRAPHY STUDIO */}
             <div className="space-y-5">
+              {!isV2Mode && (
+                  <>
               <div className="flex justify-between items-center">
                 <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200">{t.msgTitle}</label>
                 <button
@@ -1350,12 +1533,16 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+              </>
+              )}
 
               {/* MEDIA UPLOAD */}
-              <div className="bg-slate-950 border border-slate-700 hover:border-slate-600 p-3.5 rounded-xl text-sm font-semibold text-slate-300 flex items-center justify-between">
+              <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
                 <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
-                  <Upload className="h-5 w-5 text-indigo-400 shrink-0" />
-                  <span className="truncate">{attachedMedia ? `Attached: ${attachedMedia.name}` : "Upload Optional Reference Image / MP4 (Max 15MB)"}</span>
+                  <Upload className={`h-5 w-5 shrink-0 ${isV2Mode ? "text-fuchsia-400" : "text-indigo-400"}`} />
+                  <span className={`truncate ${isV2Mode ? "text-fuchsia-100" : ""}`}>
+                      {attachedMedia ? `Attached: ${attachedMedia.name}` : (isV2Mode ? "UPLOAD YOUR PHOTO/VIDEO FOR PiP MAGIC!" : "Upload Optional Reference Image / MP4 (Max 15MB)")}
+                  </span>
                   <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
                 </label>
                 {attachedMedia && (
@@ -1381,7 +1568,11 @@ export default function Home() {
                 onClick={handleGenerateCard}
                 disabled={isGenerating || credits <= 0}
                 className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center space-x-2 transition ${
-                  credits > 0 ? "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-xl" : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                  credits > 0 
+                  ? isV2Mode 
+                    ? "bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white shadow-[0_0_20px_rgba(217,70,239,0.4)]" 
+                    : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-xl" 
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed"
                 }`}
               >
                 {isGenerating ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-yellow-300" />}
@@ -1392,8 +1583,19 @@ export default function Home() {
 
           {/* MAIN CANVAS TV SCREEN */}
           <div className="lg:col-span-7 flex flex-col space-y-6">
-            <div className="bg-slate-900 border-4 border-slate-800 rounded-3xl p-4 sm:p-5 shadow-2xl relative">
-              <div className="w-full h-[460px] sm:h-[520px] bg-black rounded-2xl overflow-hidden relative flex items-center justify-center border border-slate-800">
+            <div className={`bg-slate-900 border-4 rounded-3xl p-4 sm:p-5 shadow-2xl relative ${activeCard?.isV2 ? "border-fuchsia-900/50 shadow-[0_0_30px_rgba(217,70,239,0.15)]" : "border-slate-800"}`}>
+              <div className={`w-full h-[460px] sm:h-[520px] bg-black rounded-2xl overflow-hidden relative flex items-center justify-center border ${activeCard?.isV2 ? "border-fuchsia-500/30" : "border-slate-800"}`}>
+                
+                {/* V2 Live Preview Overlay */}
+                {activeCard?.isV2 && attachedMedia && (
+                    <div className="absolute inset-0 z-10 pointer-events-none opacity-80 mix-blend-screen flex items-center justify-center">
+                         <div className="bg-fuchsia-500/20 px-4 py-2 rounded-full border border-fuchsia-500/50 backdrop-blur-sm animate-pulse flex items-center space-x-2">
+                             <Sparkles className="h-4 w-4 text-fuchsia-300" />
+                             <span className="text-xs font-bold text-fuchsia-100 uppercase tracking-wider">PiP Rendering Enabled for Download</span>
+                         </div>
+                    </div>
+                )}
+
                 {isGenerating ? (
                   <div className="flex flex-col items-center justify-center space-y-4 text-amber-300">
                     <RefreshCw className="h-12 w-12 animate-spin text-indigo-400" />
@@ -1402,86 +1604,78 @@ export default function Home() {
                 ) : activeCard ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
                     
-                    {activeCard.url?.endsWith(".mp4") || (activeCard.media && activeCard.media.type === "video") ? (
-                      <div className="relative w-full h-full flex items-center justify-center">
+                    {/* The main video player */}
+                    <div className="relative w-full h-full flex items-center justify-center">
                         <video 
-                          ref={videoRef}
-                          src={activeCard.media ? activeCard.media.url : activeCard.url} 
-                          autoPlay 
-                          muted={isMuted}
-                          playsInline 
-                          crossOrigin="anonymous" 
-                          onEnded={() => setIsVideoPlaying(false)}
-                          onLoadedData={(e) => e.currentTarget.play()} 
-                          style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
-                          className={`w-full h-full object-cover transition-all duration-500 ${
-                            activeCard.style === "Motion5s" ? "ai-motion-video" : ""
-                          }`} 
+                            ref={videoRef}
+                            src={activeCard.url} 
+                            autoPlay 
+                            muted={isMuted}
+                            playsInline 
+                            crossOrigin="anonymous" 
+                            onEnded={() => setIsVideoPlaying(false)}
+                            onLoadedData={(e) => e.currentTarget.play()} 
+                            style={{ filter: (!activeCard.isV2 && activeStyleObj) ? activeStyleObj.cssFilter : "none" }}
+                            className={`w-full h-full object-cover transition-all duration-500 ${
+                            (!activeCard.isV2 && activeCard.style === "Motion5s") ? "ai-motion-video" : ""
+                            }`} 
                         />
-                        <div className="absolute top-4 left-4 flex items-center space-x-2 z-30">
-                          <button
+                        <div className="absolute top-4 left-4 flex items-center space-x-2 z-30 pointer-events-auto">
+                            <button
                             onClick={toggleVideoPlayback}
                             className="bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur transition border border-white/30"
                             title={isVideoPlaying ? "Pause Video" : "Play Video"}
-                          >
+                            >
                             {isVideoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                          </button>
-                          <button
+                            </button>
+                            <button
                             onClick={() => setIsMuted(!isMuted)}
                             className="bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur transition border border-white/30"
                             title={isMuted ? "Unmute Sound" : "Mute Sound"}
-                          >
+                            >
                             {isMuted ? <VolumeX className="h-5 w-5 text-rose-400" /> : <Volume2 className="h-5 w-5 text-emerald-400" />}
-                          </button>
+                            </button>
                         </div>
-                      </div>
-                    ) : (
-                      <img 
-                        src={activeCard.media ? activeCard.media.url : activeCard.url} 
-                        onError={(e) => { e.target.src = activeCard.fallback || createPlaceholder(activeCard.category); }}
-                        alt="Composed Greeting Card" 
-                        style={{ filter: activeStyleObj ? activeStyleObj.cssFilter : "none" }}
-                        className={`max-w-full max-h-full object-contain transition-all duration-500 ${
-                          activeCard.style === "Motion5s" ? "ai-motion-video" : ""
-                        }`} 
-                      />
-                    )}
-
-                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                      <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
-                        {activeCard.to && (
-                          <p 
-                            style={{ 
-                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor || "#ffd700"
-                            }}
-                            className={`${fontSize} font-bold italic truncate`}
-                          >
-                            To: {activeCard.to}
-                          </p>
-                        )}
-                        <p 
-                          style={{ 
-                            color: textColor || "#ffd700",
-                            fontFamily: activeCard.fontCss || selectedFont.cssVar
-                          }} 
-                          className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
-                        >
-                          "{activeCard.text}"
-                        </p>
-                        {activeCard.from && (
-                          <p 
-                            style={{ 
-                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                              color: textColor || "#ffd700"
-                            }}
-                            className={`${fontSize} font-bold truncate`}
-                          >
-                            — {activeCard.from}
-                          </p>
-                        )}
-                      </div>
                     </div>
+
+                    {/* V1 Text Overlay (Hidden in V2) */}
+                    {!activeCard.isV2 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                        <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
+                            {activeCard.to && (
+                            <p 
+                                style={{ 
+                                fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                                color: textColor || "#ffd700"
+                                }}
+                                className={`${fontSize} font-bold italic truncate`}
+                            >
+                                To: {activeCard.to}
+                            </p>
+                            )}
+                            <p 
+                            style={{ 
+                                color: textColor || "#ffd700",
+                                fontFamily: activeCard.fontCss || selectedFont.cssVar
+                            }} 
+                            className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
+                            >
+                            "{activeCard.text}"
+                            </p>
+                            {activeCard.from && (
+                            <p 
+                                style={{ 
+                                fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                                color: textColor || "#ffd700"
+                                }}
+                                className={`${fontSize} font-bold truncate`}
+                            >
+                                — {activeCard.from}
+                            </p>
+                            )}
+                        </div>
+                        </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center text-slate-600 space-y-3">
@@ -1497,26 +1691,26 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
                   onClick={() => executeExport('download')}
-                  disabled={isDownloading || isSharing}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full"
+                  disabled={isDownloading || isSharing || (activeCard.isV2 && !activeCard.media)}
+                  className={`${activeCard.isV2 && !activeCard.media ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl"} font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition text-sm md:text-base w-full`}
                 >
                   {isDownloading ? (
                     <div className="flex items-center space-x-2">
                       <RefreshCw className="h-5 w-5 animate-spin" />
-                      <span>Imprinting Text ({downloadProgress}%)</span>
+                      <span>{activeCard.isV2 ? "Rendering PiP Mask" : "Imprinting Text"} ({downloadProgress}%)</span>
                     </div>
                   ) : (
                     <>
                       <Download className="h-5 w-5 shrink-0" />
-                      <span>{t.downloadBtn}</span>
+                      <span>{activeCard.isV2 && !activeCard.media ? "Upload Media First" : t.downloadBtn}</span>
                     </>
                   )}
                 </button>
 
                 <button
                   onClick={() => executeExport('share')}
-                  disabled={isDownloading || isSharing}
-                  className="bg-green-600 hover:bg-green-500 text-white font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-xl text-sm md:text-base w-full border border-green-400/30"
+                  disabled={isDownloading || isSharing || (activeCard.isV2 && !activeCard.media)}
+                  className={`${activeCard.isV2 && !activeCard.media ? "bg-slate-800 text-slate-500 cursor-not-allowed border-slate-700" : "bg-green-600 hover:bg-green-500 text-white shadow-xl border-green-400/30"} font-extrabold py-4 px-3 rounded-xl flex items-center justify-center space-x-2 transition border text-sm md:text-base w-full`}
                 >
                   {isSharing ? (
                     <div className="flex items-center space-x-2">
@@ -1526,7 +1720,7 @@ export default function Home() {
                   ) : (
                     <>
                       <Share2 className="h-5 w-5 shrink-0" />
-                      <span>{t.shareBtn}</span>
+                      <span>{activeCard.isV2 && !activeCard.media ? "Upload Media First" : t.shareBtn}</span>
                     </>
                   )}
                 </button>
@@ -1539,38 +1733,34 @@ export default function Home() {
               <div className="grid grid-cols-5 gap-3">
                 {[...Array(5)].map((_, index) => {
                   const card = history[index];
-                  const isCardVideo = card?.url?.endsWith(".mp4") || (card?.media && card.media.type === "video");
+                  // Using card.url always for preview since media is meant for PiP
                   return (
                     <div
                       key={index}
                       onClick={() => card && setActiveCard(card)}
-                      className={`aspect-video rounded-xl border-2 overflow-hidden bg-slate-900 transition relative flex items-center justify-center ${
-                        card ? "border-indigo-500 hover:border-amber-400 cursor-pointer shadow-md" : "border-slate-800 opacity-30 cursor-default"
+                      className={`aspect-[9/16] sm:aspect-video rounded-xl border-2 overflow-hidden bg-slate-900 transition relative flex items-center justify-center ${
+                        card 
+                          ? card.isV2 
+                            ? "border-fuchsia-500 hover:border-fuchsia-400 cursor-pointer shadow-[0_0_10px_rgba(217,70,239,0.2)]"
+                            : "border-indigo-500 hover:border-amber-400 cursor-pointer shadow-md" 
+                          : "border-slate-800 opacity-30 cursor-default"
                       }`}
                     >
                       {card ? (
                         <div className="relative w-full h-full">
-                          {isCardVideo ? (
                             <video 
-                              src={card.media ? card.media.url : card.url} 
+                              src={card.url} 
                               autoPlay 
                               muted 
                               playsInline 
+                              loop
                               crossOrigin="anonymous" 
                               onLoadedData={(e) => e.currentTarget.play()} 
                               className="w-full h-full object-cover" 
                             />
-                          ) : (
-                            <img 
-                              src={card.media ? card.media.url : card.url} 
-                              onError={(e) => { e.target.src = card.fallback || createPlaceholder(card.category); }}
-                              alt="Mini TV preview" 
-                              className="w-full h-full object-cover" 
-                            />
-                          )}
                           <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-1.5">
                             <p className="text-[10px] font-bold text-amber-300 truncate text-center leading-tight">
-                              {card.to ? `To: ${card.to}` : card.text}
+                              {card.isV2 ? "V2 PiP Magic" : (card.to ? `To: ${card.to}` : card.text)}
                             </p>
                           </div>
                         </div>
