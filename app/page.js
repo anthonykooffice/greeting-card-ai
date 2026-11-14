@@ -62,7 +62,7 @@ const FESTIVE_DATA = {
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
         // FIX: lowercase 'v' to match exact file system name pushed in Git
-        url: "/assets/v2-vertical/Happy-Birthday/video1_fairy_girl.mp4",
+        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
         pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
