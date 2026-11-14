@@ -12,7 +12,7 @@ import {
   ShieldCheck, 
   Layers, 
   Smartphone, 
-  Wath2, 
+  Wand2, 
   Check, 
   Film, 
   X, 
@@ -24,7 +24,6 @@ import {
   CheckCircle2, 
   FileVideo 
 } from "lucide-react";
-import { Wand2 } from 'lucide-react'; // Fix for Wath2 typo
 
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23ffd700") => 
   `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
@@ -62,9 +61,10 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_Fairy_Girl.mp4",
+        // FIX: lowercase 'v' to match exact file system name pushed in Git
+        url: "/assets/v2-vertical/Happy-Birthday/video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
-        pipConfig: { revealTime: 6.5, shape: "rect", x: 100, y: 350, width: 880, height: 1100 }
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
       { 
         id: "v2_helicopter_heart", 
@@ -72,7 +72,8 @@ const FESTIVE_DATA = {
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
-        pipConfig: { revealTime: 8.5, shape: "heart", x: 150, y: 350, width: 780, height: 780 }
+        // FIX: Tighter bounding box so media doesn't bleed outside the flower heart
+        pipConfig: { revealTime: 8.5, shape: "heart", x: 230, y: 430, width: 620, height: 580 }
       },
       { 
         id: "v2_night_castle", 
@@ -80,7 +81,7 @@ const FESTIVE_DATA = {
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 50, y: 350, width: 600, height: 800 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 70, y: 370, width: 560, height: 760 }
       },
       { 
         id: "v2_butterfly_color", 
@@ -88,7 +89,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 50, y: 250, width: 600, height: 800 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 70, y: 270, width: 560, height: 760 }
       },
       { 
         id: "v2_butterfly_glass", 
@@ -96,7 +97,7 @@ const FESTIVE_DATA = {
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 150, y: 400, width: 780, height: 950 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 170, y: 420, width: 740, height: 910 }
       }
     ],
     // ------------------------------
@@ -339,7 +340,7 @@ const TRANSLATIONS = {
     policyPrivacyTitle: "Privacy & Data Security",
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
-    policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
+    policyLegalText: "GreetingAI Studio is provided "as is" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
     contactTitle: "Questions & Support",
     contactText: "Have feedback or need help? Reach out to our support team at ",
     footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
@@ -401,27 +402,29 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   const w = canvas.width;
   const h = canvas.height;
 
-  // --- V2 PIP LOGIC INJECTION ---
-  // If the active card is a V2 template with pipConfig, use the Universal PiP Engine
-  if (card.pipConfig) {
-    ctx.save();
-    
-    // 1. Draw the AI Template Background
-    ctx.drawImage(video, 0, 0, w, h);
+  ctx.save();
+  // Apply visual style filter only if it's V1
+  if (!card.pipConfig && activeStyleObj && activeStyleObj.cssFilter) {
+    ctx.filter = activeStyleObj.cssFilter;
+  }
+  
+  // 1. Draw the Base Video (V1 or V2 Template)
+  ctx.drawImage(video, 0, 0, w, h);
+  ctx.restore();
 
-    // 2. Draw User Media if reveal time is reached and media exists
+  // 2. V2 PiP Draw Logic (Only if it's a V2 template)
+  if (card.pipConfig) {
     if (userMediaRef && userMediaRef.current && video.currentTime >= card.pipConfig.revealTime) {
       const pip = card.pipConfig;
       const userMedia = userMediaRef.current;
       
-      // Ensure media is ready to draw
       const isVideoReady = userMedia.tagName === 'VIDEO' && userMedia.readyState >= 2;
       const isImageReady = userMedia.tagName === 'IMG' && userMedia.complete;
 
       if (isVideoReady || isImageReady) {
+        ctx.save();
         ctx.beginPath();
         
-        // Shape Masking Logic
         if (pip.shape === 'rect') {
           ctx.rect(pip.x, pip.y, pip.width, pip.height);
         } else if (pip.shape === 'oval') {
@@ -433,7 +436,6 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
             0, 0, 2 * Math.PI
           );
         } else if (pip.shape === 'heart') {
-          // Advanced Canvas Path for Heart Shape
           const topX = pip.x + pip.width / 2;
           const topY = pip.y + pip.height * 0.3;
           ctx.moveTo(pip.x, topY);
@@ -443,101 +445,91 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
           ctx.bezierCurveTo(topX, pip.y + pip.height * 0.9, pip.x, pip.y + pip.height * 0.6, pip.x, topY);
         }
         
-        ctx.clip(); // Apply the mask
-        
-        // Draw the user media stretched to fill the exact masking box
+        ctx.clip(); 
         ctx.drawImage(userMedia, pip.x, pip.y, pip.width, pip.height);
+        ctx.restore();
       }
     }
-    ctx.restore();
-  } 
-  // --- V1 CLASSIC LOGIC ---
-  else {
-    ctx.save();
-    if (activeStyleObj && activeStyleObj.cssFilter) {
-      ctx.filter = activeStyleObj.cssFilter;
-    }
-    ctx.drawImage(video, 0, 0, w, h);
-    ctx.restore();
+  }
 
-    const overlayH = h * 0.30;
-    const overlayY = h - overlayH;
-    const grad = ctx.createLinearGradient(0, overlayY, 0, h);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
-    grad.addColorStop(1, "rgba(0,0,0,0.95)");
+  // 3. TEXT RENDERING LOGIC (Now applies to BOTH V1 and V2!)
+  const overlayH = h * 0.30;
+  const overlayY = h - overlayH;
+  const grad = ctx.createLinearGradient(0, overlayY, 0, h);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
+  grad.addColorStop(1, "rgba(0,0,0,0.95)");
 
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, overlayY, w, overlayH);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, overlayY, w, overlayH);
 
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
-    let fontFamily = "serif";
-    if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
-    else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
-    else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
-    else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
-    else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
+  let fontFamily = "serif";
+  if (selectedFont.id === "serif") fontFamily = "'Playfair Display', serif";
+  else if (selectedFont.id === "script") fontFamily = "'Great Vibes', cursive, serif";
+  else if (selectedFont.id === "hand") fontFamily = "'Dancing Script', cursive";
+  else if (selectedFont.id === "display") fontFamily = "'Cinzel Decorative', serif";
+  else if (selectedFont.id === "sans") fontFamily = "'Montserrat', sans-serif";
 
-    const maxTextWidth = w * 0.88;
-    const centerX = w / 2;
-    const contentCenterY = overlayY + (overlayH * 0.50);
+  const maxTextWidth = w * 0.88;
+  const centerX = w / 2;
+  const contentCenterY = overlayY + (overlayH * 0.50);
 
-    const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
-    const toFontSize = Math.round(baseFontSize * 0.95);
-    const msgFontSize = baseFontSize;
-    const fromFontSize = Math.round(baseFontSize * 0.90);
+  const baseFontSize = Math.min(Math.round(w * 0.021), Math.round(overlayH * 0.16));
+  const toFontSize = Math.round(baseFontSize * 0.95);
+  const msgFontSize = baseFontSize;
+  const fromFontSize = Math.round(baseFontSize * 0.90);
 
-    const activeTextColor = textColor || "#ffd700";
+  const activeTextColor = textColor || "#ffd700";
 
-    if (card.to) {
-      ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
-      ctx.fillStyle = activeTextColor;
-      ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-      ctx.shadowBlur = 5;
-      ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
-    }
-
-    ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
+  if (card.to) {
+    ctx.font = `italic bold ${toFontSize}px ${fontFamily}`;
     ctx.fillStyle = activeTextColor;
     ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-    ctx.shadowBlur = 6;
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`To: ${card.to}`, centerX, contentCenterY - msgFontSize * 1.45, maxTextWidth);
+  }
 
-    const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
-    let lines = [];
-    let currentLine = "";
+  ctx.font = `bold ${msgFontSize}px ${fontFamily}`;
+  ctx.fillStyle = activeTextColor;
+  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
 
-    for (let i = 0; i < words.length; i++) {
-      const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxTextWidth && i > 0) {
-        lines.push(currentLine);
-        currentLine = words[i];
-      } else {
-        currentLine = testLine;
-      }
+  const words = card.text ? card.text.split(" ") : ["Happy", "Birthday!"];
+  let lines = [];
+  let currentLine = "";
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = currentLine ? `${currentLine} ${words[i]}` : words[i];
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxTextWidth && i > 0) {
+      lines.push(currentLine);
+      currentLine = words[i];
+    } else {
+      currentLine = testLine;
     }
-    lines.push(currentLine);
-    if (lines.length > 2) lines = lines.slice(0, 2);
+  }
+  lines.push(currentLine);
+  if (lines.length > 2) lines = lines.slice(0, 2);
 
-    const lineHeight = msgFontSize * 1.20;
-    const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
+  const lineHeight = msgFontSize * 1.20;
+  const startY = contentCenterY - ((lines.length - 1) * lineHeight) / 2;
 
-    lines.forEach((line, idx) => {
-      ctx.strokeText(`"${line}"`, centerX, startY + idx * lineHeight);
-      ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
-    });
+  lines.forEach((line, idx) => {
+    ctx.strokeText(`"${line}"`, centerX, startY + idx * lineHeight);
+    ctx.fillText(`"${line}"`, centerX, startY + idx * lineHeight);
+  });
 
-    if (card.from) {
-      ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
-      ctx.fillStyle = activeTextColor;
-      ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-      ctx.shadowBlur = 5;
-      ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
-    }
+  if (card.from) {
+    ctx.font = `bold ${fromFontSize}px ${fontFamily}`;
+    ctx.fillStyle = activeTextColor;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+    ctx.shadowBlur = 5;
+    ctx.fillText(`— ${card.from}`, centerX, contentCenterY + msgFontSize * 1.45, maxTextWidth);
   }
 };
 
@@ -597,15 +589,11 @@ export default function Home() {
 
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
-  const requestRef = useRef(); // For V2 Canvas animation frame
+  const requestRef = useRef();
 
-  // --- V2 RENDER LOOP ---
-  // This continuous loop is only active when drawing V2 PiP to the visual screen
   const continuousRender = () => {
     if (isV2Mode && activeCard && canvasRef.current && videoRef.current) {
         const activeMediaRef = attachedMedia && attachedMedia.type === 'video' ? userVideoRef : userImageRef;
-        // Optional live preview logic could go here if we wanted to mirror the canvas to the screen. 
-        // For now, we rely on CSS overlay for the preview, and use drawCanvasFrame ONLY during export.
     }
     requestRef.current = requestAnimationFrame(continuousRender);
   };
@@ -615,7 +603,6 @@ export default function Home() {
     return () => cancelAnimationFrame(requestRef.current);
   }, [isV2Mode, activeCard, attachedMedia]);
 
-  // Force play user video silently alongside the V2 template
   useEffect(() => {
     if (isV2Mode && attachedMedia?.type === 'video' && userVideoRef.current && videoRef.current) {
         userVideoRef.current.play().catch(e => console.log("Auto-play prevented", e));
@@ -631,7 +618,7 @@ export default function Home() {
       from: fromName,
       text: customText,
       fontCss: selectedFont.cssVar,
-      url: selectedPreset.url, // Always use template URL for activeCard in V2, media is tracked separately
+      url: selectedPreset.url, 
       fallback: selectedPreset.fallback,
       media: attachedMedia,
       pipConfig: selectedPreset.pipConfig || null
@@ -655,7 +642,7 @@ export default function Home() {
   const handleCategoryChange = (cat) => {
     setSelectedCategory(cat);
     setAttachedMedia(null);
-    setIsV2Mode(false); // Reset to V1 when changing category
+    setIsV2Mode(false);
 
     let defaultPreset;
     if (cat === "Happy Birthday") {
@@ -678,7 +665,6 @@ export default function Home() {
   const handlePresetSelect = (preset, isV2 = false) => {
     setSelectedPreset(preset);
     setIsV2Mode(isV2);
-    // Don't auto-clear attached media when switching V2 templates, allows user to quickly test different frames
     if (!isV2) setAttachedMedia(null); 
   };
 
@@ -751,10 +737,9 @@ export default function Home() {
     if (!audioCtx) throw new Error("Audio Context not initialized properly.");
 
     const canvas = document.createElement("canvas");
-    canvas.width = 1080; // V2 Vertical Output Resolution
+    canvas.width = 1080; 
     canvas.height = 1920; 
     
-    // Fallback to video dimensions if V1 (which might be horizontal)
     if (!activeCard.pipConfig) {
         canvas.width = video.videoWidth || 800;
         canvas.height = video.videoHeight || 600;
@@ -766,14 +751,12 @@ export default function Home() {
     let audioTrack = null;
     let sourceNode = null;
     
-    // Audio Extraction 
     try {
       const audioCtx = window._sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       window._sharedAudioCtx = audioCtx;
       if (audioCtx.state === "suspended") await audioCtx.resume();
 
       const dest = audioCtx.createMediaStreamDestination();
-      // For V2, audio ALWAYS comes from the template video. For V1, it might come from uploaded media.
       const srcUrl = (activeCard.pipConfig || !activeCard.media) ? activeCard.url : activeCard.media.url;
       
       const response = await fetch(srcUrl);
@@ -825,7 +808,7 @@ export default function Home() {
     const ext = isMp4 ? "mp4" : "webm";
     const baseMimeType = mimeType.split(';')[0]; 
 
-    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 4500000 }); // Bumped bitrate for vertical
+    const recorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 4500000 });
     const chunks = [];
 
     return new Promise((resolve, reject) => {
@@ -1422,9 +1405,8 @@ export default function Home() {
 
 
             {/* 3. MULTI-FIELD PERSONALIZATION INPUTS & TYPOGRAPHY STUDIO */}
+            {/* FIX: Removed the !isV2Mode wrapper here so this always shows! */}
             <div className="space-y-5">
-              {!isV2Mode && (
-                  <>
               <div className="flex justify-between items-center">
                 <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200">{t.msgTitle}</label>
                 <button
@@ -1533,8 +1515,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              </>
-              )}
 
               {/* MEDIA UPLOAD */}
               <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
@@ -1638,44 +1618,42 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* V1 Text Overlay (Hidden in V2) */}
-                    {!activeCard.isV2 && (
-                        <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
-                        <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
-                            {activeCard.to && (
-                            <p 
-                                style={{ 
-                                fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                                color: textColor || "#ffd700"
-                                }}
-                                className={`${fontSize} font-bold italic truncate`}
-                            >
-                                To: {activeCard.to}
-                            </p>
-                            )}
-                            <p 
+                    {/* Text Overlay for ALL modes (Removed the !activeCard.isV2 restriction here) */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                    <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
+                        {activeCard.to && (
+                        <p 
                             style={{ 
-                                color: textColor || "#ffd700",
-                                fontFamily: activeCard.fontCss || selectedFont.cssVar
-                            }} 
-                            className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
-                            >
-                            "{activeCard.text}"
-                            </p>
-                            {activeCard.from && (
-                            <p 
-                                style={{ 
-                                fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                                color: textColor || "#ffd700"
-                                }}
-                                className={`${fontSize} font-bold truncate`}
-                            >
-                                — {activeCard.from}
-                            </p>
-                            )}
-                        </div>
-                        </div>
-                    )}
+                            fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                            color: textColor || "#ffd700"
+                            }}
+                            className={`${fontSize} font-bold italic truncate`}
+                        >
+                            To: {activeCard.to}
+                        </p>
+                        )}
+                        <p 
+                        style={{ 
+                            color: textColor || "#ffd700",
+                            fontFamily: activeCard.fontCss || selectedFont.cssVar
+                        }} 
+                        className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
+                        >
+                        "{activeCard.text}"
+                        </p>
+                        {activeCard.from && (
+                        <p 
+                            style={{ 
+                            fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                            color: textColor || "#ffd700"
+                            }}
+                            className={`${fontSize} font-bold truncate`}
+                        >
+                            — {activeCard.from}
+                        </p>
+                        )}
+                    </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center text-slate-600 space-y-3">
