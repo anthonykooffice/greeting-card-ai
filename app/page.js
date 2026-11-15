@@ -61,8 +61,7 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        // FIX: lowercase 'v' to match exact file system name pushed in Git
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
+        url: "/assets/v2-vertical/Happy-Birthday/video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
         pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
@@ -72,7 +71,6 @@ const FESTIVE_DATA = {
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
-        // FIX: Tighter bounding box so media doesn't bleed outside the flower heart
         pipConfig: { revealTime: 8.5, shape: "heart", x: 230, y: 430, width: 620, height: 580 }
       },
       { 
@@ -446,13 +444,29 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
         }
         
         ctx.clip(); 
-        ctx.drawImage(userMedia, pip.x, pip.y, pip.width, pip.height);
+        
+        // SMART OBJECT-FIT: COVER LOGIC TO PREVENT OVER-SIZING/STRETCHING
+        const mediaW = userMedia.videoWidth || userMedia.naturalWidth || userMedia.width;
+        const mediaH = userMedia.videoHeight || userMedia.naturalHeight || userMedia.height;
+        
+        if (mediaW && mediaH) {
+          const scale = Math.max(pip.width / mediaW, pip.height / mediaH);
+          const drawW = mediaW * scale;
+          const drawH = mediaH * scale;
+          const offsetX = pip.x + (pip.width - drawW) / 2;
+          const offsetY = pip.y + (pip.height - drawH) / 2;
+          
+          ctx.drawImage(userMedia, offsetX, offsetY, drawW, drawH);
+        } else {
+          ctx.drawImage(userMedia, pip.x, pip.y, pip.width, pip.height);
+        }
+        
         ctx.restore();
       }
     }
   }
 
-  // 3. TEXT RENDERING LOGIC (Now applies to BOTH V1 and V2!)
+  // 3. TEXT RENDERING LOGIC (Applies to BOTH V1 and V2)
   const overlayH = h * 0.30;
   const overlayY = h - overlayH;
   const grad = ctx.createLinearGradient(0, overlayY, 0, h);
@@ -1362,6 +1376,34 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              
+              {/* MEDIA UPLOAD BUTTON (MOVED HERE) */}
+              <div className="mt-5 space-y-3">
+                  <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
+                    <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
+                      <Upload className={`h-5 w-5 shrink-0 ${isV2Mode ? "text-fuchsia-400" : "text-indigo-400"}`} />
+                      <span className={`truncate ${isV2Mode ? "text-fuchsia-100" : ""}`}>
+                          {attachedMedia ? `Attached: ${attachedMedia.name}` : (isV2Mode ? "UPLOAD YOUR PHOTO/VIDEO FOR PiP MAGIC!" : "Upload Optional Reference Image / MP4 (Max 15MB)")}
+                      </span>
+                      <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
+                    </label>
+                    {attachedMedia && (
+                      <button
+                        onClick={handleRemoveMedia}
+                        title="Remove custom media"
+                        className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-400 flex items-start space-x-2.5">
+                    <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{t.disclaimer}</span>
+                  </div>
+              </div>
+              
             </div>
 
             {/* 2. STYLE SELECTION & AI ENHANCEMENTS */}
@@ -1405,7 +1447,6 @@ export default function Home() {
 
 
             {/* 3. MULTI-FIELD PERSONALIZATION INPUTS & TYPOGRAPHY STUDIO */}
-            {/* FIX: Removed the !isV2Mode wrapper here so this always shows! */}
             <div className="space-y-5">
               <div className="flex justify-between items-center">
                 <label className="block text-base font-extrabold uppercase tracking-wider text-slate-200">{t.msgTitle}</label>
@@ -1515,31 +1556,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              {/* MEDIA UPLOAD */}
-              <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
-                <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
-                  <Upload className={`h-5 w-5 shrink-0 ${isV2Mode ? "text-fuchsia-400" : "text-indigo-400"}`} />
-                  <span className={`truncate ${isV2Mode ? "text-fuchsia-100" : ""}`}>
-                      {attachedMedia ? `Attached: ${attachedMedia.name}` : (isV2Mode ? "UPLOAD YOUR PHOTO/VIDEO FOR PiP MAGIC!" : "Upload Optional Reference Image / MP4 (Max 15MB)")}
-                  </span>
-                  <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
-                </label>
-                {attachedMedia && (
-                  <button
-                    onClick={handleRemoveMedia}
-                    title="Remove custom media"
-                    className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-400 flex items-start space-x-2.5">
-                <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-                <span>{t.disclaimer}</span>
-              </div>
             </div>
 
             {/* ACTION GENERATE BUTTON */}
@@ -1564,7 +1580,11 @@ export default function Home() {
           {/* MAIN CANVAS TV SCREEN */}
           <div className="lg:col-span-7 flex flex-col space-y-6">
             <div className={`bg-slate-900 border-4 rounded-3xl p-4 sm:p-5 shadow-2xl relative ${activeCard?.isV2 ? "border-fuchsia-900/50 shadow-[0_0_30px_rgba(217,70,239,0.15)]" : "border-slate-800"}`}>
-              <div className={`w-full h-[460px] sm:h-[520px] bg-black rounded-2xl overflow-hidden relative flex items-center justify-center border ${activeCard?.isV2 ? "border-fuchsia-500/30" : "border-slate-800"}`}>
+              <div className={`bg-black rounded-2xl overflow-hidden relative flex items-center justify-center mx-auto border transition-all duration-500 ${
+                activeCard?.isV2 
+                  ? "aspect-[9/16] w-full max-w-[320px] sm:max-w-[400px] border-fuchsia-500/30" 
+                  : "aspect-video w-full border-slate-800"
+              }`}>
                 
                 {/* V2 Live Preview Overlay */}
                 {activeCard?.isV2 && attachedMedia && (
@@ -1618,7 +1638,7 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Text Overlay for ALL modes (Removed the !activeCard.isV2 restriction here) */}
+                    {/* Text Overlay for ALL modes */}
                     <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
                     <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
@@ -1716,12 +1736,12 @@ export default function Home() {
                     <div
                       key={index}
                       onClick={() => card && setActiveCard(card)}
-                      className={`aspect-[9/16] sm:aspect-video rounded-xl border-2 overflow-hidden bg-slate-900 transition relative flex items-center justify-center ${
+                      className={`rounded-xl border-2 overflow-hidden bg-slate-900 transition relative flex items-center justify-center ${
                         card 
                           ? card.isV2 
-                            ? "border-fuchsia-500 hover:border-fuchsia-400 cursor-pointer shadow-[0_0_10px_rgba(217,70,239,0.2)]"
-                            : "border-indigo-500 hover:border-amber-400 cursor-pointer shadow-md" 
-                          : "border-slate-800 opacity-30 cursor-default"
+                            ? "aspect-[9/16] border-fuchsia-500 hover:border-fuchsia-400 cursor-pointer shadow-[0_0_10px_rgba(217,70,239,0.2)]"
+                            : "aspect-video border-indigo-500 hover:border-amber-400 cursor-pointer shadow-md" 
+                          : "aspect-video border-slate-800 opacity-30 cursor-default"
                       }`}
                     >
                       {card ? (
