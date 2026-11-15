@@ -61,7 +61,7 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
+        url: "/assets/v2-vertical/Happy-Birthday/video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
         pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
@@ -1023,6 +1023,35 @@ export default function Home() {
 
   const v2PipTemplates = FESTIVE_DATA["Happy Birthday"].v2PipTemplates;
 
+  // REUSABLE UPLOAD BLOCK JSX
+  const UploadMediaBtn = (
+    <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
+      <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
+        <Upload className={`h-5 w-5 shrink-0 ${isV2Mode ? "text-fuchsia-400" : "text-indigo-400"}`} />
+        <span className={`truncate ${isV2Mode ? "text-fuchsia-100" : ""}`}>
+            {attachedMedia ? `Attached: ${attachedMedia.name}` : (isV2Mode ? "UPLOAD YOUR PHOTO/VIDEO FOR PiP MAGIC!" : "Upload Optional Reference Image / MP4 (Max 15MB)")}
+        </span>
+        <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
+      </label>
+      {attachedMedia && (
+        <button
+          onClick={handleRemoveMedia}
+          title="Remove custom media"
+          className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  const DisclaimerText = (
+    <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-400 flex items-start space-x-2.5">
+      <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+      <span>{t.disclaimer}</span>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-16 text-lg">
       <style jsx global>{`
@@ -1298,7 +1327,7 @@ export default function Home() {
                             <Sparkles className="h-4 w-4" />
                             <span>V2 PiP Magic (Picture-in-Picture) / 全新 V2 畫中畫技術</span>
                         </label>
-                        <div className="grid grid-cols-5 gap-3">
+                        <div className="grid grid-cols-5 gap-3 mb-4">
                             {v2PipTemplates.map((preset) => (
                             <button
                                 key={preset.id}
@@ -1319,6 +1348,12 @@ export default function Home() {
                                 />
                             </button>
                             ))}
+                        </div>
+
+                        {/* UPLOAD BUTTON FOR HAPPY BIRTHDAY (MOVED EXACTLY TO ARROW LOCATION) */}
+                        <div className="space-y-3 pt-2 border-t border-fuchsia-500/30">
+                           {UploadMediaBtn}
+                           {DisclaimerText}
                         </div>
                     </div>
 
@@ -1376,34 +1411,14 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              
-              {/* MEDIA UPLOAD BUTTON (MOVED HERE) */}
-              <div className="mt-5 space-y-3">
-                  <div className={`bg-slate-950 border p-3.5 rounded-xl text-sm font-semibold flex items-center justify-between ${isV2Mode ? "border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]" : "border-slate-700 hover:border-slate-600 text-slate-300"}`}>
-                    <label className="flex items-center space-x-3 truncate cursor-pointer flex-1">
-                      <Upload className={`h-5 w-5 shrink-0 ${isV2Mode ? "text-fuchsia-400" : "text-indigo-400"}`} />
-                      <span className={`truncate ${isV2Mode ? "text-fuchsia-100" : ""}`}>
-                          {attachedMedia ? `Attached: ${attachedMedia.name}` : (isV2Mode ? "UPLOAD YOUR PHOTO/VIDEO FOR PiP MAGIC!" : "Upload Optional Reference Image / MP4 (Max 15MB)")}
-                      </span>
-                      <input type="file" accept="image/*,video/mp4" onChange={handleMediaUpload} className="hidden" />
-                    </label>
-                    {attachedMedia && (
-                      <button
-                        onClick={handleRemoveMedia}
-                        title="Remove custom media"
-                        className="ml-2 p-1 bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/40 rounded-lg transition"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
 
-                  <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-400 flex items-start space-x-2.5">
-                    <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{t.disclaimer}</span>
-                  </div>
-              </div>
-              
+              {/* UPLOAD BUTTON FALLBACK FOR NON-BIRTHDAY CATEGORIES */}
+              {selectedCategory !== "Happy Birthday" && (
+                <div className="mt-5 space-y-3">
+                  {UploadMediaBtn}
+                  {DisclaimerText}
+                </div>
+              )}
             </div>
 
             {/* 2. STYLE SELECTION & AI ENHANCEMENTS */}
