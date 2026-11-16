@@ -71,7 +71,7 @@ const FESTIVE_DATA = {
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
-        pipConfig: { revealTime: 8.5, shape: "heart", x: 300, y: 300, width: 446, height: 200 }
+        pipConfig: { revealTime: 8.5, shape: "heart", x: 300, y: 500, width: 558, height: 522 }
       },
       { 
         id: "v2_night_castle", 
