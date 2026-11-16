@@ -87,7 +87,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 75, y: 300, width: 360, height: 486 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 75, y: 300, width: 200, height: 271 }
       },
       { 
         id: "v2_butterfly_glass", 
