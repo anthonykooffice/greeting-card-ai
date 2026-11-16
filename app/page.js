@@ -95,7 +95,7 @@ const FESTIVE_DATA = {
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
-        pipConfig: { revealTime: 8.5, shape: "rect", x: 283, y: 580, width: 550, height: 723 }
+        pipConfig: { revealTime: 8.5, shape: "rect", x: 280, y: 581, width: 549, height: 723 }
       }
     ],
     // ------------------------------
