@@ -63,7 +63,7 @@ const FESTIVE_DATA = {
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
-        pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 500, height: 630 }
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 240, y: 600, width: 570, height: 720 }
       },
       { 
         id: "v2_helicopter_heart", 
