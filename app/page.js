@@ -79,7 +79,7 @@ const FESTIVE_DATA = {
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 115, y: 430, width: 504, height: 684 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 120, y: 435, width: 504, height: 684 }
       },
       { 
         id: "v2_butterfly_color", 
