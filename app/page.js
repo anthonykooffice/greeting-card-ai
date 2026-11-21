@@ -61,9 +61,9 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
+        url: "/assets/v2-vertical/Happy-Birthday/Video1_Fairy_Girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
-        pipConfig: { revealTime: 6.5, shape: "rect", x: 255, y: 615, width: 560, height: 950 }
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
       { 
         id: "v2_helicopter_heart", 
@@ -71,7 +71,7 @@ const FESTIVE_DATA = {
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
-        pipConfig: { revealTime: 8.5, shape: "heart", x: 290, y: 660, width: 500, height: 470 }
+        pipConfig: { revealTime: 8.5, shape: "heart", x: 230, y: 430, width: 620, height: 580 }
       },
       { 
         id: "v2_night_castle", 
@@ -79,7 +79,7 @@ const FESTIVE_DATA = {
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 120, y: 435, width: 504, height: 684 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 70, y: 370, width: 560, height: 760 }
       },
       { 
         id: "v2_butterfly_color", 
@@ -87,7 +87,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 115, y: 900, width: 268, height: 362 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 70, y: 270, width: 560, height: 760 }
       },
       { 
         id: "v2_butterfly_glass", 
@@ -95,7 +95,7 @@ const FESTIVE_DATA = {
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
-        pipConfig: { revealTime: 8.5, shape: "rect", x: 280, y: 581, width: 549, height: 723 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 170, y: 420, width: 740, height: 910 }
       }
     ],
     // ------------------------------
@@ -250,6 +250,92 @@ const FESTIVE_DATA = {
     heroImage: "/assets/Merry-Christmas/Merry-Christmas-1.mp4",
     heroFallback: createPlaceholder("Merry Christmas", "%2315803d"),
     themeColor: "from-emerald-600/40 via-red-700/30 to-green-500/40",
+    
+    // --- NEW V2 PIP ENGINE DATA FOR MERRY CHRISTMAS ---
+    v2PipTemplates: [
+      { 
+        id: "xmas_v2_1", 
+        title: "Golden Wreath & Santa", 
+        zhTitle: "金色花環與聖誕老人 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_1.mp4",
+        fallback: createPlaceholder("Golden Wreath", "%2315803d"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 185, y: 555, width: 710, height: 710 }
+      },
+      { 
+        id: "xmas_v2_2", 
+        title: "Frosted Oval & Cabin", 
+        zhTitle: "冰霜橢圓與木屋 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_2.mp4",
+        fallback: createPlaceholder("Frosted Oval", "%23b91c1c"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 220, y: 405, width: 640, height: 1000 }
+      },
+      { 
+        id: "xmas_v2_3", 
+        title: "Glass Bauble & Sleigh", 
+        zhTitle: "玻璃球與馴鹿雪橇 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_3.mp4",
+        fallback: createPlaceholder("Glass Bauble", "%23047857"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 335, y: 210, width: 410, height: 410 }
+      },
+      { 
+        id: "xmas_v2_4", 
+        title: "Pine Wreath & Reindeer", 
+        zhTitle: "松果花圈與馴鹿 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_4.mp4",
+        fallback: createPlaceholder("Pine Wreath", "%23b45309"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 325, y: 420, width: 420, height: 420 }
+      },
+      { 
+        id: "xmas_v2_5", 
+        title: "Cozy Fireplace Bauble", 
+        zhTitle: "溫馨壁爐水晶球 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_5.mp4",
+        fallback: createPlaceholder("Fireplace Bauble", "%230f766e"),
+        pipConfig: { revealTime: 10.0, shape: "oval", x: 380, y: 165, width: 300, height: 300 }
+      },
+      { 
+        id: "xmas_v2_6", 
+        title: "Festive Christmas Mug", 
+        zhTitle: "節慶聖誕馬克杯 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_6.mp4",
+        fallback: createPlaceholder("Christmas Mug", "%23d97706"),
+        pipConfig: { revealTime: 8.0, shape: "rect", x: 365, y: 865, width: 360, height: 460 }
+      },
+      { 
+        id: "xmas_v2_7", 
+        title: "Crystal Sleigh & Gift Box", 
+        zhTitle: "水晶雪橇與魔法禮盒 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_7.mp4",
+        fallback: createPlaceholder("Crystal Sleigh", "%231e3a8a"),
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 315, y: 520, width: 450, height: 765 }
+      },
+      { 
+        id: "xmas_v2_8", 
+        title: "Oval Snow Globe & Forest", 
+        zhTitle: "橢圓水晶球與雪林 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_8.mp4",
+        fallback: createPlaceholder("Oval Globe", "%2378350f"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 195, y: 555, width: 690, height: 810 }
+      },
+      { 
+        id: "xmas_v2_9", 
+        title: "Family Room Snow Globe", 
+        zhTitle: "溫馨客廳水晶球 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_9.mp4",
+        fallback: createPlaceholder("Family Globe", "%23dc2626"),
+        pipConfig: { revealTime: 9.0, shape: "oval", x: 205, y: 540, width: 670, height: 630 }
+      },
+      { 
+        id: "xmas_v2_10", 
+        title: "Crystal Wine Glass & Tavern", 
+        zhTitle: "水晶紅酒杯與聖誕酒館 (V2 畫中畫)",
+        url: "/assets/v2-vertical/Merry-Christmas/video_10.mp4",
+        fallback: createPlaceholder("Wine Glass", "%231e40af"),
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 290, y: 595, width: 500, height: 595 }
+      }
+    ],
+    // ------------------------------
+    
     presets: [
       { id: "c1", title: "Glowing Christmas Tree Lights", zhTitle: "璀璨聖誕樹彩燈", url: "/assets/Merry-Christmas/Merry-Christmas-1.mp4", fallback: createPlaceholder("Christmas Tree Lights", "%2315803d") },
       { id: "c2", title: "Cozy Fireplace & Holiday Stockings", zhTitle: "壁爐與節慶聖誕襪", url: "/assets/Merry-Christmas/Merry-Christmas-2.mp4", fallback: createPlaceholder("Cozy Fireplace", "%23b91c1c") },
@@ -338,7 +424,7 @@ const TRANSLATIONS = {
     policyPrivacyTitle: "Privacy & Data Security",
     policyPrivacyText: "Your privacy is our priority. Any custom text, names, or reference media you upload are processed securely in your browser's temporary memory or temporary cloud runtime specifically to generate your card. We do not permanently store your personal media, nor do we ever access your device's private local folders.",
     policyLegalTitle: "Legal Protection & Disclaimer",
-    policyLegalText: "GreetingAI Studio is provided \"as is\" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!",
+    policyLegalText: 'GreetingAI Studio is provided "as is" for personal, entertainment, and non-commercial sharing. Users are solely responsible for their messages and custom media. We are not liable for external third-party platform delivery rules (such as WhatsApp or WeChat file restrictions). Enjoy spreading joy responsibly!',
     contactTitle: "Questions & Support",
     contactText: "Have feedback or need help? Reach out to our support team at ",
     footerText: "© 2026 GreetingAI Studio. All rights reserved. | Support: ",
@@ -467,12 +553,13 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
   }
 
   // 3. TEXT RENDERING LOGIC (Applies to BOTH V1 and V2)
-  const overlayH = h * 0.30;
+  // Reduced height from 30% to 18% and lowered opacity so animated characters are not blocked
+  const overlayH = h * 0.18;
   const overlayY = h - overlayH;
   const grad = ctx.createLinearGradient(0, overlayY, 0, h);
   grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(0.35, "rgba(0,0,0,0.80)");
-  grad.addColorStop(1, "rgba(0,0,0,0.95)");
+  grad.addColorStop(0.5, "rgba(0,0,0,0.40)");
+  grad.addColorStop(1, "rgba(0,0,0,0.70)");
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, overlayY, w, overlayH);
@@ -1021,7 +1108,7 @@ export default function Home() {
     ? FESTIVE_DATA["Happy Birthday"].relationshipPresets[selectedRelationship]
     : FESTIVE_DATA[selectedCategory].presets;
 
-  const v2PipTemplates = FESTIVE_DATA["Happy Birthday"].v2PipTemplates;
+  const v2PipTemplates = FESTIVE_DATA["Merry Christmas"].v2PipTemplates;
 
   // REUSABLE UPLOAD BLOCK JSX
   const UploadMediaBtn = (
@@ -1319,7 +1406,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {selectedCategory === "Happy Birthday" && (
+              {(selectedCategory === "Happy Birthday" || selectedCategory === "Merry Christmas") && (
                 <>
                     {/* V2 PIP MAGIC SECTOR INJECTION */}
                     <div className="mb-5 bg-gradient-to-r from-fuchsia-950 to-indigo-950 p-4 rounded-xl border border-fuchsia-500/30">
@@ -1327,36 +1414,89 @@ export default function Home() {
                             <Sparkles className="h-4 w-4" />
                             <span>V2 PiP Magic (Picture-in-Picture) / 全新 V2 畫中畫技術</span>
                         </label>
-                        <div className="grid grid-cols-5 gap-3 mb-4">
-                            {v2PipTemplates.map((preset) => (
-                            <button
-                                key={preset.id}
-                                onClick={() => handlePresetSelect(preset, true)}
-                                title={lang === "zh" ? preset.zhTitle : preset.title}
-                                className={`aspect-[9/16] rounded-xl overflow-hidden border-2 transition relative ${
-                                selectedPreset.id === preset.id && isV2Mode ? "border-fuchsia-400 ring-4 ring-fuchsia-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
-                                }`}
-                            >
-                                <video 
-                                src={preset.url} 
-                                autoPlay 
-                                muted 
-                                loop
-                                playsInline 
-                                crossOrigin="anonymous" 
-                                className="w-full h-full object-cover" 
-                                />
-                            </button>
-                            ))}
-                        </div>
+                        
+                        {selectedCategory === "Happy Birthday" && (
+                            <div className="grid grid-cols-5 gap-3 mb-4">
+                                {FESTIVE_DATA["Happy Birthday"].v2PipTemplates.map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => handlePresetSelect(preset, true)}
+                                    title={lang === "zh" ? preset.zhTitle : preset.title}
+                                    className={`aspect-[9/16] rounded-xl overflow-hidden border-2 transition relative ${
+                                    selectedPreset.id === preset.id && isV2Mode ? "border-fuchsia-400 ring-4 ring-fuchsia-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                                    }`}
+                                >
+                                    <video 
+                                    src={preset.url} 
+                                    autoPlay 
+                                    muted 
+                                    loop
+                                    playsInline 
+                                    crossOrigin="anonymous" 
+                                    className="w-full h-full object-cover" 
+                                    />
+                                </button>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {selectedCategory === "Merry Christmas" && (
+                            <div className="space-y-4 mb-4">
+                                <div className="grid grid-cols-5 gap-3">
+                                    {v2PipTemplates.slice(0, 5).map((preset) => (
+                                    <button
+                                        key={preset.id}
+                                        onClick={() => handlePresetSelect(preset, true)}
+                                        title={lang === "zh" ? preset.zhTitle : preset.title}
+                                        className={`aspect-[9/16] rounded-xl overflow-hidden border-2 transition relative ${
+                                        selectedPreset.id === preset.id && isV2Mode ? "border-fuchsia-400 ring-4 ring-fuchsia-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                                        }`}
+                                    >
+                                        <video 
+                                        src={preset.url} 
+                                        autoPlay 
+                                        muted 
+                                        loop
+                                        playsInline 
+                                        crossOrigin="anonymous" 
+                                        className="w-full h-full object-cover" 
+                                        />
+                                    </button>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-5 gap-3">
+                                    {v2PipTemplates.slice(5, 10).map((preset) => (
+                                    <button
+                                        key={preset.id}
+                                        onClick={() => handlePresetSelect(preset, true)}
+                                        title={lang === "zh" ? preset.zhTitle : preset.title}
+                                        className={`aspect-[9/16] rounded-xl overflow-hidden border-2 transition relative ${
+                                        selectedPreset.id === preset.id && isV2Mode ? "border-fuchsia-400 ring-4 ring-fuchsia-400/30 scale-105" : "border-slate-800 opacity-80 hover:opacity-100"
+                                        }`}
+                                    >
+                                        <video 
+                                        src={preset.url} 
+                                        autoPlay 
+                                        muted 
+                                        loop
+                                        playsInline 
+                                        crossOrigin="anonymous" 
+                                        className="w-full h-full object-cover" 
+                                        />
+                                    </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
-                        {/* UPLOAD BUTTON FOR HAPPY BIRTHDAY (MOVED EXACTLY TO ARROW LOCATION) */}
+                        {/* UPLOAD BUTTON (MOVED EXACTLY TO ARROW LOCATION) */}
                         <div className="space-y-3 pt-2 border-t border-fuchsia-500/30">
                            {UploadMediaBtn}
                            {DisclaimerText}
                         </div>
                     </div>
-
+                    
+                    {selectedCategory === "Happy Birthday" && (
                     <div className="mb-5 bg-slate-950 p-4 rounded-xl border border-slate-800">
                     <label className="block text-sm font-bold text-amber-300 mb-3">
                         V1 Classics: Relationship Sector / 經典 V1：人際關係選擇
@@ -1383,6 +1523,7 @@ export default function Home() {
                         ))}
                     </div>
                     </div>
+                    )}
                 </>
               )}
 
@@ -1412,8 +1553,8 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* UPLOAD BUTTON FALLBACK FOR NON-BIRTHDAY CATEGORIES */}
-              {selectedCategory !== "Happy Birthday" && (
+              {/* UPLOAD BUTTON FALLBACK FOR NON-BIRTHDAY/CHRISTMAS CATEGORIES */}
+              {selectedCategory !== "Happy Birthday" && selectedCategory !== "Merry Christmas" && (
                 <div className="mt-5 space-y-3">
                   {UploadMediaBtn}
                   {DisclaimerText}
@@ -1653,8 +1794,8 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Text Overlay for ALL modes */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/95 via-black/80 to-transparent flex flex-col justify-end pb-3 px-4 pointer-events-none z-20">
+                    {/* Text Overlay for ALL modes (Matches reduced 18% transparent gradient) */}
+                    <div className="absolute bottom-0 left-0 right-0 h-[18%] bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end pb-2.5 px-4 pointer-events-none z-20">
                     <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
                         {activeCard.to && (
                         <p 
