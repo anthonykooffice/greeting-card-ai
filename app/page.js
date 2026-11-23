@@ -63,7 +63,7 @@ const FESTIVE_DATA = {
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
-        pipConfig: { revealTime: 6.5, shape: "rect", x: 255, y: 615, width: 500, height: 900 }
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 255, y: 615, width: 400, height: 700 }
       },
       { 
         id: "v2_helicopter_heart", 
@@ -79,7 +79,7 @@ const FESTIVE_DATA = {
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 120, y: 435, width: 500, height: 670 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 120, y: 435, width: 450, height: 550 }
       },
       { 
         id: "v2_butterfly_color", 
@@ -87,7 +87,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 120, y: 910, width: 260, height: 350 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 120, y: 910, width: 240, height: 350 }
       },
       { 
         id: "v2_butterfly_glass", 
@@ -95,7 +95,7 @@ const FESTIVE_DATA = {
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 280, y: 590, width: 530, height: 710 }
+        pipConfig: { revealTime: 8.5, shape: "rect", x: 280, y: 590, width: 530, height: 710 }
       }
     ],
     // ------------------------------
