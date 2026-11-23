@@ -502,6 +502,10 @@ const drawCanvasFrame = (ctx, canvas, video, card, selectedFont, textColor, acti
       const pip = card.pipConfig;
       const userMedia = userMediaRef.current;
       
+      if (userMedia.tagName === 'VIDEO' && userMedia.paused) {
+        userMedia.play().catch(() => {});
+      }
+
       const isVideoReady = userMedia.tagName === 'VIDEO' && userMedia.readyState >= 2;
       const isImageReady = userMedia.tagName === 'IMG' && userMedia.complete;
 
@@ -705,7 +709,8 @@ export default function Home() {
   }, [isV2Mode, activeCard, attachedMedia]);
 
   useEffect(() => {
-    if (isV2Mode && attachedMedia?.type === 'video' && userVideoRef.current && videoRef.current) {
+    if (isV2Mode && attachedMedia?.type === 'video' && userVideoRef.current) {
+        userVideoRef.current.muted = true;
         userVideoRef.current.play().catch(e => console.log("Auto-play prevented", e));
     }
   }, [attachedMedia, isV2Mode, activeCard]);
@@ -742,6 +747,9 @@ export default function Home() {
 
   const handleCategoryChange = (cat) => {
     setSelectedCategory(cat);
+    if (attachedMedia?.url && attachedMedia.url.startsWith("blob:")) {
+      URL.revokeObjectURL(attachedMedia.url);
+    }
     setAttachedMedia(null);
     setIsV2Mode(false);
 
@@ -760,13 +768,21 @@ export default function Home() {
     setIsV2Mode(false);
     const newPreset = FESTIVE_DATA["Happy Birthday"].relationshipPresets[rel][0];
     setSelectedPreset(newPreset);
+    if (attachedMedia?.url && attachedMedia.url.startsWith("blob:")) {
+      URL.revokeObjectURL(attachedMedia.url);
+    }
     setAttachedMedia(null);
   };
 
   const handlePresetSelect = (preset, isV2 = false) => {
     setSelectedPreset(preset);
     setIsV2Mode(isV2);
-    if (!isV2) setAttachedMedia(null); 
+    if (!isV2) {
+      if (attachedMedia?.url && attachedMedia.url.startsWith("blob:")) {
+        URL.revokeObjectURL(attachedMedia.url);
+      }
+      setAttachedMedia(null); 
+    }
   };
 
   const handleStyleSelect = (styleKey) => {
@@ -784,6 +800,7 @@ export default function Home() {
     setCustomText(currentIdeas[randomIndex][lang]);
   };
 
+  // FIX 1: Use URL.createObjectURL(file) for uploaded MP4 videos instead of FileReader base64
   const handleMediaUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -791,20 +808,35 @@ export default function Home() {
         alert("Security Guardrail: File size exceeds 15MB limit.");
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const uploadedMediaObj = {
+      if (attachedMedia?.url && attachedMedia.url.startsWith("blob:")) {
+        URL.revokeObjectURL(attachedMedia.url);
+      }
+      const isVideo = file.type.startsWith("video");
+      if (isVideo) {
+        const objectUrl = URL.createObjectURL(file);
+        setAttachedMedia({
           name: file.name,
-          type: file.type.startsWith("video") ? "video" : "image",
-          url: event.target.result
+          type: "video",
+          url: objectUrl
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setAttachedMedia({
+            name: file.name,
+            type: "image",
+            url: event.target.result
+          });
         };
-        setAttachedMedia(uploadedMediaObj);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
   const handleRemoveMedia = () => {
+    if (attachedMedia?.url && attachedMedia.url.startsWith("blob:")) {
+      URL.revokeObjectURL(attachedMedia.url);
+    }
     setAttachedMedia(null);
   };
 
@@ -832,7 +864,25 @@ export default function Home() {
     if (!video) throw new Error("Video stream reference not ready.");
 
     video.currentTime = 0;
-    if (userVideoRef.current) userVideoRef.current.currentTime = 0;
+
+    // FIX 3: Ensure uploaded PiP video is loaded, reset to 0, and playing before recording starts
+    if (userVideoRef.current && attachedMedia?.type === 'video') {
+      const pipVid = userVideoRef.current;
+      pipVid.muted = true;
+      if (pipVid.readyState < 2) {
+        await new Promise((resolveReady) => {
+          const onReady = () => {
+            pipVid.removeEventListener("loadeddata", onReady);
+            resolveReady();
+          };
+          pipVid.addEventListener("loadeddata", onReady, { once: true });
+          pipVid.load();
+          setTimeout(resolveReady, 2000);
+        });
+      }
+      pipVid.currentTime = 0;
+      await pipVid.play().catch((e) => console.warn("PiP video play error:", e));
+    }
 
     const audioCtx = window._sharedAudioCtx;
     if (!audioCtx) throw new Error("Audio Context not initialized properly.");
@@ -940,7 +990,7 @@ export default function Home() {
       if (sourceNode) {
         try { sourceNode.start(0); } catch (e) {}
       }
-      if (userVideoRef.current) {
+      if (userVideoRef.current && attachedMedia?.type === 'video') {
           userVideoRef.current.play().catch(e => console.log(e));
       }
 
@@ -987,6 +1037,16 @@ export default function Home() {
       } catch (e) {
         alert("Please tap the main video preview once to unlock audio permissions, then tap Share/Download again.");
         return;
+      }
+    }
+
+    // FIX 3 (Gesture Unlock): Unlock uploaded PiP video playback inside user click gesture
+    if (activeCard.isV2 && attachedMedia?.type === 'video' && userVideoRef.current) {
+      userVideoRef.current.muted = true;
+      try {
+        await userVideoRef.current.play();
+      } catch (e) {
+        console.warn("PiP video unlock play warning:", e);
       }
     }
 
@@ -1154,15 +1214,16 @@ export default function Home() {
         }
       `}</style>
       
-      {/* OFF-SCREEN MEDIA ELEMENTS FOR V2 PIP (Keeps browser decoding uploaded MP4 frames) */}
+      {/* FIX 2: IN-VIEWPORT HIDDEN MEDIA ELEMENTS FOR V2 PIP (Ensures Chrome/Edge actively decode uploaded MP4 frames) */}
       <div
         style={{
           position: "fixed",
-          top: "-9999px",
-          left: "-9999px",
-          width: "1px",
-          height: "1px",
-          opacity: 0,
+          bottom: "0px",
+          right: "0px",
+          width: "2px",
+          height: "2px",
+          opacity: 0.01,
+          zIndex: -1,
           pointerEvents: "none",
           overflow: "hidden"
         }}
@@ -1176,7 +1237,6 @@ export default function Home() {
                 muted
                 playsInline
                 preload="auto"
-                crossOrigin="anonymous"
             />
         )}
         {attachedMedia?.type === 'image' && (
