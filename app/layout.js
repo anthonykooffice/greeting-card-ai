@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";			
 import { 
   Playfair_Display, 
   Great_Vibes, 
@@ -51,7 +52,7 @@ export default function RootLayout({ children }) {
       className={`${playfair.variable} ${greatVibes.variable} ${dancing.variable} ${cinzel.variable} ${montserrat.variable}`}
     >
       <body className="bg-slate-950 text-slate-100 antialiased">
-        {children}
+        {children} <Analytics />
       </body>
     </html>
   );
