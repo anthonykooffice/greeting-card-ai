@@ -61,7 +61,7 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
+        url: "/assets/v2-vertical/Happy-Birthday/Video1_Fairy_Girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
         pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
       },
@@ -1154,8 +1154,19 @@ export default function Home() {
         }
       `}</style>
       
-      {/* HIDDEN MEDIA ELEMENTS FOR V2 PIP */}
-      <div style={{ display: 'none' }}>
+      {/* OFF-SCREEN MEDIA ELEMENTS FOR V2 PIP (Keeps browser decoding uploaded MP4 frames) */}
+      <div
+        style={{
+          position: "fixed",
+          top: "-9999px",
+          left: "-9999px",
+          width: "1px",
+          height: "1px",
+          opacity: 0,
+          pointerEvents: "none",
+          overflow: "hidden"
+        }}
+      >
         {attachedMedia?.type === 'video' && (
             <video 
                 ref={userVideoRef} 
@@ -1164,6 +1175,7 @@ export default function Home() {
                 loop 
                 muted
                 playsInline
+                preload="auto"
                 crossOrigin="anonymous"
             />
         )}
