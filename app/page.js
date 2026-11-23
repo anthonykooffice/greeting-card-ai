@@ -696,17 +696,35 @@ export default function Home() {
   const videoRef = useRef(null);
   const requestRef = useRef();
 
-  const continuousRender = () => {
-    if (isV2Mode && activeCard && canvasRef.current && videoRef.current) {
-        const activeMediaRef = attachedMedia && attachedMedia.type === 'video' ? userVideoRef : userImageRef;
-    }
-    requestRef.current = requestAnimationFrame(continuousRender);
-  };
-  
+  // LIVE V2 PIP CANVAS PREVIEW LOOP (Runs during live preview, download, and sharing)
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(continuousRender);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [isV2Mode, activeCard, attachedMedia]);
+    let animationFrameId;
+    const renderLivePreview = () => {
+      if (activeCard?.pipConfig && canvasRef.current && videoRef.current) {
+        const video = videoRef.current;
+        if (video.readyState >= 2) {
+          const ctx = canvasRef.current.getContext("2d");
+          const activeMediaRef = attachedMedia && attachedMedia.type === "video" ? userVideoRef : userImageRef;
+          const styleObj = t.styles.find((s) => s.key === selectedStyle);
+          drawCanvasFrame(
+            ctx,
+            canvasRef.current,
+            video,
+            activeCard,
+            selectedFont,
+            textColor,
+            styleObj,
+            activeMediaRef
+          );
+        }
+      }
+      animationFrameId = requestAnimationFrame(renderLivePreview);
+    };
+
+    animationFrameId = requestAnimationFrame(renderLivePreview);
+    requestRef.current = animationFrameId;
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [activeCard, attachedMedia, selectedFont, textColor, selectedStyle, t.styles]);
 
   useEffect(() => {
     if (isV2Mode && attachedMedia?.type === 'video' && userVideoRef.current) {
@@ -727,9 +745,10 @@ export default function Home() {
       url: selectedPreset.url, 
       fallback: selectedPreset.fallback,
       media: attachedMedia,
-      pipConfig: selectedPreset.pipConfig || null
+      pipConfig: selectedPreset.pipConfig || null,
+      isV2: isV2Mode
     }));
-  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia]);
+  }, [selectedCategory, selectedPreset, selectedStyle, toName, fromName, customText, selectedFont, attachedMedia, isV2Mode]);
 
   const toggleVideoPlayback = () => {
     if (videoRef.current) {
@@ -738,8 +757,12 @@ export default function Home() {
         if (userVideoRef.current) userVideoRef.current.pause();
         setIsVideoPlaying(false);
       } else {
+        if (videoRef.current.ended) {
+          videoRef.current.currentTime = 0;
+          if (userVideoRef.current) userVideoRef.current.currentTime = 0;
+        }
         videoRef.current.play();
-        if (userVideoRef.current) userVideoRef.current.play();
+        if (userVideoRef.current) userVideoRef.current.play().catch(() => {});
         setIsVideoPlaying(true);
       }
     }
@@ -1814,12 +1837,14 @@ export default function Home() {
                   : "aspect-video w-full border-slate-800"
               }`}>
                 
-                {/* V2 Live Preview Overlay */}
-                {activeCard?.isV2 && attachedMedia && (
-                    <div className="absolute inset-0 z-10 pointer-events-none opacity-80 mix-blend-screen flex items-center justify-center">
-                         <div className="bg-fuchsia-500/20 px-4 py-2 rounded-full border border-fuchsia-500/50 backdrop-blur-sm animate-pulse flex items-center space-x-2">
-                             <Sparkles className="h-4 w-4 text-fuchsia-300" />
-                             <span className="text-xs font-bold text-fuchsia-100 uppercase tracking-wider">PiP Rendering Enabled for Download</span>
+                {/* V2 Live PiP Status Pill (Non-blocking top-right corner) */}
+                {activeCard?.pipConfig && attachedMedia && !isGenerating && (
+                    <div className="absolute top-4 right-4 z-30 pointer-events-none">
+                         <div className="bg-fuchsia-600/80 px-3 py-1.5 rounded-full border border-fuchsia-300/60 backdrop-blur-sm flex items-center space-x-1.5 shadow-lg">
+                             <Sparkles className="h-3.5 w-3.5 text-yellow-200 animate-pulse" />
+                             <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                               {isDownloading || isSharing ? `Recording PiP (${downloadProgress}%)` : "Live PiP Preview"}
+                             </span>
                          </div>
                     </div>
                 )}
@@ -1832,7 +1857,7 @@ export default function Home() {
                 ) : activeCard ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
                     
-                    {/* The main video player */}
+                    {/* The main video player & Live V2 PiP Canvas */}
                     <div className="relative w-full h-full flex items-center justify-center">
                         <video 
                             ref={videoRef}
@@ -1842,12 +1867,26 @@ export default function Home() {
                             playsInline 
                             crossOrigin="anonymous" 
                             onEnded={() => setIsVideoPlaying(false)}
-                            onLoadedData={(e) => e.currentTarget.play()} 
+                            onLoadedData={(e) => {
+                              e.currentTarget.play().catch(() => {});
+                              setIsVideoPlaying(true);
+                            }}
                             style={{ filter: (!activeCard.isV2 && activeStyleObj) ? activeStyleObj.cssFilter : "none" }}
                             className={`w-full h-full object-cover transition-all duration-500 ${
                             (!activeCard.isV2 && activeCard.style === "Motion5s") ? "ai-motion-video" : ""
                             }`} 
                         />
+
+                        {/* LIVE V2 PIP COMPOSITE CANVAS OVERLAY */}
+                        {activeCard?.pipConfig && (
+                          <canvas
+                            ref={canvasRef}
+                            width={1080}
+                            height={1920}
+                            className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
+                          />
+                        )}
+
                         <div className="absolute top-4 left-4 flex items-center space-x-2 z-30 pointer-events-auto">
                             <button
                             onClick={toggleVideoPlayback}
@@ -1866,42 +1905,44 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Text Overlay for ALL modes (Matches reduced 18% transparent gradient) */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[18%] bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end pb-2.5 px-4 pointer-events-none z-20">
-                    <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
-                        {activeCard.to && (
-                        <p 
-                            style={{ 
-                            fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                            color: textColor || "#ffd700"
-                            }}
-                            className={`${fontSize} font-bold italic truncate`}
-                        >
-                            To: {activeCard.to}
-                        </p>
-                        )}
-                        <p 
-                        style={{ 
-                            color: textColor || "#ffd700",
-                            fontFamily: activeCard.fontCss || selectedFont.cssVar
-                        }} 
-                        className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
-                        >
-                        "{activeCard.text}"
-                        </p>
-                        {activeCard.from && (
-                        <p 
-                            style={{ 
-                            fontFamily: activeCard.fontCss || selectedFont.cssVar,
-                            color: textColor || "#ffd700"
-                            }}
-                            className={`${fontSize} font-bold truncate`}
-                        >
-                            — {activeCard.from}
-                        </p>
-                        )}
-                    </div>
-                    </div>
+                    {/* HTML Text Overlay for V1 modes only (V2 mode renders text directly on the Live PiP Canvas) */}
+                    {!activeCard?.pipConfig && (
+                      <div className="absolute bottom-0 left-0 right-0 h-[18%] bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end pb-2.5 px-4 pointer-events-none z-20">
+                      <div className="text-center space-y-0.5 max-w-[90%] mx-auto drop-shadow-md">
+                          {activeCard.to && (
+                          <p 
+                              style={{ 
+                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                              color: textColor || "#ffd700"
+                              }}
+                              className={`${fontSize} font-bold italic truncate`}
+                          >
+                              To: {activeCard.to}
+                          </p>
+                          )}
+                          <p 
+                          style={{ 
+                              color: textColor || "#ffd700",
+                              fontFamily: activeCard.fontCss || selectedFont.cssVar
+                          }} 
+                          className={`${fontSize} font-bold tracking-tight leading-snug line-clamp-2`}
+                          >
+                          "{activeCard.text}"
+                          </p>
+                          {activeCard.from && (
+                          <p 
+                              style={{ 
+                              fontFamily: activeCard.fontCss || selectedFont.cssVar,
+                              color: textColor || "#ffd700"
+                              }}
+                              className={`${fontSize} font-bold truncate`}
+                          >
+                              — {activeCard.from}
+                          </p>
+                          )}
+                      </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center text-slate-600 space-y-3">
