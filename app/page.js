@@ -63,7 +63,7 @@ const FESTIVE_DATA = {
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
-        pipConfig: { revealTime: 6.5, shape: "rect", x: 120, y: 370, width: 840, height: 1060 }
+        pipConfig: { revealTime: 6.5, shape: "rect", x: 255, y: 615, width: 560, height: 950 }
       },
       { 
         id: "v2_helicopter_heart", 
@@ -71,7 +71,7 @@ const FESTIVE_DATA = {
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
-        pipConfig: { revealTime: 8.5, shape: "heart", x: 230, y: 430, width: 620, height: 580 }
+        pipConfig: { revealTime: 8.5, shape: "heart", x: 290, y: 660, width: 500, height: 470 }
       },
       { 
         id: "v2_night_castle", 
@@ -79,7 +79,7 @@ const FESTIVE_DATA = {
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 70, y: 370, width: 560, height: 760 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 120, y: 435, width: 504, height: 684 }
       },
       { 
         id: "v2_butterfly_color", 
@@ -87,7 +87,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 70, y: 270, width: 560, height: 760 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 115, y: 900, width: 268, height: 362 }
       },
       { 
         id: "v2_butterfly_glass", 
@@ -95,7 +95,7 @@ const FESTIVE_DATA = {
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
         url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
-        pipConfig: { revealTime: 8.5, shape: "oval", x: 170, y: 420, width: 740, height: 910 }
+        pipConfig: { revealTime: 8.5, shape: "oval", x: 280, y: 581, width: 549, height: 723 }
       }
     ],
     // ------------------------------
