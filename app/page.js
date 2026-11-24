@@ -259,7 +259,7 @@ const FESTIVE_DATA = {
         zhTitle: "金色花環與聖誕老人 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_1.mp4",
         fallback: createPlaceholder("Golden Wreath", "%2315803d"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 185, y: 555, width: 710, height: 710 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 180, y: 548, width: 720, height: 720 }
       },
       { 
         id: "xmas_v2_2", 
@@ -267,7 +267,7 @@ const FESTIVE_DATA = {
         zhTitle: "冰霜橢圓與木屋 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_2.mp4",
         fallback: createPlaceholder("Frosted Oval", "%23b91c1c"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 220, y: 405, width: 640, height: 1000 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 202, y: 385, width: 675, height: 1045 }
       },
       { 
         id: "xmas_v2_3", 
@@ -275,7 +275,7 @@ const FESTIVE_DATA = {
         zhTitle: "玻璃球與馴鹿雪橇 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_3.mp4",
         fallback: createPlaceholder("Glass Bauble", "%23047857"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 335, y: 210, width: 410, height: 410 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 320, y: 198, width: 440, height: 440 }
       },
       { 
         id: "xmas_v2_4", 
@@ -283,7 +283,7 @@ const FESTIVE_DATA = {
         zhTitle: "松果花圈與馴鹿 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_4.mp4",
         fallback: createPlaceholder("Pine Wreath", "%23b45309"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 325, y: 420, width: 420, height: 420 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 312, y: 408, width: 455, height: 455 }
       },
       { 
         id: "xmas_v2_5", 
@@ -291,7 +291,7 @@ const FESTIVE_DATA = {
         zhTitle: "溫馨壁爐水晶球 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_5.mp4",
         fallback: createPlaceholder("Fireplace Bauble", "%230f766e"),
-        pipConfig: { revealTime: 10.0, shape: "oval", x: 380, y: 165, width: 300, height: 300 }
+        pipConfig: { revealTime: 10.0, shape: "oval", x: 368, y: 152, width: 340, height: 340 }
       },
       { 
         id: "xmas_v2_6", 
@@ -299,7 +299,7 @@ const FESTIVE_DATA = {
         zhTitle: "節慶聖誕馬克杯 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_6.mp4",
         fallback: createPlaceholder("Christmas Mug", "%23d97706"),
-        pipConfig: { revealTime: 8.0, shape: "rect", x: 365, y: 865, width: 360, height: 460 }
+        pipConfig: { revealTime: 8.0, shape: "rect", x: 340, y: 865, width: 400, height: 480 }
       },
       { 
         id: "xmas_v2_7", 
@@ -307,7 +307,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶雪橇與魔法禮盒 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_7.mp4",
         fallback: createPlaceholder("Crystal Sleigh", "%231e3a8a"),
-        pipConfig: { revealTime: 9.5, shape: "rect", x: 315, y: 520, width: 450, height: 765 }
+        pipConfig: { revealTime: 9.5, shape: "rect", x: 300, y: 515, width: 480, height: 775 }
       },
       { 
         id: "xmas_v2_8", 
@@ -315,7 +315,7 @@ const FESTIVE_DATA = {
         zhTitle: "橢圓水晶球與雪林 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_8.mp4",
         fallback: createPlaceholder("Oval Globe", "%2378350f"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 195, y: 555, width: 690, height: 810 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 155, y: 545, width: 740, height: 825 }
       },
       { 
         id: "xmas_v2_9", 
@@ -323,7 +323,7 @@ const FESTIVE_DATA = {
         zhTitle: "溫馨客廳水晶球 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_9.mp4",
         fallback: createPlaceholder("Family Globe", "%23dc2626"),
-        pipConfig: { revealTime: 9.0, shape: "oval", x: 205, y: 540, width: 670, height: 630 }
+        pipConfig: { revealTime: 9.0, shape: "oval", x: 190, y: 525, width: 700, height: 685 }
       },
       { 
         id: "xmas_v2_10", 
@@ -331,7 +331,7 @@ const FESTIVE_DATA = {
         zhTitle: "水晶紅酒杯與聖誕酒館 (V2 畫中畫)",
         url: "/assets/v2-vertical/Merry-Christmas/video_10.mp4",
         fallback: createPlaceholder("Wine Glass", "%231e40af"),
-        pipConfig: { revealTime: 8.0, shape: "oval", x: 290, y: 595, width: 500, height: 595 }
+        pipConfig: { revealTime: 8.0, shape: "oval", x: 268, y: 588, width: 536, height: 622 }
       }
     ],
     // ------------------------------
