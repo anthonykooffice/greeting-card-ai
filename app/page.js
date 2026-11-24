@@ -28,6 +28,8 @@ import {
 const createPlaceholder = (title, bgColor = "%231e293b", textColor = "%23ffd700") => 
   `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="${bgColor}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="bold" fill="${textColor}">${encodeURIComponent(title)}</text></svg>`;
 
+const MEDIA_BASE_URL = "https://pub-d9f6793d350d4526a93d553dd1b42e62.r2.dev";
+
 const ORDERED_CATEGORIES = [
   "Happy Birthday",
   "Happy Valentine's Day",
@@ -51,7 +53,7 @@ const FONT_OPTIONS = [
 const FESTIVE_DATA = {
   "Happy Birthday": {
     zhTitle: "祝生日快樂",
-    heroImage: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-1.mp4`,
     heroFallback: createPlaceholder("Happy Birthday Celebration", "%233b82f6"),
     themeColor: "from-amber-500/40 via-purple-600/30 to-pink-500/40",
     
@@ -61,7 +63,7 @@ const FESTIVE_DATA = {
         id: "v2_fairy_girl", 
         title: "Fairy Girl & Floral Mirror", 
         zhTitle: "精靈女孩與花朵畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Happy-Birthday/Video1_fairy_girl.mp4`,
         fallback: createPlaceholder("Fairy Girl", "%23ec4899"),
         pipConfig: { revealTime: 6.5, shape: "rect", x: 270, y: 645, width: 540, height: 810 }
       },
@@ -69,7 +71,7 @@ const FESTIVE_DATA = {
         id: "v2_helicopter_heart", 
         title: "Helicopter Delivery & Heart", 
         zhTitle: "直升機送禮與愛心畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Happy-Birthday/Video2_helicopter_heart.mp4`,
         fallback: createPlaceholder("Helicopter Heart", "%23db2777"),
         pipConfig: { revealTime: 8.5, shape: "heart", x: 265, y: 620, width: 540, height: 525 }
       },
@@ -77,7 +79,7 @@ const FESTIVE_DATA = {
         id: "v2_night_castle", 
         title: "Fantasy Castle & Oval Mirror", 
         zhTitle: "夢幻城堡與橢圓畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Happy-Birthday/Video3_night_castle.mp4`,
         fallback: createPlaceholder("Night Castle", "%237c3aed"),
         pipConfig: { revealTime: 8.5, shape: "oval", x: 132, y: 455, width: 496, height: 684 }
       },
@@ -85,7 +87,7 @@ const FESTIVE_DATA = {
         id: "v2_butterfly_color", 
         title: "Crystal Cake & Golden Frame", 
         zhTitle: "水晶蛋糕與金色畫框 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Happy-Birthday/Video4_butterfly_color.mp4`,
         fallback: createPlaceholder("Crystal Cake", "%23d97706"),
         pipConfig: { revealTime: 9.5, shape: "rect", x: 105, y: 885, width: 295, height: 395 }
       },
@@ -93,7 +95,7 @@ const FESTIVE_DATA = {
         id: "v2_butterfly_glass", 
         title: "Pop-Up Card & Fireworks", 
         zhTitle: "立體賀卡與煙花橢圓 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Happy-Birthday/Video5_butterfly_glass.mp4`,
         fallback: createPlaceholder("Pop-Up Card", "%23e11d48"),
         pipConfig: { revealTime: 8.5, shape: "rect", x: 255, y: 570, width: 565, height: 750 }
       }
@@ -102,39 +104,39 @@ const FESTIVE_DATA = {
     
     relationshipPresets: {
       couples: [
-        { id: "b1_1", title: "Romantic Candlelight & Champagne", zhTitle: "浪漫燭光與香檳 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-1.mp4", fallback: createPlaceholder("Candlelight Champagne", "%23d97706") },
-        { id: "b1_2", title: "Sunset Beach Toast", zhTitle: "日落海灘乾杯 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-2.mp4", fallback: createPlaceholder("Sunset Beach Toast", "%232563eb") },
-        { id: "b1_3", title: "Starlight Rose Dinner", zhTitle: "星空玫瑰晚宴 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-3.mp4", fallback: createPlaceholder("Rose Dinner", "%237c3aed") },
-        { id: "b1_4", title: "Sweet Couples Cake Kiss", zhTitle: "甜蜜切蛋糕時光 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-4.mp4", fallback: createPlaceholder("Couples Cake", "%23db2777") },
-        { id: "b1_5", title: "Golden Heart Sparklers", zhTitle: "金光愛心仙女棒 (情侶)", url: "/assets/Happy-Birthday/Happy-Birthday-1-5.mp4", fallback: createPlaceholder("Heart Sparklers", "%23ca8a04") }
+        { id: "b1_1", title: "Romantic Candlelight & Champagne", zhTitle: "浪漫燭光與香檳 (情侶)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-1.mp4`, fallback: createPlaceholder("Candlelight Champagne", "%23d97706") },
+        { id: "b1_2", title: "Sunset Beach Toast", zhTitle: "日落海灘乾杯 (情侶)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-2.mp4`, fallback: createPlaceholder("Sunset Beach Toast", "%232563eb") },
+        { id: "b1_3", title: "Starlight Rose Dinner", zhTitle: "星空玫瑰晚宴 (情侶)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-3.mp4`, fallback: createPlaceholder("Rose Dinner", "%237c3aed") },
+        { id: "b1_4", title: "Sweet Couples Cake Kiss", zhTitle: "甜蜜切蛋糕時光 (情侶)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-4.mp4`, fallback: createPlaceholder("Couples Cake", "%23db2777") },
+        { id: "b1_5", title: "Golden Heart Sparklers", zhTitle: "金光愛心仙女棒 (情侶)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-1-5.mp4`, fallback: createPlaceholder("Heart Sparklers", "%23ca8a04") }
       ],
       friends: [
-        { id: "b2_1", title: "Fun Confetti & Neon Party", zhTitle: "彩帶狂歡派對 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-1.mp4", fallback: createPlaceholder("Confetti Party", "%23d97706") },
-        { id: "b2_2", title: "Vibrant Outdoor BBQ Cheer", zhTitle: "熱鬧戶外聚會 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-2.mp4", fallback: createPlaceholder("Outdoor Cheer", "%232563eb") },
-        { id: "b2_3", title: "Balloons Burst Celebration", zhTitle: "繽紛氣球派對 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-3.mp4", fallback: createPlaceholder("Balloons Burst", "%237c3aed") },
-        { id: "b2_4", title: "Funny Dessert High Five", zhTitle: "歡樂甜品擊掌 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-4.mp4", fallback: createPlaceholder("Dessert High Five", "%23db2777") },
-        { id: "b2_5", title: "Karaoke Spotlight Cheers", zhTitle: "K歌燈光聚會 (朋友)", url: "/assets/Happy-Birthday/Happy-Birthday-2-5.mp4", fallback: createPlaceholder("Karaoke Cheers", "%23ca8a04") }
+        { id: "b2_1", title: "Fun Confetti & Neon Party", zhTitle: "彩帶狂歡派對 (朋友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-2-1.mp4`, fallback: createPlaceholder("Confetti Party", "%23d97706") },
+        { id: "b2_2", title: "Vibrant Outdoor BBQ Cheer", zhTitle: "熱鬧戶外聚會 (朋友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-2-2.mp4`, fallback: createPlaceholder("Outdoor Cheer", "%232563eb") },
+        { id: "b2_3", title: "Balloons Burst Celebration", zhTitle: "繽紛氣球派對 (朋友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-2-3.mp4`, fallback: createPlaceholder("Balloons Burst", "%237c3aed") },
+        { id: "b2_4", title: "Funny Dessert High Five", zhTitle: "歡樂甜品擊掌 (朋友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-2-4.mp4`, fallback: createPlaceholder("Dessert High Five", "%23db2777") },
+        { id: "b2_5", title: "Karaoke Spotlight Cheers", zhTitle: "K歌燈光聚會 (朋友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-2-5.mp4`, fallback: createPlaceholder("Karaoke Cheers", "%23ca8a04") }
       ],
       family: [
-        { id: "b3_1", title: "Warm Cozy Home Cake", zhTitle: "溫馨家庭燭光蛋糕 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-1.mp4", fallback: createPlaceholder("Home Cake", "%23d97706") },
-        { id: "b3_2", title: "Family Living Room Celebration", zhTitle: "客廳閤家歡聚 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-2.mp4", fallback: createPlaceholder("Living Room Party", "%232563eb") },
-        { id: "b3_3", title: "Generations Reunion Feast", zhTitle: "三代同堂賀壽宴 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-3.mp4", fallback: createPlaceholder("Reunion Feast", "%237c3aed") },
-        { id: "b3_4", title: "Fairy Light Warm Gifts", zhTitle: "暖光溫馨生日禮物 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-4.mp4", fallback: createPlaceholder("Warm Gifts", "%23db2777") },
-        { id: "b3_5", title: "Peaceful Garden Family Tea", zhTitle: "花園溫馨茶會 (家人)", url: "/assets/Happy-Birthday/Happy-Birthday-3-5.mp4", fallback: createPlaceholder("Garden Tea", "%23ca8a04") }
+        { id: "b3_1", title: "Warm Cozy Home Cake", zhTitle: "溫馨家庭燭光蛋糕 (家人)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-3-1.mp4`, fallback: createPlaceholder("Home Cake", "%23d97706") },
+        { id: "b3_2", title: "Family Living Room Celebration", zhTitle: "客廳閤家歡聚 (家人)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-3-2.mp4`, fallback: createPlaceholder("Living Room Party", "%232563eb") },
+        { id: "b3_3", title: "Generations Reunion Feast", zhTitle: "三代同堂賀壽宴 (家人)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-3-3.mp4`, fallback: createPlaceholder("Reunion Feast", "%237c3aed") },
+        { id: "b3_4", title: "Fairy Light Warm Gifts", zhTitle: "暖光溫馨生日禮物 (家人)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-3-4.mp4`, fallback: createPlaceholder("Warm Gifts", "%23db2777") },
+        { id: "b3_5", title: "Peaceful Garden Family Tea", zhTitle: "花園溫馨茶會 (家人)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-3-5.mp4`, fallback: createPlaceholder("Garden Tea", "%23ca8a04") }
       ],
       colleagues: [
-        { id: "b4_1", title: "Corporate Elegance & Champagne", zhTitle: "高雅商務尊尚慶典 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-1.mp4", fallback: createPlaceholder("Corporate Elegance", "%23d97706") },
-        { id: "b4_2", title: "Executive Lounge Gift Box", zhTitle: "行政套房精緻禮盒 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-2.mp4", fallback: createPlaceholder("Executive Lounge", "%232563eb") },
-        { id: "b4_3", title: "Office Team Surprise Cake", zhTitle: "辦公室團隊驚喜蛋糕 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-3.mp4", fallback: createPlaceholder("Office Surprise", "%237c3aed") },
-        { id: "b4_4", title: "Sleek Marble Toast", zhTitle: "大理石尊爵乾杯 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-4.mp4", fallback: createPlaceholder("Marble Toast", "%23db2777") },
-        { id: "b4_5", title: "Modern Skyline Celebration", zhTitle: "現代都市天際賀壽 (同事老闆)", url: "/assets/Happy-Birthday/Happy-Birthday-4-5.mp4", fallback: createPlaceholder("Skyline Celebration", "%23ca8a04") }
+        { id: "b4_1", title: "Corporate Elegance & Champagne", zhTitle: "高雅商務尊尚慶典 (同事老闆)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-4-1.mp4`, fallback: createPlaceholder("Corporate Elegance", "%23d97706") },
+        { id: "b4_2", title: "Executive Lounge Gift Box", zhTitle: "行政套房精緻禮盒 (同事老闆)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-4-2.mp4`, fallback: createPlaceholder("Executive Lounge", "%232563eb") },
+        { id: "b4_3", title: "Office Team Surprise Cake", zhTitle: "辦公室團隊驚喜蛋糕 (同事老闆)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-4-3.mp4`, fallback: createPlaceholder("Office Surprise", "%237c3aed") },
+        { id: "b4_4", title: "Sleek Marble Toast", zhTitle: "大理石尊爵乾杯 (同事老闆)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-4-4.mp4`, fallback: createPlaceholder("Marble Toast", "%23db2777") },
+        { id: "b4_5", title: "Modern Skyline Celebration", zhTitle: "現代都市天際賀壽 (同事老闆)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-4-5.mp4`, fallback: createPlaceholder("Skyline Celebration", "%23ca8a04") }
       ],
       schoolmates: [
-        { id: "b5_1", title: "Youthful Campus Memories", zhTitle: "青春校園草地回憶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-1.mp4", fallback: createPlaceholder("Campus Memories", "%23d97706") },
-        { id: "b5_2", title: "Classroom Blackboard Party", zhTitle: "教室黑板派對 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-2.mp4", fallback: createPlaceholder("Classroom Party", "%232563eb") },
-        { id: "b5_3", title: "Cafe Study Group Cake", zhTitle: "咖啡館同窗切蛋糕 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-3.mp4", fallback: createPlaceholder("Cafe Cake", "%237c3aed") },
-        { id: "b5_4", title: "Graduation Memory Polaroids", zhTitle: "拍立得相片青春回憶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-4.mp4", fallback: createPlaceholder("Memory Polaroids", "%23db2777") },
-        { id: "b5_5", title: "Sports Field Sunset Toast", zhTitle: "操場夕陽歡慶 (同學校友)", url: "/assets/Happy-Birthday/Happy-Birthday-5-5.mp4", fallback: createPlaceholder("Sports Field Sunset", "%23ca8a04") }
+        { id: "b5_1", title: "Youthful Campus Memories", zhTitle: "青春校園草地回憶 (同學校友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-5-1.mp4`, fallback: createPlaceholder("Campus Memories", "%23d97706") },
+        { id: "b5_2", title: "Classroom Blackboard Party", zhTitle: "教室黑板派對 (同學校友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-5-2.mp4`, fallback: createPlaceholder("Classroom Party", "%232563eb") },
+        { id: "b5_3", title: "Cafe Study Group Cake", zhTitle: "咖啡館同窗切蛋糕 (同學校友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-5-3.mp4`, fallback: createPlaceholder("Cafe Cake", "%237c3aed") },
+        { id: "b5_4", title: "Graduation Memory Polaroids", zhTitle: "拍立得相片青春回憶 (同學校友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-5-4.mp4`, fallback: createPlaceholder("Memory Polaroids", "%23db2777") },
+        { id: "b5_5", title: "Sports Field Sunset Toast", zhTitle: "操場夕陽歡慶 (同學校友)", url: `${MEDIA_BASE_URL}/assets/Happy-Birthday/Happy-Birthday-5-5.mp4`, fallback: createPlaceholder("Sports Field Sunset", "%23ca8a04") }
       ]
     },
     ideas: [
@@ -147,15 +149,15 @@ const FESTIVE_DATA = {
   },
   "Happy Valentine's Day": {
     zhTitle: "情人節快樂",
-    heroImage: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4`,
     heroFallback: createPlaceholder("Happy Valentine's Day", "%23be123c"),
     themeColor: "from-pink-600/40 via-rose-700/30 to-red-500/40",
     presets: [
-      { id: "v1", title: "Crimson Red Velvet Hearts", zhTitle: "深紅絲絨愛心", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4", fallback: createPlaceholder("Red Velvet Hearts", "%23be123c") },
-      { id: "v2", title: "Red Rose Petal Shower", zhTitle: "浪漫玫瑰花瓣", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-2.mp4", fallback: createPlaceholder("Rose Petal Shower", "%239f1239") },
-      { id: "v3", title: "Romantic Candlelight Ambiance", zhTitle: "浪漫燭光晚宴", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-3.mp4", fallback: createPlaceholder("Candlelight Ambiance", "%23881337") },
-      { id: "v4", title: "Glowing Neon Heart Art", zhTitle: "霓虹愛心燈飾", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-4.mp4", fallback: createPlaceholder("Neon Heart Art", "%23e11d48") },
-      { id: "v5", title: "Golden Love Infinity Symbol", zhTitle: "金色永恆摯愛", url: "/assets/Happy-Valentines-Day/Happy-Valentines-Day-5.mp4", fallback: createPlaceholder("Golden Love Infinity", "%23f43f5e") }
+      { id: "v1", title: "Crimson Red Velvet Hearts", zhTitle: "深紅絲絨愛心", url: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-1.mp4`, fallback: createPlaceholder("Red Velvet Hearts", "%23be123c") },
+      { id: "v2", title: "Red Rose Petal Shower", zhTitle: "浪漫玫瑰花瓣", url: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-2.mp4`, fallback: createPlaceholder("Rose Petal Shower", "%239f1239") },
+      { id: "v3", title: "Romantic Candlelight Ambiance", zhTitle: "浪漫燭光晚宴", url: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-3.mp4`, fallback: createPlaceholder("Candlelight Ambiance", "%23881337") },
+      { id: "v4", title: "Glowing Neon Heart Art", zhTitle: "霓虹愛心燈飾", url: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-4.mp4`, fallback: createPlaceholder("Neon Heart Art", "%23e11d48") },
+      { id: "v5", title: "Golden Love Infinity Symbol", zhTitle: "金色永恆摯愛", url: `${MEDIA_BASE_URL}/assets/Happy-Valentines-Day/Happy-Valentines-Day-5.mp4`, fallback: createPlaceholder("Golden Love Infinity", "%23f43f5e") }
     ],
     ideas: [
       { en: "You hold the key to my heart today, tomorrow, and forever. Happy Valentine's Day!", zh: "你掌握著我心門的鑰匙，直到永遠。情人節快樂！" },
@@ -167,15 +169,15 @@ const FESTIVE_DATA = {
   },
   "Happy Easter": {
     zhTitle: "復活節快樂",
-    heroImage: "/assets/Happy-Easter/Happy-Easter-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-1.mp4`,
     heroFallback: createPlaceholder("Happy Easter", "%2310b981"),
     themeColor: "from-emerald-400/40 via-teal-500/30 to-yellow-400/40",
     presets: [
-      { id: "e1", title: "Colorful Pastel Easter Eggs", zhTitle: "彩繪復活節彩蛋", url: "/assets/Happy-Easter/Happy-Easter-1.mp4", fallback: createPlaceholder("Pastel Easter Eggs", "%23059669") },
-      { id: "e2", title: "Spring Blossom Bunny Garden", zhTitle: "春日花園可愛兔子", url: "/assets/Happy-Easter/Happy-Easter-2.mp4", fallback: createPlaceholder("Bunny Garden", "%2310b981") },
-      { id: "e3", title: "Easter Egg Nest in Meadow", zhTitle: "草地彩蛋溫馨鳥巢", url: "/assets/Happy-Easter/Happy-Easter-3.mp4", fallback: createPlaceholder("Easter Egg Nest", "%2334d399") },
-      { id: "e4", title: "Golden Morning Spring Tulips", zhTitle: "晨曦金色鬱金香", url: "/assets/Happy-Easter/Happy-Easter-4.mp4", fallback: createPlaceholder("Spring Tulips", "%23f59e0b") },
-      { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: "/assets/Happy-Easter/Happy-Easter-5.mp4", fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
+      { id: "e1", title: "Colorful Pastel Easter Eggs", zhTitle: "彩繪復活節彩蛋", url: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-1.mp4`, fallback: createPlaceholder("Pastel Easter Eggs", "%23059669") },
+      { id: "e2", title: "Spring Blossom Bunny Garden", zhTitle: "春日花園可愛兔子", url: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-2.mp4`, fallback: createPlaceholder("Bunny Garden", "%2310b981") },
+      { id: "e3", title: "Easter Egg Nest in Meadow", zhTitle: "草地彩蛋溫馨鳥巢", url: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-3.mp4`, fallback: createPlaceholder("Easter Egg Nest", "%2334d399") },
+      { id: "e4", title: "Golden Morning Spring Tulips", zhTitle: "晨曦金色鬱金香", url: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-4.mp4`, fallback: createPlaceholder("Spring Tulips", "%23f59e0b") },
+      { id: "e5", title: "Festive Chocolate Easter Treats", zhTitle: "復活節精緻巧克力", url: `${MEDIA_BASE_URL}/assets/Happy-Easter/Happy-Easter-5.mp4`, fallback: createPlaceholder("Chocolate Easter Treats", "%23d97706") }
     ],
     ideas: [
       { en: "Wishing you a bright, joyful Easter filled with hope and sweet surprises!", zh: "祝你度過一個充滿希望與甜蜜驚喜的明媚復活節！" },
@@ -187,15 +189,15 @@ const FESTIVE_DATA = {
   },
   "Happy Mother's Day": {
     zhTitle: "母親節快樂",
-    heroImage: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4`,
     heroFallback: createPlaceholder("Happy Mother's Day", "%23ec4899"),
     themeColor: "from-rose-500/40 via-pink-600/30 to-red-400/40",
     presets: [
-      { id: "m1", title: "Fresh Peony & Rose Bouquet", zhTitle: "新鮮牡丹玫瑰花束", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4", fallback: createPlaceholder("Peony Bouquet", "%23e11d48") },
-      { id: "m2", title: "Spring Tulip Bloom", zhTitle: "春日鬱金香花海", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-2.mp4", fallback: createPlaceholder("Spring Tulips", "%23be123c") },
-      { id: "m3", title: "Warm Morning Floral Tea", zhTitle: "溫馨早晨花茶", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-3.mp4", fallback: createPlaceholder("Morning Floral Tea", "%239f1239") },
-      { id: "m4", title: "Golden Hour Garden Blossoms", zhTitle: "金輝花園盛開", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-4.mp4", fallback: createPlaceholder("Garden Blossoms", "%23881337") },
-      { id: "m5", title: "Soft Pink Carnation Arrangement", zhTitle: "粉嫩康乃馨花藝", url: "/assets/Happy-Mothers-Day/Happy-Mothers-Day-5.mp4", fallback: createPlaceholder("Pink Carnations", "%23f43f5e") }
+      { id: "m1", title: "Fresh Peony & Rose Bouquet", zhTitle: "新鮮牡丹玫瑰花束", url: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-1.mp4`, fallback: createPlaceholder("Peony Bouquet", "%23e11d48") },
+      { id: "m2", title: "Spring Tulip Bloom", zhTitle: "春日鬱金香花海", url: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-2.mp4`, fallback: createPlaceholder("Spring Tulips", "%23be123c") },
+      { id: "m3", title: "Warm Morning Floral Tea", zhTitle: "溫馨早晨花茶", url: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-3.mp4`, fallback: createPlaceholder("Morning Floral Tea", "%239f1239") },
+      { id: "m4", title: "Golden Hour Garden Blossoms", zhTitle: "金輝花園盛開", url: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-4.mp4`, fallback: createPlaceholder("Garden Blossoms", "%23881337") },
+      { id: "m5", title: "Soft Pink Carnation Arrangement", zhTitle: "粉嫩康乃馨花藝", url: `${MEDIA_BASE_URL}/assets/Happy-Mothers-Day/Happy-Mothers-Day-5.mp4`, fallback: createPlaceholder("Pink Carnations", "%23f43f5e") }
     ],
     ideas: [
       { en: "Thank you for your unconditional love and infinite patience. Happy Mother's Day!", zh: "感謝您無私的愛與無窮的耐心，母親節快樂！" },
@@ -207,15 +209,15 @@ const FESTIVE_DATA = {
   },
   "Happy Father's Day": {
     zhTitle: "父親節快樂",
-    heroImage: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4`,
     heroFallback: createPlaceholder("Happy Father's Day", "%231d4ed8"),
     themeColor: "from-blue-600/40 via-slate-700/30 to-indigo-500/40",
     presets: [
-      { id: "f1", title: "Serene Dock & Ocean Sunset", zhTitle: "寧靜港灣夕陽", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4", fallback: createPlaceholder("Ocean Sunset", "%231e40af") },
-      { id: "f2", title: "Majestic Wilderness Mountain", zhTitle: "壯麗山川風光", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-2.mp4", fallback: createPlaceholder("Wilderness Mountain", "%231d4ed8") },
-      { id: "f3", title: "Classic Vintage Timepiece", zhTitle: "經典復古腕錶", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-3.mp4", fallback: createPlaceholder("Vintage Timepiece", "%232563eb") },
-      { id: "f4", title: "Peaceful Forest Dusk Path", zhTitle: "靜謐森林步道", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-4.mp4", fallback: createPlaceholder("Forest Dusk Path", "%233b82f6") },
-      { id: "f5", title: "Modern Deep Blue Geometry", zhTitle: "深藍幾何美學", url: "/assets/Happy-Fathers-Day/Happy-Fathers-Day-5.mp4", fallback: createPlaceholder("Deep Blue Geometry", "%231e3a8a") }
+      { id: "f1", title: "Serene Dock & Ocean Sunset", zhTitle: "寧靜港灣夕陽", url: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-1.mp4`, fallback: createPlaceholder("Ocean Sunset", "%231e40af") },
+      { id: "f2", title: "Majestic Wilderness Mountain", zhTitle: "壯麗山川風光", url: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-2.mp4`, fallback: createPlaceholder("Wilderness Mountain", "%231d4ed8") },
+      { id: "f3", title: "Classic Vintage Timepiece", zhTitle: "經典復古腕錶", url: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-3.mp4`, fallback: createPlaceholder("Vintage Timepiece", "%232563eb") },
+      { id: "f4", title: "Peaceful Forest Dusk Path", zhTitle: "靜謐森林步道", url: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-4.mp4`, fallback: createPlaceholder("Forest Dusk Path", "%233b82f6") },
+      { id: "f5", title: "Modern Deep Blue Geometry", zhTitle: "深藍幾何美學", url: `${MEDIA_BASE_URL}/assets/Happy-Fathers-Day/Happy-Fathers-Day-5.mp4`, fallback: createPlaceholder("Deep Blue Geometry", "%231e3a8a") }
     ],
     ideas: [
       { en: "Thank you for being my anchor, my mentor, and my hero. Happy Father's Day!", zh: "感謝您成為我的靠山、導師與英雄，父親節快樂！" },
@@ -227,15 +229,15 @@ const FESTIVE_DATA = {
   },
   "Happy Mid-Autumn Festival": {
     zhTitle: "中秋節快樂",
-    heroImage: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4`,
     heroFallback: createPlaceholder("Happy Mid-Autumn Festival", "%23d97706"),
     themeColor: "from-amber-600/40 via-yellow-700/30 to-orange-500/40",
     presets: [
-      { id: "ma1", title: "Full Golden Moon & Lanterns", zhTitle: "金黃明月與節慶燈籠", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4", fallback: createPlaceholder("Golden Moon & Lanterns", "%23d97706") },
-      { id: "ma2", title: "Traditional Gourmet Mooncakes", zhTitle: "傳統精緻月餅美食", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-2.mp4", fallback: createPlaceholder("Gourmet Mooncakes", "%23b45309") },
-      { id: "ma3", title: "Glowing Night Sky Lanterns", zhTitle: "夜空璀璨放飛天燈", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-3.mp4", fallback: createPlaceholder("Night Sky Lanterns", "%23ea580c") },
-      { id: "ma4", title: "Serene Moonlight Lake Reflection", zhTitle: "靜謐湖畔月影搖曳", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-4.mp4", fallback: createPlaceholder("Moonlight Lake", "%231e3a8a") },
-      { id: "ma5", title: "Warm Tea & Reunion Celebration", zhTitle: "中秋品茗歡聚一堂", url: "/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-5.mp4", fallback: createPlaceholder("Tea & Reunion", "%2378350f") }
+      { id: "ma1", title: "Full Golden Moon & Lanterns", zhTitle: "金黃明月與節慶燈籠", url: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-1.mp4`, fallback: createPlaceholder("Golden Moon & Lanterns", "%23d97706") },
+      { id: "ma2", title: "Traditional Gourmet Mooncakes", zhTitle: "傳統精緻月餅美食", url: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-2.mp4`, fallback: createPlaceholder("Gourmet Mooncakes", "%23b45309") },
+      { id: "ma3", title: "Glowing Night Sky Lanterns", zhTitle: "夜空璀璨放飛天燈", url: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-3.mp4`, fallback: createPlaceholder("Night Sky Lanterns", "%23ea580c") },
+      { id: "ma4", title: "Serene Moonlight Lake Reflection", zhTitle: "靜謐湖畔月影搖曳", url: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-4.mp4`, fallback: createPlaceholder("Moonlight Lake", "%231e3a8a") },
+      { id: "ma5", title: "Warm Tea & Reunion Celebration", zhTitle: "中秋品茗歡聚一堂", url: `${MEDIA_BASE_URL}/assets/Happy-Mid-Autumn-Festival/Happy-Mid-Autumn-Festival-5.mp4`, fallback: createPlaceholder("Tea & Reunion", "%2378350f") }
     ],
     ideas: [
       { en: "Wishing you and your family a blessed Mid-Autumn Festival of harmony and reunion!", zh: "祝您與家人中秋團圓，花好月圓，合家幸福！" },
@@ -247,7 +249,7 @@ const FESTIVE_DATA = {
   },
   "Merry Christmas": {
     zhTitle: "聖誕節快樂",
-    heroImage: "/assets/Merry-Christmas/Merry-Christmas-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-1.mp4`,
     heroFallback: createPlaceholder("Merry Christmas", "%2315803d"),
     themeColor: "from-emerald-600/40 via-red-700/30 to-green-500/40",
     
@@ -257,7 +259,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_1", 
         title: "Golden Wreath & Santa", 
         zhTitle: "金色花環與聖誕老人 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_1.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_1.mp4`,
         fallback: createPlaceholder("Golden Wreath", "%2315803d"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 180, y: 548, width: 720, height: 720 }
       },
@@ -265,7 +267,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_2", 
         title: "Frosted Oval & Cabin", 
         zhTitle: "冰霜橢圓與木屋 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_2.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_2.mp4`,
         fallback: createPlaceholder("Frosted Oval", "%23b91c1c"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 202, y: 385, width: 675, height: 1045 }
       },
@@ -273,7 +275,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_3", 
         title: "Glass Bauble & Sleigh", 
         zhTitle: "玻璃球與馴鹿雪橇 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_3.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_3.mp4`,
         fallback: createPlaceholder("Glass Bauble", "%23047857"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 320, y: 198, width: 440, height: 440 }
       },
@@ -281,7 +283,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_4", 
         title: "Pine Wreath & Reindeer", 
         zhTitle: "松果花圈與馴鹿 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_4.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_4.mp4`,
         fallback: createPlaceholder("Pine Wreath", "%23b45309"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 312, y: 408, width: 455, height: 455 }
       },
@@ -289,7 +291,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_5", 
         title: "Cozy Fireplace Bauble", 
         zhTitle: "溫馨壁爐水晶球 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_5.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_5.mp4`,
         fallback: createPlaceholder("Fireplace Bauble", "%230f766e"),
         pipConfig: { revealTime: 10.0, shape: "oval", x: 368, y: 152, width: 340, height: 340 }
       },
@@ -297,7 +299,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_6", 
         title: "Festive Christmas Mug", 
         zhTitle: "節慶聖誕馬克杯 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_6.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_6.mp4`,
         fallback: createPlaceholder("Christmas Mug", "%23d97706"),
         pipConfig: { revealTime: 8.0, shape: "rect", x: 340, y: 865, width: 400, height: 480 }
       },
@@ -305,7 +307,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_7", 
         title: "Crystal Sleigh & Gift Box", 
         zhTitle: "水晶雪橇與魔法禮盒 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_7.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_7.mp4`,
         fallback: createPlaceholder("Crystal Sleigh", "%231e3a8a"),
         pipConfig: { revealTime: 9.5, shape: "rect", x: 300, y: 515, width: 480, height: 775 }
       },
@@ -313,7 +315,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_8", 
         title: "Oval Snow Globe & Forest", 
         zhTitle: "橢圓水晶球與雪林 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_8.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_8.mp4`,
         fallback: createPlaceholder("Oval Globe", "%2378350f"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 155, y: 545, width: 740, height: 825 }
       },
@@ -321,7 +323,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_9", 
         title: "Family Room Snow Globe", 
         zhTitle: "溫馨客廳水晶球 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_9.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_9.mp4`,
         fallback: createPlaceholder("Family Globe", "%23dc2626"),
         pipConfig: { revealTime: 9.0, shape: "oval", x: 190, y: 525, width: 700, height: 685 }
       },
@@ -329,7 +331,7 @@ const FESTIVE_DATA = {
         id: "xmas_v2_10", 
         title: "Crystal Wine Glass & Tavern", 
         zhTitle: "水晶紅酒杯與聖誕酒館 (V2 畫中畫)",
-        url: "/assets/v2-vertical/Merry-Christmas/video_10.mp4",
+        url: `${MEDIA_BASE_URL}/assets/v2-vertical/Merry-Christmas/video_10.mp4`,
         fallback: createPlaceholder("Wine Glass", "%231e40af"),
         pipConfig: { revealTime: 8.0, shape: "oval", x: 268, y: 588, width: 536, height: 622 }
       }
@@ -337,11 +339,11 @@ const FESTIVE_DATA = {
     // ------------------------------
     
     presets: [
-      { id: "c1", title: "Glowing Christmas Tree Lights", zhTitle: "璀璨聖誕樹彩燈", url: "/assets/Merry-Christmas/Merry-Christmas-1.mp4", fallback: createPlaceholder("Christmas Tree Lights", "%2315803d") },
-      { id: "c2", title: "Cozy Fireplace & Holiday Stockings", zhTitle: "壁爐與節慶聖誕襪", url: "/assets/Merry-Christmas/Merry-Christmas-2.mp4", fallback: createPlaceholder("Cozy Fireplace", "%23b91c1c") },
-      { id: "c3", title: "Snowy Winter Pine Cones", zhTitle: "雪景松果美景", url: "/assets/Merry-Christmas/Merry-Christmas-3.mp4", fallback: createPlaceholder("Snowy Pine Cones", "%23047857") },
-      { id: "c4", title: "Golden Christmas Tree Baubles", zhTitle: "金色聖誕裝飾球", url: "/assets/Merry-Christmas/Merry-Christmas-4.mp4", fallback: createPlaceholder("Golden Christmas Baubles", "%23b45309") },
-      { id: "c5", title: "Nordic Winter Snowflake Branch", zhTitle: "北歐雪花冬日松枝", url: "/assets/Merry-Christmas/Merry-Christmas-5.mp4", fallback: createPlaceholder("Snowflake Branch", "%230f766e") }
+      { id: "c1", title: "Glowing Christmas Tree Lights", zhTitle: "璀璨聖誕樹彩燈", url: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-1.mp4`, fallback: createPlaceholder("Christmas Tree Lights", "%2315803d") },
+      { id: "c2", title: "Cozy Fireplace & Holiday Stockings", zhTitle: "壁爐與節慶聖誕襪", url: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-2.mp4`, fallback: createPlaceholder("Cozy Fireplace", "%23b91c1c") },
+      { id: "c3", title: "Snowy Winter Pine Cones", zhTitle: "雪景松果美景", url: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-3.mp4`, fallback: createPlaceholder("Snowy Pine Cones", "%23047857") },
+      { id: "c4", title: "Golden Christmas Tree Baubles", zhTitle: "金色聖誕裝飾球", url: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-4.mp4`, fallback: createPlaceholder("Golden Christmas Baubles", "%23b45309") },
+      { id: "c5", title: "Nordic Winter Snowflake Branch", zhTitle: "北歐雪花冬日松枝", url: `${MEDIA_BASE_URL}/assets/Merry-Christmas/Merry-Christmas-5.mp4`, fallback: createPlaceholder("Snowflake Branch", "%230f766e") }
     ],
     ideas: [
       { en: "May your holidays be wrapped in warmth, filled with love, and bright with joy!", zh: "願你的佳節充滿溫暖、愛與無盡喜悅！" },
@@ -353,15 +355,15 @@ const FESTIVE_DATA = {
   },
   "Happy New Year": {
     zhTitle: "跨年元旦快樂",
-    heroImage: "/assets/Happy-New-Year/Happy-New-Year-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-1.mp4`,
     heroFallback: createPlaceholder("Happy New Year 2027", "%23d97706"),
     themeColor: "from-amber-400/40 via-yellow-600/30 to-orange-500/40",
     presets: [
-      { id: "n1", title: "Midnight Fireworks Sky", zhTitle: "璀璨夜空煙花", url: "/assets/Happy-New-Year/Happy-New-Year-1.mp4", fallback: createPlaceholder("Fireworks Sky", "%23b45309") },
-      { id: "n2", title: "Golden Champagne Celebration", zhTitle: "金色香檳慶典", url: "/assets/Happy-New-Year/Happy-New-Year-2.mp4", fallback: createPlaceholder("Champagne Celebration", "%23d97706") },
-      { id: "n3", title: "City Skyline Sparkler Glow", zhTitle: "都市天際仙女棒", url: "/assets/Happy-New-Year/Happy-New-Year-3.mp4", fallback: createPlaceholder("City Sparkler Glow", "%23f59e0b") },
-      { id: "n4", title: "Warm Festive Lantern Festival", zhTitle: "暖心節慶天燈", url: "/assets/Happy-New-Year/Happy-New-Year-4.mp4", fallback: createPlaceholder("Lantern Festival", "%23ea580c") },
-      { id: "n5", title: "Glittering Countdown Lights", zhTitle: "倒數歡慶燈光", url: "/assets/Happy-New-Year/Happy-New-Year-5.mp4", fallback: createPlaceholder("Countdown Lights", "%23c2410c") }
+      { id: "n1", title: "Midnight Fireworks Sky", zhTitle: "璀璨夜空煙花", url: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-1.mp4`, fallback: createPlaceholder("Fireworks Sky", "%23b45309") },
+      { id: "n2", title: "Golden Champagne Celebration", zhTitle: "金色香檳慶典", url: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-2.mp4`, fallback: createPlaceholder("Champagne Celebration", "%23d97706") },
+      { id: "n3", title: "City Skyline Sparkler Glow", zhTitle: "都市天際仙女棒", url: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-3.mp4`, fallback: createPlaceholder("City Sparkler Glow", "%23f59e0b") },
+      { id: "n4", title: "Warm Festive Lantern Festival", zhTitle: "暖心節慶天燈", url: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-4.mp4`, fallback: createPlaceholder("Lantern Festival", "%23ea580c") },
+      { id: "n5", title: "Glittering Countdown Lights", zhTitle: "倒數歡慶燈光", url: `${MEDIA_BASE_URL}/assets/Happy-New-Year/Happy-New-Year-5.mp4`, fallback: createPlaceholder("Countdown Lights", "%23c2410c") }
     ],
     ideas: [
       { en: "May 2027 bring you health, wealth, prosperity, and endless joy!", zh: "願新的一年帶給你健康、財富與無限喜悅！" },
@@ -373,15 +375,15 @@ const FESTIVE_DATA = {
   },
   "Happy Chinese New Year": {
     zhTitle: "農曆新年快樂",
-    heroImage: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4",
+    heroImage: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4`,
     heroFallback: createPlaceholder("Happy Chinese New Year", "%23dc2626"),
     themeColor: "from-red-600/40 via-amber-600/30 to-red-500/40",
     presets: [
-      { id: "cny1", title: "Red Lanterns & Spring Couplets", zhTitle: "喜慶紅燈籠與春聯", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4", fallback: createPlaceholder("Red Lanterns & Couplets", "%23dc2626") },
-      { id: "cny2", title: "Golden Fortune Coins & Red Packets", zhTitle: "金玉滿堂開運紅包", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-2.mp4", fallback: createPlaceholder("Fortune Coins & Red Packets", "%23b91c1c") },
-      { id: "cny3", title: "Vibrant Lion Dance Celebration", zhTitle: "熱鬧非凡醒獅賀歲", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-3.mp4", fallback: createPlaceholder("Lion Dance Celebration", "%23991b1b") },
-      { id: "cny4", title: "Blossoming Cherry Spring Flowers", zhTitle: "新春桃花報喜盛開", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-4.mp4", fallback: createPlaceholder("Blossoming Spring Flowers", "%23e11d48") },
-      { id: "cny5", title: "Festive Fireworks & Temple Lights", zhTitle: "新春火樹銀花不夜天", url: "/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-5.mp4", fallback: createPlaceholder("Fireworks & Temple Lights", "%23d97706") }
+      { id: "cny1", title: "Red Lanterns & Spring Couplets", zhTitle: "喜慶紅燈籠與春聯", url: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-1.mp4`, fallback: createPlaceholder("Red Lanterns & Couplets", "%23dc2626") },
+      { id: "cny2", title: "Golden Fortune Coins & Red Packets", zhTitle: "金玉滿堂開運紅包", url: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-2.mp4`, fallback: createPlaceholder("Fortune Coins & Red Packets", "%23b91c1c") },
+      { id: "cny3", title: "Vibrant Lion Dance Celebration", zhTitle: "熱鬧非凡醒獅賀歲", url: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-3.mp4`, fallback: createPlaceholder("Lion Dance Celebration", "%23991b1b") },
+      { id: "cny4", title: "Blossoming Cherry Spring Flowers", zhTitle: "新春桃花報喜盛開", url: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-4.mp4`, fallback: createPlaceholder("Blossoming Spring Flowers", "%23e11d48") },
+      { id: "cny5", title: "Festive Fireworks & Temple Lights", zhTitle: "新春火樹銀花不夜天", url: `${MEDIA_BASE_URL}/assets/Happy-Chinese-New-Year/Happy-Chinese-New-Year-5.mp4`, fallback: createPlaceholder("Fireworks & Temple Lights", "%23d97706") }
     ],
     ideas: [
       { en: "Wishing you immense prosperity, good health, and wealth in the New Year!", zh: "祝您新春吉星高照，大吉大利，歲歲平安！" },
